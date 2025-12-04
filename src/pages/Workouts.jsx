@@ -72,7 +72,7 @@ export default function Workouts() {
               </div>
               <Button 
                 onClick={() => setShowWorkoutForm(!showWorkoutForm)}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Create Workout

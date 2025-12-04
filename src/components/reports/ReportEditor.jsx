@@ -703,7 +703,7 @@ export default function ReportEditor({
             </Button>
             <Button
               onClick={handleExportPDF}
-              className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-bold"
+              className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black"
             >
               <FileDown className="w-4 h-4 mr-2" />
               Export PDF

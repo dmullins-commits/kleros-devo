@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Athlete, ClassPeriod } from "@/entities/all";
+import { Athlete, Team, ClassPeriod } from "@/entities/all";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Settings, Grid3X3, List, Upload, AlertTriangle } from "lucide-react";
+import { Plus, Search, Users, Filter, Settings, Grid3X3, List, Upload, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTeam } from "@/components/TeamContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -254,7 +254,7 @@ export default function Athletes() {
                     setShowForm(!showForm);
                     setErrorMessage(null);
                   }}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold shadow-lg"
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-black shadow-lg"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Add Athlete
