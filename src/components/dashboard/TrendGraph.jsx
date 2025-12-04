@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { BarChart3 } from "lucide-react";
 
-const categoryColors = {
+const defaultCategoryColors = {
   strength: "#EF4444",
   endurance: "#3B82F6",
   speed: "#FCD34D",
@@ -13,7 +13,7 @@ const categoryColors = {
   other: "#6B7280"
 };
 
-export default function TrendGraph({ categoryGraphData, isLoading }) {
+export default function TrendGraph({ categoryGraphData, categoryColors = {}, isLoading }) {
   if (isLoading) {
     return (
       <Card className="bg-gray-950 border border-gray-800">
@@ -57,7 +57,7 @@ export default function TrendGraph({ categoryGraphData, isLoading }) {
         <div className="grid md:grid-cols-2 gap-6">
           {categories.map(category => {
             const data = categoryGraphData[category];
-            const color = categoryColors[category] || categoryColors.other;
+            const color = categoryColors[category] || defaultCategoryColors[category.toLowerCase().replace(/ /g, '_')] || defaultCategoryColors.other;
             
             return (
               <div key={category} className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">

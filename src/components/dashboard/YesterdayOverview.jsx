@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Minus, CalendarCheck, AlertTriangle, CheckCircle } from "lucide-react";
 
-export default function YesterdayOverview({ overviewData, incompleteWorkouts, prsInLastSession, athletesInLastSession, isLoading }) {
+export default function YesterdayOverview({ overviewData, incompleteWorkouts, prsInLastSession, athletesInLastSession, prsByTeam, prsByClass, isLoading }) {
   const trendIcons = {
     up: <TrendingUp className="w-4 h-4 text-green-400" />,
     down: <TrendingDown className="w-4 h-4 text-red-400" />,
@@ -34,6 +34,44 @@ export default function YesterdayOverview({ overviewData, incompleteWorkouts, pr
           )}
         </CardTitle>
       </CardHeader>
+      
+      {/* PR Breakdown by Team and Class */}
+      {((prsByTeam && prsByTeam.length > 0) || (prsByClass && prsByClass.length > 0)) && (
+        <div className="p-4 border-b border-gray-800 bg-gray-900/30">
+          <div className="grid md:grid-cols-2 gap-4">
+            {prsByTeam && prsByTeam.length > 0 && (
+              <div>
+                <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">By Team</h4>
+                <div className="space-y-1">
+                  {prsByTeam.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-300">{item.name}</span>
+                      <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-xs">
+                        {item.prs} / {item.athletes}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {prsByClass && prsByClass.length > 0 && (
+              <div>
+                <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">By Class Period</h4>
+                <div className="space-y-1">
+                  {prsByClass.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-300">{item.name}</span>
+                      <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-xs">
+                        {item.prs} / {item.athletes}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <CardContent className="p-0">
         {/* Incomplete Workouts Section */}
         {incompleteWorkouts && incompleteWorkouts.length > 0 && (
