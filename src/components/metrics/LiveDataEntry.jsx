@@ -8,7 +8,7 @@ import { Clipboard, Play, Save, ArrowUpDown, CheckCircle, Trophy, Medal, Award, 
 import { Team, MetricRecord, ClassPeriod, Athlete } from "@/entities/all";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { calculateAllAutoMetrics } from "@/components/utils/index.js";
+import { calculateAllAutoMetrics } from "@/components/utils";
 import { useTeam } from "@/components/TeamContext";
 import PrintableLeaderboard from "./PrintableLeaderboard";
 import QuickAddAthleteModal from "./QuickAddAthleteModal";
