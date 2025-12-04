@@ -1,9 +1,5 @@
-
-import { withRetry, staggeredApiCalls } from './apiHelpers';
-
-export const createPageUrl = (pageName) => {
-  return `/${pageName}`;
-};
+// Utility functions
+export { withRetry, staggeredApiCalls } from './apiHelpers';
 
 export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, autoCalcSettings) => {
   if (!autoCalcSettings) return {};
@@ -41,7 +37,7 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
   if (autoCalcSettings.enable_mph) {
     const fly10 = getLatestValue('Fly 10');
     if (fly10) {
-      calculatedMetrics.mph = (10 / fly10) * 2.23694; // convert to mph
+      calculatedMetrics.mph = (10 / fly10) * 2.23694;
     }
   }
 
@@ -99,6 +95,3 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
 
   return calculatedMetrics;
 };
-
-// Utility functions
-export { withRetry, staggeredApiCalls };
