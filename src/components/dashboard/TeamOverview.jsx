@@ -6,8 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TeamOverview({ teams, athletes, isLoading }) {
   const getTeamStats = (team) => {
-    const teamAthletes = athletes.filter(a => a.team_id === team.id);
-    const activeAthletes = teamAthletes.filter(a => a.status === 'active').length;
+    const teamAthletes = athletes.filter(a => a.team_ids?.includes(team.id));
+    const activeAthletes = teamAthletes.filter(a => a.status === 'active' || !a.status).length;
     const injuredAthletes = teamAthletes.filter(a => a.status === 'injured').length;
     
     return {

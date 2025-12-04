@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Minus, CalendarCheck, AlertTriangle, CheckCircle } from "lucide-react";
 
-export default function YesterdayOverview({ overviewData, incompleteWorkouts, isLoading }) {
+export default function YesterdayOverview({ overviewData, incompleteWorkouts, prsInLastSession, athletesInLastSession, isLoading }) {
   const trendIcons = {
     up: <TrendingUp className="w-4 h-4 text-green-400" />,
     down: <TrendingDown className="w-4 h-4 text-red-400" />,
@@ -20,11 +20,18 @@ export default function YesterdayOverview({ overviewData, incompleteWorkouts, is
   return (
     <Card className="bg-gray-950 border border-gray-800">
       <CardHeader className="border-b border-gray-800">
-        <CardTitle className="flex items-center gap-3 text-white">
-          <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
-            <CalendarCheck className="w-4 h-4 text-black" />
+        <CardTitle className="flex items-center justify-between text-white">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+              <CalendarCheck className="w-4 h-4 text-black" />
+            </div>
+            Latest Session
           </div>
-          Yesterday's Performance
+          {athletesInLastSession > 0 && (
+            <Badge className="bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-lg px-3 py-1">
+              PRs: {prsInLastSession} / {athletesInLastSession}
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

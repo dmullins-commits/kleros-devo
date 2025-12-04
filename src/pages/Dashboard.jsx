@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Athlete, MetricRecord, Workout, Metric, VBTSession } from "@/entities/all";
-import { Target, Crown, Zap } from "lucide-react";
+import { Athlete, Team, MetricRecord, Workout, Metric, VBTSession } from "@/entities/all";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, Target, Dumbbell, TrendingUp, Crown, Zap } from "lucide-react";
 import { isYesterday, startOfMonth } from "date-fns";
 import { useTeam } from "@/components/TeamContext";
 
@@ -10,7 +12,7 @@ import FlaggedAthletesList from "../components/dashboard/FlaggedAthletesList";
 
 import TrendGraph from "../components/dashboard/TrendGraph";
 import YesterdayOverview from "../components/dashboard/YesterdayOverview";
-import RecentActivity from "../components/dashboard/RecentActivity";
+
 import TopPerformers from "../components/dashboard/TopPerformers";
 import TeamOverview from "../components/dashboard/TeamOverview";
 
@@ -468,9 +470,13 @@ export default function Dashboard() {
             <YesterdayOverview 
               overviewData={yesterdayOverviewData} 
               incompleteWorkouts={incompleteWorkouts}
+              prsInLastSession={prsInLastSession}
+              athletesInLastSession={new Set(allRecords.filter(r => {
+                const sortedRecords = [...allRecords].sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
+                return sortedRecords.length > 0 && r.recorded_date === sortedRecords[0].recorded_date;
+              }).map(r => r.athlete_id)).size}
               isLoading={isLoading} 
             />
-            <RecentActivity records={recentRecords} athletes={athletes} isLoading={isLoading} />
             <TeamOverview teams={teams} athletes={athletes} isLoading={isLoading} />
           </div>
           <div>
