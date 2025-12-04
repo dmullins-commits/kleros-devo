@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,18 @@ export default function ReportEditor({
   initialTemplate,
   onBack
 }) {
+  // Generate default title based on report type
+  const getDefaultTitle = () => {
+    if (reportType === 'individual') {
+      return `${athlete?.first_name || ''} ${athlete?.last_name || ''} Progress Report`;
+    } else {
+      const groupName = filterType === 'team' ? team?.name : classPeriod;
+      return `${groupName || ''} Progress Report`;
+    }
+  };
+
   const [elements, setElements] = useState(initialTemplate?.elements || [
-    { id: 'header', type: 'text', content: reportType === 'individual' 
-      ? `${athlete?.first_name || ''} ${athlete?.last_name || ''} - Performance Report`
-      : `${team?.name || classPeriod || ''} - Team Report`,
+    { id: 'header', type: 'text', content: getDefaultTitle(),
       fontSize: 28, fontWeight: 'bold', locked: false }
   ]);
   const [selectedElement, setSelectedElement] = useState(null);
@@ -62,18 +70,27 @@ export default function ReportEditor({
     setSelectedElement(newElement.id);
   };
 
-  // Add graph element
+  // Add graph element with auto-inserted summary table
   const addGraphElement = () => {
-    const newElement = {
-      id: `graph-${Date.now()}`,
+    const timestamp = Date.now();
+    const graphElement = {
+      id: `graph-${timestamp}`,
       type: 'graph',
       title: 'Performance Chart',
       metricIds: [],
       height: 300,
-      locked: false
+      locked: false,
+      linkedSummaryId: `summary-${timestamp}`
     };
-    setElements([...elements, newElement]);
-    setSelectedElement(newElement.id);
+    const summaryElement = {
+      id: `summary-${timestamp}`,
+      type: 'summary',
+      metricIds: [],
+      locked: false,
+      linkedGraphId: `graph-${timestamp}`
+    };
+    setElements([...elements, graphElement, summaryElement]);
+    setSelectedElement(graphElement.id);
   };
 
   // Add summary table element
@@ -115,7 +132,7 @@ export default function ReportEditor({
     updateElement(id, { locked: !elements.find(el => el.id === id)?.locked });
   };
 
-  // Toggle metric in graph
+  // Toggle metric in graph (also updates linked summary table)
   const toggleMetricInElement = (elementId, metricId) => {
     const element = elements.find(el => el.id === elementId);
     if (!element) return;
@@ -126,6 +143,55 @@ export default function ReportEditor({
       : [...currentMetrics, metricId];
     
     updateElement(elementId, { metricIds: newMetrics });
+    
+    // If this is a graph with a linked summary, update the summary too
+    if (element.type === 'graph' && element.linkedSummaryId) {
+      updateElement(element.linkedSummaryId, { metricIds: newMetrics });
+    }
+    // If this is a summary with a linked graph, update the graph too
+    if (element.type === 'summary' && element.linkedGraphId) {
+      updateElement(element.linkedGraphId, { metricIds: newMetrics });
+    }
+  };
+
+  // Get metrics sorted by category order
+  const getSortedMetrics = () => {
+    if (!categories || categories.length === 0) return metrics;
+    
+    const categoryOrder = {};
+    categories.forEach((cat, idx) => {
+      categoryOrder[cat.name] = idx;
+    });
+    
+    return [...metrics].sort((a, b) => {
+      const orderA = categoryOrder[a.category] ?? 999;
+      const orderB = categoryOrder[b.category] ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  };
+
+  // Get metrics grouped by category
+  const getMetricsGroupedByCategory = () => {
+    const sorted = getSortedMetrics();
+    const grouped = {};
+    
+    sorted.forEach(metric => {
+      const category = metric.category || 'Other';
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(metric);
+    });
+    
+    // Return in category order
+    const orderedCategories = categories.map(c => c.name).filter(name => grouped[name]);
+    const otherCategories = Object.keys(grouped).filter(name => !orderedCategories.includes(name));
+    
+    return [...orderedCategories, ...otherCategories].map(category => ({
+      category,
+      metrics: grouped[category]
+    }));
   };
 
   // Get chart data for a graph element
@@ -356,17 +422,6 @@ export default function ReportEditor({
 
             {element.type === 'summary' && (
               <Card className="bg-gray-900 border border-gray-800">
-                <CardHeader className="border-b border-gray-800 py-3">
-                  {isSelected && !isLocked ? (
-                    <Input
-                      value={element.title}
-                      onChange={(e) => updateElement(element.id, { title: e.target.value })}
-                      className="bg-transparent border-none text-white font-bold"
-                    />
-                  ) : (
-                    <CardTitle className="text-white text-lg">{element.title}</CardTitle>
-                  )}
-                </CardHeader>
                 <CardContent className="p-4">
                   {element.metricIds.length > 0 ? (
                     <table className="w-full">
@@ -391,7 +446,7 @@ export default function ReportEditor({
                     </table>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      Select metrics from the panel to display summary
+                      {element.linkedGraphId ? 'Add metrics to the graph above' : 'Select metrics from the panel to display summary'}
                     </div>
                   )}
                 </CardContent>
@@ -525,39 +580,59 @@ export default function ReportEditor({
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 mb-2 block">Select Metrics</label>
-                    <div className="max-h-48 overflow-y-auto space-y-1">
-                      {metrics.map(metric => (
-                        <label key={metric.id} className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedEl.metricIds?.includes(metric.id)}
-                            onChange={() => toggleMetricInElement(selectedEl.id, metric.id)}
-                            className="rounded border-gray-600"
-                          />
-                          <span className="text-sm text-gray-300">{metric.name}</span>
-                        </label>
+                    <div className="max-h-64 overflow-y-auto space-y-1">
+                      {getMetricsGroupedByCategory().map(group => (
+                        <div key={group.category} className="mb-2">
+                          <div className="text-xs font-bold text-amber-400 uppercase tracking-wide px-2 py-1 bg-gray-800/50 rounded">
+                            {group.category}
+                          </div>
+                          {group.metrics.map(metric => (
+                            <label key={metric.id} className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded cursor-pointer ml-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedEl.metricIds?.includes(metric.id)}
+                                onChange={() => toggleMetricInElement(selectedEl.id, metric.id)}
+                                className="rounded border-gray-600"
+                              />
+                              <span className="text-sm text-gray-300">{metric.name}</span>
+                            </label>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
 
-              {selectedEl.type === 'summary' && (
+              {selectedEl.type === 'summary' && !selectedEl.linkedGraphId && (
                 <div>
                   <label className="text-sm text-gray-400 mb-2 block">Select Metrics</label>
-                  <div className="max-h-48 overflow-y-auto space-y-1">
-                    {metrics.map(metric => (
-                      <label key={metric.id} className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedEl.metricIds?.includes(metric.id)}
-                          onChange={() => toggleMetricInElement(selectedEl.id, metric.id)}
-                          className="rounded border-gray-600"
-                        />
-                        <span className="text-sm text-gray-300">{metric.name}</span>
-                      </label>
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {getMetricsGroupedByCategory().map(group => (
+                      <div key={group.category} className="mb-2">
+                        <div className="text-xs font-bold text-amber-400 uppercase tracking-wide px-2 py-1 bg-gray-800/50 rounded">
+                          {group.category}
+                        </div>
+                        {group.metrics.map(metric => (
+                          <label key={metric.id} className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded cursor-pointer ml-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedEl.metricIds?.includes(metric.id)}
+                              onChange={() => toggleMetricInElement(selectedEl.id, metric.id)}
+                              className="rounded border-gray-600"
+                            />
+                            <span className="text-sm text-gray-300">{metric.name}</span>
+                          </label>
+                        ))}
+                      </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {selectedEl.type === 'summary' && selectedEl.linkedGraphId && (
+                <div className="text-sm text-gray-400 p-3 bg-gray-800/50 rounded">
+                  This summary table is linked to the graph above. Select metrics in the graph to update both.
                 </div>
               )}
             </div>
