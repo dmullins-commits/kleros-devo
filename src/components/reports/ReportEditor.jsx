@@ -134,24 +134,30 @@ export default function ReportEditor({
 
   // Toggle metric in graph (also updates linked summary table)
   const toggleMetricInElement = (elementId, metricId) => {
-    const element = elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    const currentMetrics = element.metricIds || [];
-    const newMetrics = currentMetrics.includes(metricId)
-      ? currentMetrics.filter(id => id !== metricId)
-      : [...currentMetrics, metricId];
-    
-    updateElement(elementId, { metricIds: newMetrics });
-    
-    // If this is a graph with a linked summary, update the summary too
-    if (element.type === 'graph' && element.linkedSummaryId) {
-      updateElement(element.linkedSummaryId, { metricIds: newMetrics });
-    }
-    // If this is a summary with a linked graph, update the graph too
-    if (element.type === 'summary' && element.linkedGraphId) {
-      updateElement(element.linkedGraphId, { metricIds: newMetrics });
-    }
+    setElements(prevElements => {
+      const element = prevElements.find(el => el.id === elementId);
+      if (!element) return prevElements;
+      
+      const currentMetrics = element.metricIds || [];
+      const newMetrics = currentMetrics.includes(metricId)
+        ? currentMetrics.filter(id => id !== metricId)
+        : [...currentMetrics, metricId];
+      
+      return prevElements.map(el => {
+        if (el.id === elementId) {
+          return { ...el, metricIds: newMetrics };
+        }
+        // If this is a graph with a linked summary, update the summary too
+        if (element.type === 'graph' && element.linkedSummaryId && el.id === element.linkedSummaryId) {
+          return { ...el, metricIds: newMetrics };
+        }
+        // If this is a summary with a linked graph, update the graph too
+        if (element.type === 'summary' && element.linkedGraphId && el.id === element.linkedGraphId) {
+          return { ...el, metricIds: newMetrics };
+        }
+        return el;
+      });
+    });
   };
 
   // Get metrics sorted by category order
@@ -378,7 +384,7 @@ export default function ReportEditor({
                   )}
                 </CardHeader>
                 <CardContent className="p-4">
-                  {element.metricIds.length > 0 ? (
+                  {element.metricIds && element.metricIds.length > 0 ? (
                     <div style={{ height: element.height }} className="chart-container">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={getChartData(element.metricIds)}>
@@ -388,26 +394,65 @@ export default function ReportEditor({
                             stroke="#9CA3AF"
                             tickFormatter={(date) => format(new Date(date), "MMM d")}
                           />
-                          <YAxis stroke="#9CA3AF" />
+                          {/* Dual Y-Axis: Left axis for first metric unit group, Right for second */}
+                          {(() => {
+                            const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                            const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                            const hasMultipleUnits = uniqueUnits.length > 1;
+                            
+                            if (hasMultipleUnits) {
+                              return (
+                                <>
+                                  <YAxis 
+                                    yAxisId="left" 
+                                    stroke="#9CA3AF"
+                                    label={{ value: uniqueUnits[0], angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                                  />
+                                  <YAxis 
+                                    yAxisId="right" 
+                                    orientation="right" 
+                                    stroke="#9CA3AF"
+                                    label={{ value: uniqueUnits[1], angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+                                  />
+                                </>
+                              );
+                            }
+                            return <YAxis stroke="#9CA3AF" />;
+                          })()}
                           <Tooltip 
                             contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                             labelFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                            formatter={(value, name) => {
+                              const metric = metrics.find(m => m.name === name || m.id === name);
+                              return [value?.toFixed(metric?.decimal_places ?? 2), `${name} (${metric?.unit || ''})`];
+                            }}
                           />
                           <Legend />
-                          {element.metricIds.map((metricId, idx) => {
-                            const metric = metrics.find(m => m.id === metricId);
-                            return (
-                              <Line
-                                key={metricId}
-                                type="monotone"
-                                dataKey={metricId}
-                                name={metric?.name || metricId}
-                                stroke={colors[idx % colors.length]}
-                                strokeWidth={2}
-                                dot={{ r: 4 }}
-                              />
-                            );
-                          })}
+                          {(() => {
+                            const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                            const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                            const hasMultipleUnits = uniqueUnits.length > 1;
+                            
+                            return element.metricIds.map((metricId, idx) => {
+                              const metric = metrics.find(m => m.id === metricId);
+                              const yAxisId = hasMultipleUnits 
+                                ? (metric?.unit === uniqueUnits[0] ? 'left' : 'right')
+                                : undefined;
+                              
+                              return (
+                                <Line
+                                  key={metricId}
+                                  type="monotone"
+                                  dataKey={metricId}
+                                  name={metric?.name || metricId}
+                                  stroke={colors[idx % colors.length]}
+                                  strokeWidth={2}
+                                  dot={{ r: 4 }}
+                                  yAxisId={yAxisId}
+                                />
+                              );
+                            });
+                          })()}
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
