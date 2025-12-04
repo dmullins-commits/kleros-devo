@@ -489,7 +489,7 @@ export default function LiveDataEntry({ metrics, athletes, onDataSaved, isLoadin
           <Button
             onClick={beginTesting}
             disabled={selectedMetrics.length === 0}
-            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-6 text-lg"
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-black py-6 text-lg"
           >
             <Play className="w-5 h-5 mr-2" />
             Begin Testing
@@ -520,7 +520,7 @@ export default function LiveDataEntry({ metrics, athletes, onDataSaved, isLoadin
                   </Badge>
                   <Button
                     onClick={() => setShowQuickAddModal(true)}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-black font-black"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Add Athlete
@@ -662,7 +662,7 @@ export default function LiveDataEntry({ metrics, athletes, onDataSaved, isLoadin
                 <Button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold px-8"
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black px-8"
                 >
                   {isSaving ? (
                     <>
