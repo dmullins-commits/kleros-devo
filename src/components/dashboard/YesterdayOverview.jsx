@@ -4,7 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Minus, CalendarCheck, AlertTriangle, CheckCircle } from "lucide-react";
 
-export default function YesterdayOverview({ overviewData, incompleteWorkouts, prsInLastSession, athletesInLastSession, prsByTeam, prsByClass, isLoading }) {
+export default function YesterdayOverview({ 
+  overviewData, 
+  incompleteWorkouts, 
+  prsInLastSession, 
+  athletesInLastSession, 
+  prsByTeam, 
+  prsByClass, 
+  latestMetricName,
+  groupAveragesBefore,
+  groupAveragesAfter,
+  isLoading 
+}) {
   const trendIcons = {
     up: <TrendingUp className="w-4 h-4 text-green-400" />,
     down: <TrendingDown className="w-4 h-4 text-red-400" />,

@@ -48,6 +48,9 @@ export default function Dashboard() {
   const [prsByTeam, setPrsByTeam] = useState([]);
   const [prsByClass, setPrsByClass] = useState([]);
   const [athletesInLastSession, setAthletesInLastSession] = useState(0);
+  const [latestMetricName, setLatestMetricName] = useState(null);
+  const [groupAveragesBefore, setGroupAveragesBefore] = useState({});
+  const [groupAveragesAfter, setGroupAveragesAfter] = useState({});
 
   const processYesterdayData = useCallback((allRecords, athletesData, metricsData) => {
     const yesterdayRecords = allRecords.filter(r => {
@@ -399,6 +402,60 @@ export default function Dashboard() {
     });
     
     setCategoryGraphData(categoryData);
+
+    // Calculate group averages for the latest metric
+    if (latestSessionRecords.length > 0) {
+      const latestMetricId = latestSessionRecords[0].metric_id;
+      const latestMetricObj = metricsData.find(m => m.id === latestMetricId);
+      setLatestMetric(latestMetricObj);
+      setLatestMetricName(latestMetricObj?.name || null);
+
+      // Get all records for this metric before the latest session
+      const latestDate = sortedRecords[0].recorded_date;
+      const previousRecordsForMetric = validRecords.filter(r => 
+        r.metric_id === latestMetricId && 
+        new Date(r.recorded_date) < new Date(latestDate)
+      );
+
+      // Calculate group averages by team
+      const beforeByTeam = {};
+      const afterByTeam = {};
+
+      // Get teams that have athletes in the latest session
+      const teamsInSession = new Set();
+      latestSessionRecords.forEach(record => {
+        const athlete = allAthletesData?.find(a => a.id === record.athlete_id);
+        if (athlete?.team_ids) {
+          athlete.team_ids.forEach(tid => teamsInSession.add(tid));
+        }
+      });
+
+      teamsInSession.forEach(teamId => {
+        const team = teamsData.find(t => t.id === teamId);
+        if (!team) return;
+
+        const teamAthleteIds = allAthletesData
+          ?.filter(a => a.team_ids?.includes(teamId))
+          .map(a => a.id) || [];
+
+        // After (latest session)
+        const afterRecords = latestSessionRecords.filter(r => 
+          r.metric_id === latestMetricId && teamAthleteIds.includes(r.athlete_id)
+        );
+        if (afterRecords.length > 0) {
+          afterByTeam[team.name] = afterRecords.reduce((sum, r) => sum + r.value, 0) / afterRecords.length;
+        }
+
+        // Before (previous records)
+        const beforeRecords = previousRecordsForMetric.filter(r => teamAthleteIds.includes(r.athlete_id));
+        if (beforeRecords.length > 0) {
+          beforeByTeam[team.name] = beforeRecords.reduce((sum, r) => sum + r.value, 0) / beforeRecords.length;
+        }
+      });
+
+      setGroupAveragesBefore(beforeByTeam);
+      setGroupAveragesAfter(afterByTeam);
+    }
   }, []);
 
   const loadData = useCallback(async () => {
@@ -552,6 +609,9 @@ export default function Dashboard() {
               athletesInLastSession={athletesInLastSession}
               prsByTeam={prsByTeam}
               prsByClass={prsByClass}
+              latestMetricName={latestMetricName}
+              groupAveragesBefore={groupAveragesBefore}
+              groupAveragesAfter={groupAveragesAfter}
               isLoading={isLoading} 
             />
             <TeamOverview teams={teams} athletes={athletes} isLoading={isLoading} />
