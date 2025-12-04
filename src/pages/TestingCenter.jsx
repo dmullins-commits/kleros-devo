@@ -1,0 +1,114 @@
+import React, { useState, useEffect } from "react";
+import { Metric, Athlete } from "@/entities/all";
+import { Clipboard, Zap, Target, FileSpreadsheet, Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+import LiveDataEntry from "../components/metrics/LiveDataEntry";
+import RawDataPanel from "../components/metrics/RawDataPanel";
+import LatestLeaderboardModal from "../components/metrics/LatestLeaderboardModal";
+
+export default function TestingCenter() {
+  const [metrics, setMetrics] = useState([]);
+  const [athletes, setAthletes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showRawData, setShowRawData] = useState(false);
+  const [showLatestLeaderboard, setShowLatestLeaderboard] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [metricsData, athletesData] = await Promise.all([
+        Metric.list(),
+        Athlete.list()
+      ]);
+      setMetrics(metricsData);
+      setAthletes(athletesData);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-black via-gray-950 to-black border-2 border-amber-400/30 shadow-2xl shadow-amber-500/20">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-400/10 via-yellow-500/5 to-amber-400/10" />
+          <div className="relative z-10 p-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 tracking-tight">
+                  TESTING CENTER
+                </h1>
+                <p className="text-amber-200/80 font-bold tracking-wide">
+                  Live Performance Data Entry & Recording
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <Badge className="bg-gradient-to-r from-amber-400/30 to-yellow-500/30 text-amber-200 border border-amber-400/50 font-bold">
+                    {athletes.length} ATHLETES
+                  </Badge>
+                  <Badge className="bg-gradient-to-r from-amber-400/30 to-yellow-500/30 text-amber-200 border border-amber-400/50 font-bold">
+                    {metrics.filter(m => !m.is_auto_calculated).length} METRICS AVAILABLE
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={() => setShowRawData(true)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
+                >
+                  <FileSpreadsheet className="w-5 h-5 mr-2" />
+                  Raw Data
+                </Button>
+                <Button
+                  onClick={() => setShowLatestLeaderboard(true)}
+                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-bold"
+                >
+                  <Trophy className="w-5 h-5 mr-2" />
+                  Latest Leaderboard
+                </Button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-amber-300">
+                    <Zap className="w-4 h-4" />
+                    <span className="text-sm font-bold">Real-time data entry</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-amber-300">
+                    <Target className="w-4 h-4" />
+                    <span className="text-sm font-bold">Multi-athlete testing</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-amber-300">
+                    <Clipboard className="w-4 h-4" />
+                    <span className="text-sm font-bold">Batch data recording</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <LiveDataEntry 
+          metrics={metrics}
+          athletes={athletes}
+          onDataSaved={loadData}
+          isLoading={isLoading}
+        />
+
+        {showRawData && (
+          <RawDataPanel onClose={() => setShowRawData(false)} />
+        )}
+
+        {showLatestLeaderboard && (
+          <LatestLeaderboardModal 
+            onClose={() => setShowLatestLeaderboard(false)}
+            metrics={metrics}
+            athletes={athletes}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
