@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Athlete, Metric, MetricRecord, MetricCategory, Team, ClassPeriod, ReportTemplate } from "@/entities/all";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -587,7 +588,7 @@ export default function Reports() {
                   (reportType === "individual" && selectedAthleteId)) && (
                   <Button
                     onClick={() => setStep("editor")}
-                    className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black"
+                    className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black shadow-lg"
                   >
                     Continue to Report Builder
                   </Button>

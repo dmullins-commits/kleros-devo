@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Metric, Athlete } from "@/entities/all";
+import { Metric, MetricRecord, Athlete } from "@/entities/all";
 import { Clipboard, Zap, Target, FileSpreadsheet, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export default function TestingCenter() {
                 </Button>
                 <Button
                   onClick={() => setShowLatestLeaderboard(true)}
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-bold"
+                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-black"
                 >
                   <Trophy className="w-5 h-5 mr-2" />
                   Latest Leaderboard

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Athlete, Metric, MetricRecord } from "@/entities/all";
+import { Athlete, Metric, MetricRecord, VBTSession } from "@/entities/all";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, Target, Zap, CheckCircle, Activity } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, Users, Target, Zap, CheckCircle, Activity } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import FileUploadZone from "../components/upload/FileUploadZone";
 import ColumnMappingModal from "../components/upload/ColumnMappingModal";
+import DataPreview from "../components/upload/DataPreview";
 import MissingAthletesModal from "../components/upload/MissingAthletesModal";
 
 export default function Upload() {
@@ -343,7 +345,7 @@ export default function Upload() {
                   <Button
                     onClick={() => processFile('metric_records')}
                     disabled={isProcessing}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black h-24 flex flex-col gap-2 font-bold shadow-lg"
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black h-24 flex flex-col gap-2 font-black shadow-lg"
                   >
                     <FileSpreadsheet className="w-8 h-8" />
                     Performance Data
@@ -426,14 +428,14 @@ export default function Upload() {
                       setCsvData(null);
                       setDataType(null);
                     }}
-                    className="flex-1 border-gray-700 text-white hover:bg-gray-800"
+                    className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={saveData}
                     disabled={isSaving}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold"
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-black"
                   >
                     {isSaving ? (
                       <>
