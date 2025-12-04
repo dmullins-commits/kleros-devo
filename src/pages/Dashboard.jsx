@@ -463,14 +463,29 @@ export default function Dashboard() {
       setIsLoading(true);
       
       // Load all data first, then filter client-side for reliability
-      const [athletesData, teamsData, allRecordsData, workoutsData, metricsData, categoriesData] = await staggeredApiCalls([
+      const [athletesData, allTeamsData, allRecordsData, workoutsData, metricsData, categoriesData] = await staggeredApiCalls([
         () => withRetry(() => Athlete.list('-created_date', 10000)),
-        () => Promise.resolve(filteredTeams),
+        () => withRetry(() => Team.list()),
         () => withRetry(() => MetricRecord.list('-recorded_date', 10000)),
         () => withRetry(() => Workout.list()),
         () => withRetry(() => Metric.list('-created_date', 1000)),
         () => withRetry(() => MetricCategory.list())
       ], 200);
+      
+      // Normalize teams
+      const normalizedTeams = allTeamsData.map(t => ({
+        id: t.id,
+        ...t.data,
+        ...t,
+        name: t.data?.name || t.name,
+        sport: t.data?.sport || t.sport,
+        organization_id: t.data?.organization_id || t.organization_id
+      }));
+      
+      // Filter teams by organization if needed
+      const teamsData = selectedOrganization?.id 
+        ? normalizedTeams.filter(t => t.organization_id === selectedOrganization.id)
+        : normalizedTeams;
 
       // Build category colors map from MetricCategory entities
       const catColors = {};
