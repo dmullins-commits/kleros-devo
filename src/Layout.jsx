@@ -181,7 +181,7 @@ function LayoutContent({ children, currentPageName }) {
         `}
       </style>
       
-      <Sidebar className="border-r border-[#c9a961]/30 bg-black/95 backdrop-blur-sm shadow-2xl relative z-10">
+      <Sidebar className="border-r border-[#c9a961]/30 bg-black/95 backdrop-blur-sm shadow-2xl relative z-10 h-screen sticky top-0">
         <SidebarHeader className="border-b border-[#c9a961]/30 p-6 bg-gradient-to-b from-gray-950/95 to-black/95 backdrop-blur-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="relative group">
