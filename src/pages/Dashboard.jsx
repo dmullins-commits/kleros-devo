@@ -335,21 +335,13 @@ export default function Dashboard() {
     try {
       setIsLoading(true);
       
-      // Filter by organization
-      const athletesPromise = selectedOrganization && selectedOrganization.id !== 'all'
-        ? withRetry(() => Athlete.filter({ team_ids: filteredTeams.map(t => t.id) }))
-        : withRetry(() => Athlete.list());
-      
-      const metricsPromise = selectedOrganization && selectedOrganization.id !== 'all'
-        ? withRetry(() => Metric.filter({ organization_id: selectedOrganization.id }))
-        : withRetry(() => Metric.list());
-      
+      // Load all data first, then filter client-side for reliability
       const [athletesData, teamsData, allRecordsData, workoutsData, metricsData] = await staggeredApiCalls([
-        () => athletesPromise,
+        () => withRetry(() => Athlete.list('-created_date', 10000)),
         () => Promise.resolve(filteredTeams),
-        () => withRetry(() => MetricRecord.list('-recorded_date', 5000)),
+        () => withRetry(() => MetricRecord.list('-recorded_date', 10000)),
         () => withRetry(() => Workout.list()),
-        () => metricsPromise
+        () => withRetry(() => Metric.list('-created_date', 1000))
       ], 200);
       
       // Normalize records - handle nested data structure
@@ -380,27 +372,30 @@ export default function Dashboard() {
         ...m,
         name: m.data?.name || m.name,
         unit: m.data?.unit || m.unit,
-        target_higher: m.data?.target_higher ?? m.target_higher,
-        decimal_places: m.data?.decimal_places ?? m.decimal_places
+        category: m.data?.category || m.category,
+        target_higher: m.data?.target_higher ?? m.target_higher ?? true,
+        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2
       }));
       
+      // Filter athletes by team if a specific team is selected
       const filteredAthletes = selectedTeamId === 'all' 
         ? normalizedAthletes 
         : normalizedAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
       
-      const athleteIds = filteredAthletes.map(a => a.id);
-      const filteredRecords = normalizedRecords.filter(r => athleteIds.includes(r.athlete_id));
+      // Use ALL records for stats calculation (not filtered by athlete) to properly calculate PRs
+      // PRs need all historical data to determine if a value is a personal record
       
       setAthletes(filteredAthletes);
       setTeams(teamsData);
-      setAllRecords(filteredRecords);
-      setRecentRecords(filteredRecords.slice(0, 10));
+      setAllRecords(normalizedRecords);
+      setRecentRecords(normalizedRecords.slice(0, 10));
       setWorkouts(workoutsData);
       setMetrics(normalizedMetrics);
       
-      processYesterdayData(filteredRecords, filteredAthletes, normalizedMetrics);
+      // Process stats with all records but filtered athletes
+      processYesterdayData(normalizedRecords, filteredAthletes, normalizedMetrics);
       processIncompleteWorkouts(filteredAthletes);
-      processPerformanceStats(filteredRecords, filteredAthletes, normalizedMetrics, teamsData);
+      processPerformanceStats(normalizedRecords, filteredAthletes, normalizedMetrics, teamsData);
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
