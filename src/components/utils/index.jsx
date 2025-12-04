@@ -7,10 +7,8 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
   const athleteRecords = allRecords.filter(r => r.athlete_id === athleteId);
   const calculatedMetrics = {};
 
-  // Helper to find metric by name
   const findMetric = (name) => metrics.find(m => m.name === name);
   
-  // Helper to get latest value for a metric
   const getLatestValue = (metricName) => {
     const metric = findMetric(metricName);
     if (!metric) return null;
@@ -22,7 +20,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     return sorted[0].value;
   };
 
-  // Helper to get max value for a metric
   const getMaxValue = (metricName) => {
     const metric = findMetric(metricName);
     if (!metric) return null;
@@ -33,7 +30,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     return Math.max(...records.map(r => r.value));
   };
 
-  // Calculate MPH (if enabled)
   if (autoCalcSettings.enable_mph) {
     const fly10 = getLatestValue('Fly 10');
     if (fly10) {
@@ -41,7 +37,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     }
   }
 
-  // Calculate Truck Stick (if enabled)
   if (autoCalcSettings.enable_truck_stick) {
     const broad = getLatestValue('Broad Jump');
     const vertical = getLatestValue('Vertical Jump');
@@ -50,7 +45,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     }
   }
 
-  // Calculate Max Truck Stick (if enabled)
   if (autoCalcSettings.enable_max_truck_stick) {
     const maxBroad = getMaxValue('Broad Jump');
     const maxVertical = getMaxValue('Vertical Jump');
@@ -59,7 +53,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     }
   }
 
-  // Calculate Max Speed (if enabled)
   if (autoCalcSettings.enable_max_speed) {
     const maxFly10 = getMaxValue('Fly 10');
     if (maxFly10) {
@@ -67,7 +60,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     }
   }
 
-  // Calculate Strength Deficit (if enabled)
   if (autoCalcSettings.enable_strength_deficit) {
     const vertical = getLatestValue('Vertical Jump');
     const seated = getLatestValue('Seated Vertical Jump');
@@ -76,7 +68,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
     }
   }
 
-  // Calculate Strength Total (if enabled)
   if (autoCalcSettings.enable_strength_total) {
     const bench = getLatestValue('Bench Press');
     const squat = getLatestValue('Squat');
