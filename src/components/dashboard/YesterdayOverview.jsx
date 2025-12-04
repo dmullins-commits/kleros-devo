@@ -132,44 +132,57 @@ export default function YesterdayOverview({
                 <Skeleton className="h-6 w-16 bg-gray-800" />
               </div>
             ))
-          ) : overviewData.length === 0 && (!incompleteWorkouts || incompleteWorkouts.length === 0) ? (
+          ) : !latestMetricName && (!incompleteWorkouts || incompleteWorkouts.length === 0) ? (
             <div className="p-12 text-center">
               <CalendarCheck className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">No performance data from yesterday</p>
+              <p className="text-gray-500 font-medium">No performance data from latest session</p>
               <p className="text-gray-600 text-sm">Tracked metrics and workouts will appear here</p>
             </div>
-          ) : (
-            <>
-              {overviewData.length > 0 && (
-                <div className="p-4 bg-gray-900/20 border-b border-gray-800">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <h3 className="text-green-400 font-semibold">Performance Metrics</h3>
-                  </div>
+          ) : latestMetricName ? (
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <h3 className="text-green-400 font-semibold">Latest Metric: {latestMetricName}</h3>
+              </div>
+              
+              {groupAveragesAfter && Object.keys(groupAveragesAfter).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.keys(groupAveragesAfter).map(groupName => {
+                    const before = groupAveragesBefore?.[groupName];
+                    const after = groupAveragesAfter[groupName];
+                    const change = before ? after - before : 0;
+                    const trend = change > 0 ? 'up' : change < 0 ? 'down' : 'same';
+                    
+                    return (
+                      <div key={groupName} className="p-4 bg-gray-900/50 rounded-lg border border-gray-800">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white font-medium">{groupName}</p>
+                            <div className="flex items-center gap-4 mt-1">
+                              <span className="text-gray-400 text-sm">
+                                Before: <span className="text-gray-300 font-semibold">{before ? before.toFixed(2) : 'N/A'}</span>
+                              </span>
+                              <span className="text-yellow-400 text-sm">
+                                After: <span className="text-yellow-300 font-bold">{after.toFixed(2)}</span>
+                              </span>
+                            </div>
+                          </div>
+                          {before && (
+                            <Badge className={trendColors[trend]}>
+                              {trendIcons[trend]}
+                              <span className="ml-1">{change !== 0 ? (change > 0 ? '+' : '') + change.toFixed(2) : 'No change'}</span>
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No group data available</p>
               )}
-              {overviewData.map((item) => (
-                <div key={item.id} className="p-6 hover:bg-gray-900/50 transition-colors duration-200">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-white font-medium">
-                        {item.athleteName} - <span className="text-gray-400">{item.metricName}</span>
-                      </p>
-                      <p className="text-yellow-400 font-bold text-lg">
-                        {item.value}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <Badge className={trendColors[item.trend]}>
-                        {trendIcons[item.trend]}
-                        <span className="ml-1">{item.change !== 0 ? item.change.toFixed(1) : 'No change'}</span>
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>
