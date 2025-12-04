@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Athlete, Team, MetricRecord, Workout, Metric, VBTSession } from "@/entities/all";
+import { Athlete, Team, MetricRecord, Workout, Metric, VBTSession, MetricCategory } from "@/entities/all";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Target, Dumbbell, TrendingUp, Crown, Zap } from "lucide-react";
@@ -42,8 +42,12 @@ export default function Dashboard() {
   const [prsData, setPrsData] = useState([]);
   const [flaggedData, setFlaggedData] = useState([]);
   const [categoryGraphData, setCategoryGraphData] = useState({});
+  const [categoryColors, setCategoryColors] = useState({});
   const [graphData, setGraphData] = useState([]);
   const [latestMetric, setLatestMetric] = useState(null);
+  const [prsByTeam, setPrsByTeam] = useState([]);
+  const [prsByClass, setPrsByClass] = useState([]);
+  const [athletesInLastSession, setAthletesInLastSession] = useState(0);
 
   const processYesterdayData = useCallback((allRecords, athletesData, metricsData) => {
     const yesterdayRecords = allRecords.filter(r => {
@@ -118,7 +122,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  const processPerformanceStats = useCallback((recordsData, athletesData, metricsData, teamsData) => {
+  const processPerformanceStats = useCallback((recordsData, athletesData, metricsData, teamsData, allAthletesData) => {
     // Filter out records with invalid dates
     const validRecords = recordsData.filter(r => {
       if (!r.recorded_date) return false;
@@ -200,6 +204,72 @@ export default function Dashboard() {
     setPrsInLastSession(prsLastSession);
     setTotalPRsThisMonth(prsThisMonth);
     setPrsData(Array.from(prsDataMap.values()));
+    setAthletesInLastSession(athletesInSession.size);
+
+    // Calculate PRs by Team
+    const teamPrMap = new Map();
+    const teamAthleteMap = new Map();
+    
+    latestSessionRecords.forEach(record => {
+      const athlete = allAthletesData?.find(a => a.id === record.athlete_id);
+      if (!athlete) return;
+      
+      const athleteTeamIds = athlete.team_ids || [];
+      athleteTeamIds.forEach(teamId => {
+        if (!teamAthleteMap.has(teamId)) {
+          teamAthleteMap.set(teamId, new Set());
+        }
+        teamAthleteMap.get(teamId).add(athlete.id);
+      });
+    });
+
+    // Count PRs per team
+    Array.from(prsDataMap.values()).forEach(pr => {
+      const athlete = allAthletesData?.find(a => `${a.first_name} ${a.last_name}` === pr.athleteName);
+      if (!athlete) return;
+      
+      const athleteTeamIds = athlete.team_ids || [];
+      athleteTeamIds.forEach(teamId => {
+        teamPrMap.set(teamId, (teamPrMap.get(teamId) || 0) + 1);
+      });
+    });
+
+    const prsByTeamData = teamsData.map(team => ({
+      name: team.name,
+      prs: teamPrMap.get(team.id) || 0,
+      athletes: teamAthleteMap.get(team.id)?.size || 0
+    })).filter(t => t.athletes > 0);
+    
+    setPrsByTeam(prsByTeamData);
+
+    // Calculate PRs by Class Period
+    const classPrMap = new Map();
+    const classAthleteMap = new Map();
+    
+    latestSessionRecords.forEach(record => {
+      const athlete = allAthletesData?.find(a => a.id === record.athlete_id);
+      if (!athlete || !athlete.class_period) return;
+      
+      if (!classAthleteMap.has(athlete.class_period)) {
+        classAthleteMap.set(athlete.class_period, new Set());
+      }
+      classAthleteMap.get(athlete.class_period).add(athlete.id);
+    });
+
+    Array.from(prsDataMap.values()).forEach(pr => {
+      const athlete = allAthletesData?.find(a => `${a.first_name} ${a.last_name}` === pr.athleteName);
+      if (!athlete || !athlete.class_period) return;
+      
+      classPrMap.set(athlete.class_period, (classPrMap.get(athlete.class_period) || 0) + 1);
+    });
+
+    const prsByClassData = Array.from(classAthleteMap.keys()).map(classPeriod => ({
+      name: classPeriod,
+      prs: classPrMap.get(classPeriod) || 0,
+      athletes: classAthleteMap.get(classPeriod)?.size || 0
+    })).filter(c => c.athletes > 0).sort((a, b) => a.name.localeCompare(b.name));
+    
+    setPrsByClass(prsByClassData);
 
     const flaggedMap = new Map();
     let flaggedCount = 0;
@@ -336,13 +406,25 @@ export default function Dashboard() {
       setIsLoading(true);
       
       // Load all data first, then filter client-side for reliability
-      const [athletesData, teamsData, allRecordsData, workoutsData, metricsData] = await staggeredApiCalls([
+      const [athletesData, teamsData, allRecordsData, workoutsData, metricsData, categoriesData] = await staggeredApiCalls([
         () => withRetry(() => Athlete.list('-created_date', 10000)),
         () => Promise.resolve(filteredTeams),
         () => withRetry(() => MetricRecord.list('-recorded_date', 10000)),
         () => withRetry(() => Workout.list()),
-        () => withRetry(() => Metric.list('-created_date', 1000))
+        () => withRetry(() => Metric.list('-created_date', 1000)),
+        () => withRetry(() => MetricCategory.list())
       ], 200);
+
+      // Build category colors map from MetricCategory entities
+      const catColors = {};
+      categoriesData.forEach(cat => {
+        const name = cat.data?.name || cat.name;
+        const color = cat.data?.color || cat.color;
+        if (name && color) {
+          catColors[name] = color;
+        }
+      });
+      setCategoryColors(catColors);
       
       // Normalize records - handle nested data structure
       const normalizedRecords = allRecordsData.map(r => ({
@@ -395,7 +477,7 @@ export default function Dashboard() {
       // Process stats with all records but filtered athletes
       processYesterdayData(normalizedRecords, filteredAthletes, normalizedMetrics);
       processIncompleteWorkouts(filteredAthletes);
-      processPerformanceStats(normalizedRecords, filteredAthletes, normalizedMetrics, teamsData);
+      processPerformanceStats(normalizedRecords, filteredAthletes, normalizedMetrics, teamsData, normalizedAthletes);
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -456,6 +538,7 @@ export default function Dashboard() {
         <div className="mt-6">
           <TrendGraph 
             categoryGraphData={categoryGraphData}
+            categoryColors={categoryColors}
             isLoading={isLoading} 
           />
         </div>
@@ -466,10 +549,9 @@ export default function Dashboard() {
               overviewData={yesterdayOverviewData} 
               incompleteWorkouts={incompleteWorkouts}
               prsInLastSession={prsInLastSession}
-              athletesInLastSession={new Set(allRecords.filter(r => {
-                const sortedRecords = [...allRecords].sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
-                return sortedRecords.length > 0 && r.recorded_date === sortedRecords[0].recorded_date;
-              }).map(r => r.athlete_id)).size}
+              athletesInLastSession={athletesInLastSession}
+              prsByTeam={prsByTeam}
+              prsByClass={prsByClass}
               isLoading={isLoading} 
             />
             <TeamOverview teams={teams} athletes={athletes} isLoading={isLoading} />
