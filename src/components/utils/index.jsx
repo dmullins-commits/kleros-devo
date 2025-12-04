@@ -1,3 +1,6 @@
+
+import { withRetry, staggeredApiCalls } from './apiHelpers';
+
 export const createPageUrl = (pageName) => {
   return `/${pageName}`;
 };
@@ -96,3 +99,6 @@ export const calculateAllAutoMetrics = async (athleteId, allRecords, metrics, au
 
   return calculatedMetrics;
 };
+
+// Utility functions
+export { withRetry, staggeredApiCalls };
