@@ -81,7 +81,13 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
   const loadClassPeriods = async () => {
     const periodsData = await ClassPeriod.list();
-    setClassPeriods(periodsData.sort((a, b) => a.order - b.order));
+    // Normalize class periods to handle nested data structures
+    const normalizedPeriods = periodsData.map(p => ({
+      id: p.id,
+      name: p.data?.name || p.name,
+      order: p.data?.order ?? p.order ?? 0
+    }));
+    setClassPeriods(normalizedPeriods.sort((a, b) => a.order - b.order));
   };
 
   const loadAllRecords = async () => {
