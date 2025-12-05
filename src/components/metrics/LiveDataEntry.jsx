@@ -21,7 +21,7 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function LiveDataEntry({ metrics, athletes, onDataSaved, isLoading }) {
+export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthletes, onDataSaved, isLoading }) {
   const { selectedOrganization } = useTeam();
   const [teams, setTeams] = useState([]);
   const [classPeriods, setClassPeriods] = useState([]);
@@ -39,6 +39,28 @@ export default function LiveDataEntry({ metrics, athletes, onDataSaved, isLoadin
   const [showFemaleLeaderboard, setShowFemaleLeaderboard] = useState(true);
   const [showPrintableLeaderboard, setShowPrintableLeaderboard] = useState(false);
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+
+  // Normalize athletes and metrics to handle nested data structures
+  const athletes = (rawAthletes || []).map(a => ({
+    id: a.id,
+    first_name: a.data?.first_name || a.first_name,
+    last_name: a.data?.last_name || a.last_name,
+    team_ids: a.data?.team_ids || a.team_ids || [],
+    class_period: a.data?.class_period || a.class_period,
+    gender: a.data?.gender || a.gender,
+    status: a.data?.status || a.status || 'active'
+  }));
+
+  const metrics = (rawMetrics || []).map(m => ({
+    id: m.id,
+    name: m.data?.name || m.name,
+    unit: m.data?.unit || m.unit,
+    category: m.data?.category || m.category,
+    target_higher: m.data?.target_higher ?? m.target_higher ?? true,
+    decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2,
+    is_auto_calculated: m.data?.is_auto_calculated ?? m.is_auto_calculated ?? false,
+    is_hidden: m.data?.is_hidden ?? m.is_hidden ?? false
+  }));
 
   useEffect(() => {
     loadTeams();
