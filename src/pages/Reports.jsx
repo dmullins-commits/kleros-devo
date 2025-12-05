@@ -31,7 +31,13 @@ export default function Reports() {
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
   const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
   const { data: metrics = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
-  const { data: records = [], isLoading: recordsLoading } = useMetricRecords({}, { staleTime: 2 * 60 * 1000 });
+  
+  // Filter records by org athletes only
+  const athleteIds = useMemo(() => athletes.map(a => a.id), [athletes]);
+  const { data: records = [], isLoading: recordsLoading } = useMetricRecords(
+    { athleteIds }, 
+    { staleTime: 2 * 60 * 1000 }
+  );
   const { data: categories = [], isLoading: categoriesLoading } = useMetricCategories();
   const { data: classPeriods = [] } = useClassPeriods();
   const { data: templates = [], refetch: refetchTemplates } = useReportTemplates(selectedOrganization?.id);

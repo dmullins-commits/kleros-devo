@@ -35,7 +35,13 @@ export default function Dashboard() {
   const { data: allAthletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
   const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
   const { data: metricsData = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
-  const { data: recordsData = [], isLoading: recordsLoading } = useMetricRecords({}, { staleTime: 2 * 60 * 1000 });
+  
+  // Filter metric records by current org's athlete IDs only
+  const athleteIds = useMemo(() => allAthletes.map(a => a.id), [allAthletes]);
+  const { data: recordsData = [], isLoading: recordsLoading } = useMetricRecords(
+    { athleteIds }, 
+    { staleTime: 2 * 60 * 1000 }
+  );
   const { data: categoriesData = [], isLoading: categoriesLoading } = useMetricCategories();
   const { data: workoutsData = [], isLoading: workoutsLoading } = useWorkouts();
   const { data: vbtSessionsData = [], isLoading: vbtLoading } = useVBTSessions();

@@ -125,12 +125,12 @@ export function useMetricRecords(filters = {}, options = {}) {
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id'
       ]));
       
-      // Client-side filtering for complex queries
-      if (athleteIds?.length > 1) {
+      // CRITICAL: Filter by athleteIds to enforce org boundaries
+      if (athleteIds && athleteIds.length > 0) {
         normalized = normalized.filter(r => athleteIds.includes(r.athlete_id));
       }
       
-      if (metricIds?.length > 1) {
+      if (metricIds && metricIds.length > 0) {
         normalized = normalized.filter(r => metricIds.includes(r.metric_id));
       }
       
