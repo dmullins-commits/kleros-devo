@@ -602,7 +602,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
                 </Alert>
               )}
 
-              <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] mb-6 border border-gray-800 rounded-lg">
+              <div className="overflow-x-auto overflow-y-auto mb-6 border border-gray-800 rounded-lg">
                 <table className="w-full border-collapse">
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b-2 border-gray-700">
