@@ -3,7 +3,7 @@ import { Athlete, Metric, MetricRecord, ClassPeriod, Team } from "@/entities/all
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, User, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, User, FileDown, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTeam } from "@/components/TeamContext";
 
@@ -25,9 +25,11 @@ export default function ProgressTracking() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedOrganization?.id]);
 
   const loadData = async () => {
+    if (!selectedOrganization) return;
+    
     setIsLoading(true);
     try {
       const [athletesData, metricsData, recordsData, classPeriodsData, teamsData] = await Promise.all([
@@ -38,8 +40,14 @@ export default function ProgressTracking() {
         Team.list('-created_date', 100)
       ]);
       
+      // Filter teams by org
+      const orgTeams = teamsData.filter(t => 
+        t.organization_id === selectedOrganization.id || 
+        t.data?.organization_id === selectedOrganization.id
+      );
+      
       // Normalize teams
-      const normalizedTeams = teamsData.map(t => ({
+      const normalizedTeams = orgTeams.map(t => ({
         id: t.id,
         ...t.data,
         ...t,
@@ -48,8 +56,17 @@ export default function ProgressTracking() {
       }));
       setTeams(normalizedTeams);
       
+      // Get org team IDs for filtering
+      const orgTeamIds = normalizedTeams.map(t => t.id);
+      
+      // Filter athletes by org teams
+      const orgAthletes = athletesData.filter(a => {
+        const teamIds = a.data?.team_ids || a.team_ids || [];
+        return teamIds.some(tid => orgTeamIds.includes(tid));
+      });
+      
       // Normalize athletes - data may be nested or flat
-      const normalizedAthletes = athletesData.map(a => ({
+      const normalizedAthletes = orgAthletes.map(a => ({
         id: a.id,
         ...a.data,
         ...a,
@@ -60,8 +77,14 @@ export default function ProgressTracking() {
       }));
       setAthletes(normalizedAthletes);
       
+      // Filter metrics by org (system + org-specific)
+      const orgMetrics = metricsData.filter(m =>
+        !m.organization_id || m.organization_id === selectedOrganization.id ||
+        !m.data?.organization_id || m.data?.organization_id === selectedOrganization.id
+      );
+      
       // Normalize metrics - data is in nested 'data' object  
-      const normalizedMetrics = metricsData.map(m => ({
+      const normalizedMetrics = orgMetrics.map(m => ({
         id: m.id,
         ...m.data,
         ...m,
@@ -71,8 +94,17 @@ export default function ProgressTracking() {
       }));
       setMetrics(normalizedMetrics);
       
+      // Get org athlete IDs for filtering records
+      const orgAthleteIds = new Set(normalizedAthletes.map(a => a.id));
+      
+      // Filter records by org athletes
+      const orgRecords = recordsData.filter(r => {
+        const athleteId = r.data?.athlete_id || r.athlete_id;
+        return orgAthleteIds.has(athleteId);
+      });
+      
       // Normalize records - all imported records store data in nested 'data' object
-      const normalizedRecords = recordsData.map(r => {
+      const normalizedRecords = orgRecords.map(r => {
         // Extract values from nested data object if present, otherwise use flat properties
         const athleteId = r.data?.athlete_id || r.athlete_id;
         const metricId = r.data?.metric_id || r.metric_id;
@@ -91,8 +123,6 @@ export default function ProgressTracking() {
           workout_id: workoutId
         };
       });
-      console.log('ProgressTracking - Loaded records:', recordsData.length, 'Normalized:', normalizedRecords.length);
-      console.log('Sample normalized record:', normalizedRecords[0]);
       setRecords(normalizedRecords);
       
       // Normalize class periods

@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Edit, Trash2, Crown } from "lucide-react";
+import { Plus, Edit, Trash2, Settings, Crown } from "lucide-react";
 import { MetricCategory } from "@/entities/all";
+import { useTeam } from "@/components/TeamContext";
 
 export default function CategoryManagementModal({ open, onOpenChange, onCategoriesUpdated }) {
+  const { selectedOrganization } = useTeam();
   const [categories, setCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -15,7 +17,8 @@ export default function CategoryManagementModal({ open, onOpenChange, onCategori
     name: '',
     description: '',
     color: '#f59e0b',
-    order: 1
+    order: 1,
+    organization_id: selectedOrganization?.id
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,13 +27,19 @@ export default function CategoryManagementModal({ open, onOpenChange, onCategori
     if (open) {
       loadCategories();
     }
-  }, [open]);
+  }, [open, selectedOrganization?.id]);
 
   const loadCategories = async () => {
+    if (!selectedOrganization) return;
+    
     setIsLoading(true);
     try {
       const categoriesData = await MetricCategory.list();
-      setCategories(categoriesData.sort((a, b) => a.order - b.order));
+      // Filter: system categories + org-specific categories
+      const filtered = categoriesData.filter(c => 
+        !c.organization_id || c.organization_id === selectedOrganization.id
+      );
+      setCategories(filtered.sort((a, b) => a.order - b.order));
     } finally {
       setIsLoading(false);
     }
@@ -40,10 +49,15 @@ export default function CategoryManagementModal({ open, onOpenChange, onCategori
     e.preventDefault();
     setIsSaving(true);
     try {
+      const dataToSave = {
+        ...formData,
+        organization_id: selectedOrganization?.id
+      };
+      
       if (editingCategory) {
-        await MetricCategory.update(editingCategory.id, formData);
+        await MetricCategory.update(editingCategory.id, dataToSave);
       } else {
-        await MetricCategory.create(formData);
+        await MetricCategory.create(dataToSave);
       }
       
       setShowForm(false);

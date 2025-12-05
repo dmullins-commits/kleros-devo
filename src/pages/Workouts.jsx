@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Workout, WorkoutCycle, Team, Athlete } from "@/entities/all";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Dumbbell, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTeam } from "@/components/TeamContext";
 
 import WorkoutsList from "../components/workouts/WorkoutsList";
 import WorkoutForm from "../components/workouts/WorkoutForm";
 import CycleBuilder from "../components/workouts/CycleBuilder";
 
 export default function Workouts() {
+  const { selectedOrganization, filteredTeams } = useTeam();
   const [workouts, setWorkouts] = useState([]);
   const [cycles, setCycles] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -18,11 +20,15 @@ export default function Workouts() {
   const [editingWorkout, setEditingWorkout] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedOrganization?.id]);
 
   const loadData = async () => {
+    if (!selectedOrganization) return;
+    
     setIsLoading(true);
     try {
       const [workoutsData, cyclesData, teamsData, athletesData] = await Promise.all([
@@ -31,10 +37,33 @@ export default function Workouts() {
         Team.list(),
         Athlete.list()
       ]);
-      setWorkouts(workoutsData);
-      setCycles(cyclesData);
-      setTeams(teamsData);
-      setAthletes(athletesData);
+      
+      // Filter teams by org
+      const filteredTeamsData = teamsData.filter(t => 
+        t.organization_id === selectedOrganization.id
+      );
+      
+      // Filter athletes by org teams
+      const filteredAthletes = athletesData.filter(a =>
+        a.team_ids?.some(tid => teamIds.includes(tid))
+      );
+      
+      // Filter workouts by org teams (assigned_teams)
+      const filteredWorkouts = workoutsData.filter(w =>
+        !w.assigned_teams?.length || 
+        w.assigned_teams.some(tid => teamIds.includes(tid))
+      );
+      
+      // Filter cycles by org teams
+      const filteredCycles = cyclesData.filter(c =>
+        !c.assigned_teams?.length ||
+        c.assigned_teams.some(tid => teamIds.includes(tid))
+      );
+      
+      setWorkouts(filteredWorkouts);
+      setCycles(filteredCycles);
+      setTeams(filteredTeamsData);
+      setAthletes(filteredAthletes);
     } finally {
       setIsLoading(false);
     }
