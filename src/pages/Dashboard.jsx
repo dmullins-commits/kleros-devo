@@ -27,16 +27,36 @@ import {
 
 export default function Dashboard() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
-  const [athletes, setAthletes] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [allRecords, setAllRecords] = useState([]);
-  const [recentRecords, setRecentRecords] = useState([]);
-  const [workouts, setWorkouts] = useState([]);
-  const [metrics, setMetrics] = useState([]);
+  
+  // Get team IDs for filtering
+  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
+  
+  // Use React Query hooks for data fetching
+  const { data: allAthletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
+  const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
+  const { data: metricsData = [], isLoading: metricsLoading } = useMetrics();
+  const { data: recordsData = [], isLoading: recordsLoading } = useMetricRecords({}, { staleTime: 2 * 60 * 1000 });
+  const { data: categoriesData = [], isLoading: categoriesLoading } = useMetricCategories();
+  const { data: workoutsData = [], isLoading: workoutsLoading } = useWorkouts();
+  const { data: vbtSessionsData = [], isLoading: vbtLoading } = useVBTSessions();
+
+  const isLoading = athletesLoading || teamsLoading || metricsLoading || recordsLoading || categoriesLoading;
+
+  // Filter athletes by selected team
+  const athletes = useMemo(() => {
+    if (selectedTeamId === 'all') return allAthletes;
+    return allAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
+  }, [allAthletes, selectedTeamId]);
+
+  const teams = teamsData;
+  const metrics = metricsData;
+  const allRecords = recordsData;
+  const recentRecords = useMemo(() => recordsData.slice(0, 10), [recordsData]);
+  const workouts = workoutsData;
+
+  // State for processed stats
   const [yesterdayOverviewData, setYesterdayOverviewData] = useState([]);
   const [incompleteWorkouts, setIncompleteWorkouts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
 
   // Performance stats
   const [prsInLastSession, setPrsInLastSession] = useState(0);
