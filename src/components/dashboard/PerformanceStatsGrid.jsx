@@ -1,12 +1,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Flag, BarChart3 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function PerformanceStatsGrid({ 
   prsInLastSession, 
   totalPRsThisMonth, 
   flaggedAthletes, 
   trendPercentage,
+  trendMetricName,
   isLoading 
 }) {
   if (isLoading) {
