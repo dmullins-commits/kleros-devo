@@ -76,7 +76,7 @@ export default function PerformanceStatsGrid({
             {trendPercentage >= 0 ? '+' : ''}{trendPercentage.toFixed(1)}%
           </div>
           <p className="text-xs text-gray-400 font-semibold">
-            vs previous session
+            {trendMetricName ? `${trendMetricName} vs previous session` : 'vs previous session'}
           </p>
         </CardContent>
       </Card>
