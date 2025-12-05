@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Athlete, Team, MetricRecord, Workout, Metric, VBTSession, MetricCategory } from "@/entities/all";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Target, Dumbbell, TrendingUp, Crown, Zap } from "lucide-react";
@@ -16,7 +15,15 @@ import YesterdayOverview from "../components/dashboard/YesterdayOverview";
 import TopPerformers from "../components/dashboard/TopPerformers";
 import TeamOverview from "../components/dashboard/TeamOverview";
 
-import { withRetry, staggeredApiCalls } from "@/components/utils/apiHelpers";
+import { 
+  useAthletes, 
+  useTeams, 
+  useMetrics, 
+  useMetricRecords, 
+  useMetricCategories,
+  useWorkouts,
+  useVBTSessions
+} from "@/components/hooks/useDataQueries";
 
 export default function Dashboard() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
