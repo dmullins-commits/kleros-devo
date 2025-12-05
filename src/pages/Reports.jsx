@@ -24,10 +24,13 @@ import {
 export default function Reports() {
   const { filteredTeams, selectedOrganization } = useTeam();
   
-  // Use React Query hooks
-  const { data: athletes = [], isLoading: athletesLoading } = useAthletes([]);
+  // Get team IDs for org-specific filtering
+  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
+  
+  // Use React Query hooks with org filtering
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
   const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
-  const { data: metrics = [], isLoading: metricsLoading } = useMetrics();
+  const { data: metrics = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
   const { data: records = [], isLoading: recordsLoading } = useMetricRecords({}, { staleTime: 2 * 60 * 1000 });
   const { data: categories = [], isLoading: categoriesLoading } = useMetricCategories();
   const { data: classPeriods = [] } = useClassPeriods();

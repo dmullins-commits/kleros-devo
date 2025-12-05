@@ -22,12 +22,12 @@ export default function Athletes() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
   const { invalidateAthletes } = useInvalidateQueries();
   
-  // Get team IDs for filtering
+  // Get team IDs for filtering - CRITICAL for org data isolation
   const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
   
-  // Use React Query hooks
+  // Use React Query hooks - pass team IDs to enforce org boundaries
   const { data: allAthletes = [], isLoading: athletesLoading, refetch: refetchAthletes } = useAthletes(
-    selectedOrganization && teamIds.length > 0 ? teamIds : []
+    teamIds.length > 0 ? teamIds : []
   );
   const { data: classPeriods = [] } = useClassPeriods();
   

@@ -35,13 +35,16 @@ export function useAthletes(teamIds = [], options = {}) {
         'height', 'weight', 'date_of_birth', 'status', 'profile_image', 'calculated_metrics', 'pin'
       ]));
       
-      // Filter by team IDs if provided
+      // CRITICAL: Filter by team IDs to enforce organization boundaries
+      // Only show athletes whose teams match the provided team IDs
       if (teamIds.length > 0) {
         return normalized.filter(a => 
           a.team_ids?.some(tid => teamIds.includes(tid))
         );
       }
-      return normalized;
+      
+      // If no team IDs provided, return empty array to prevent cross-org data leakage
+      return [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     ...options,
@@ -59,10 +62,13 @@ export function useTeams(orgId, options = {}) {
         'max_athletes', 'description', 'organization_id'
       ]));
       
-      if (orgId) {
+      // CRITICAL: Always filter by organization to enforce data isolation
+      if (orgId && orgId !== 'all') {
         return normalized.filter(t => t.organization_id === orgId);
       }
-      return normalized;
+      
+      // If no org specified, return empty to prevent cross-org data leakage
+      return [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     ...options,
@@ -70,15 +76,22 @@ export function useTeams(orgId, options = {}) {
 }
 
 // Metrics query hook
-export function useMetrics(options = {}) {
+export function useMetrics(orgId = null, options = {}) {
   return useQuery({
     queryKey: queryKeys.metrics(),
     queryFn: async () => {
       const data = await Metric.list('-created_date', 1000);
-      return data.map(m => normalizeEntity(m, [
+      const normalized = data.map(m => normalizeEntity(m, [
         'name', 'unit', 'category', 'description', 'target_higher',
-        'decimal_places', 'is_active', 'is_hidden', 'is_mandatory', 'is_auto_calculated'
+        'decimal_places', 'is_active', 'is_hidden', 'is_mandatory', 'is_auto_calculated', 'organization_id'
       ]));
+      
+      // Show system metrics (no org_id) + org-specific metrics
+      if (orgId && orgId !== 'all') {
+        return normalized.filter(m => !m.organization_id || m.organization_id === orgId);
+      }
+      
+      return normalized;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     ...options,
