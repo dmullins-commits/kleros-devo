@@ -598,6 +598,7 @@ export default function Dashboard() {
           totalPRsThisMonth={totalPRsThisMonth}
           flaggedAthletes={flaggedAthletes}
           trendPercentage={trendPercentage}
+          trendMetricName={latestMetric?.name}
           isLoading={isLoading}
         />
 
