@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Athlete, Team, ClassPeriod } from "@/entities/all";
+import React, { useState, useEffect, useMemo } from "react";
+import { Athlete } from "@/entities/all";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Users, Filter, Settings, Grid3X3, List, Upload, AlertTriangle } from "lucide-react";
@@ -15,6 +15,8 @@ import AthleteFilters from "../components/athletes/AthleteFilters";
 import TeamManagementModal from "../components/teams/TeamManagementModal";
 import AthleteCSVUploadModal from "../components/athletes/AthleteCSVUploadModal";
 import DuplicateManagementModal from "../components/athletes/DuplicateManagementModal";
+
+import { useAthletes, useClassPeriods, useInvalidateQueries } from "@/components/hooks/useDataQueries";
 
 export default function Athletes() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
