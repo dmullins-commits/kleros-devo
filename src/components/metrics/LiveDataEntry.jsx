@@ -121,23 +121,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
     }
 
     if (selectedClassPeriod !== "all") {
-      // Match class periods flexibly - handle cases like "1" vs "1st", "4" vs "4th"
-      teamAthletes = teamAthletes.filter(a => {
-        if (!a.class_period) return false;
-        const athletePeriod = a.class_period.toLowerCase().trim();
-        const selectedPeriod = selectedClassPeriod.toLowerCase().trim();
-        // Direct match
-        if (athletePeriod === selectedPeriod) return true;
-        // Check if one starts with the other (e.g., "1" matches "1st")
-        if (athletePeriod.startsWith(selectedPeriod.replace(/[^0-9]/g, '')) || 
-            selectedPeriod.startsWith(athletePeriod.replace(/[^0-9]/g, ''))) {
-          // Extract just the numbers and compare
-          const athleteNum = athletePeriod.replace(/[^0-9]/g, '');
-          const selectedNum = selectedPeriod.replace(/[^0-9]/g, '');
-          return athleteNum === selectedNum;
-        }
-        return false;
-      });
+      teamAthletes = teamAthletes.filter(a => a.class_period === selectedClassPeriod);
     }
     
     console.log('Athletes for testing:', teamAthletes.length, teamAthletes);
