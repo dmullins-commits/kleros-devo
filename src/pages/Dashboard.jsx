@@ -478,109 +478,25 @@ export default function Dashboard() {
     }
   }, []);
 
-  const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      // Load all data first, then filter client-side for reliability
-      const [athletesData, allTeamsData, allRecordsData, workoutsData, metricsData, categoriesData] = await staggeredApiCalls([
-        () => withRetry(() => Athlete.list('-created_date', 10000)),
-        () => withRetry(() => Team.list()),
-        () => withRetry(() => MetricRecord.list('-recorded_date', 10000)),
-        () => withRetry(() => Workout.list()),
-        () => withRetry(() => Metric.list('-created_date', 1000)),
-        () => withRetry(() => MetricCategory.list())
-      ], 200);
-      
-      // Normalize teams
-      const normalizedTeams = allTeamsData.map(t => ({
-        id: t.id,
-        ...t.data,
-        ...t,
-        name: t.data?.name || t.name,
-        sport: t.data?.sport || t.sport,
-        organization_id: t.data?.organization_id || t.organization_id
-      }));
-      
-      // Filter teams by organization if needed
-      const teamsData = selectedOrganization?.id 
-        ? normalizedTeams.filter(t => t.organization_id === selectedOrganization.id)
-        : normalizedTeams;
-
-      // Build category colors map from MetricCategory entities
-      const catColors = {};
-      categoriesData.forEach(cat => {
-        const name = cat.data?.name || cat.name;
-        const color = cat.data?.color || cat.color;
-        if (name && color) {
-          catColors[name] = color;
-        }
-      });
-      setCategoryColors(catColors);
-      
-      // Normalize records - handle nested data structure
-      const normalizedRecords = allRecordsData.map(r => ({
-        id: r.id,
-        athlete_id: r.data?.athlete_id || r.athlete_id,
-        metric_id: r.data?.metric_id || r.metric_id,
-        value: r.data?.value ?? r.value,
-        recorded_date: r.data?.recorded_date || r.recorded_date,
-        notes: r.data?.notes || r.notes,
-        workout_id: r.data?.workout_id || r.workout_id
-      }));
-      
-      // Normalize athletes
-      const normalizedAthletes = athletesData.map(a => ({
-        id: a.id,
-        ...a.data,
-        ...a,
-        first_name: a.data?.first_name || a.first_name,
-        last_name: a.data?.last_name || a.last_name,
-        team_ids: a.data?.team_ids || a.team_ids || []
-      }));
-      
-      // Normalize metrics
-      const normalizedMetrics = metricsData.map(m => ({
-        id: m.id,
-        ...m.data,
-        ...m,
-        name: m.data?.name || m.name,
-        unit: m.data?.unit || m.unit,
-        category: m.data?.category || m.category,
-        target_higher: m.data?.target_higher ?? m.target_higher ?? true,
-        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2
-      }));
-      
-      // Filter athletes by team if a specific team is selected
-      const filteredAthletes = selectedTeamId === 'all' 
-        ? normalizedAthletes 
-        : normalizedAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
-      
-      // Use ALL records for stats calculation (not filtered by athlete) to properly calculate PRs
-      // PRs need all historical data to determine if a value is a personal record
-      
-      setAthletes(filteredAthletes);
-      setTeams(teamsData);
-      setAllRecords(normalizedRecords);
-      setRecentRecords(normalizedRecords.slice(0, 10));
-      setWorkouts(workoutsData);
-      setMetrics(normalizedMetrics);
-      
-      // Process stats with all records but filtered athletes
-      processYesterdayData(normalizedRecords, filteredAthletes, normalizedMetrics);
-      processIncompleteWorkouts(filteredAthletes);
-      processPerformanceStats(normalizedRecords, filteredAthletes, normalizedMetrics, teamsData, normalizedAthletes);
-
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedTeamId, selectedOrganization, filteredTeams, processYesterdayData, processIncompleteWorkouts, processPerformanceStats]);
-
+  // Build category colors map from MetricCategory entities
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    const catColors = {};
+    categoriesData.forEach(cat => {
+      if (cat.name && cat.color) {
+        catColors[cat.name] = cat.color;
+      }
+    });
+    setCategoryColors(catColors);
+  }, [categoriesData]);
+
+  // Process data when queries complete
+  useEffect(() => {
+    if (isLoading || !allRecords.length) return;
+    
+    processYesterdayData(allRecords, athletes, metrics);
+    processIncompleteWorkouts(vbtSessionsData, athletes);
+    processPerformanceStats(allRecords, athletes, metrics, teams, allAthletes);
+  }, [isLoading, allRecords, athletes, metrics, teams, allAthletes, vbtSessionsData, processYesterdayData, processIncompleteWorkouts, processPerformanceStats]);
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
