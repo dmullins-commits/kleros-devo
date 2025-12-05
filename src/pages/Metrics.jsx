@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Metric, MetricRecord, Athlete, MetricCategory } from "@/entities/all";
 import { Button } from "@/components/ui/button";
 import { Plus, Settings, Calculator, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTeam } from "@/components/TeamContext";
 
 import MetricsList from "../components/metrics/MetricsList";
 import MetricForm from "../components/metrics/MetricForm";
@@ -11,6 +12,7 @@ import CategoryManagementModal from "../components/metrics/CategoryManagementMod
 import AutoCalcSettingsModal from "../components/metrics/AutoCalcSettingsModal";
 
 export default function Metrics() {
+  const { selectedOrganization, filteredTeams } = useTeam();
   const [metrics, setMetrics] = useState([]);
   const [records, setRecords] = useState([]);
   const [athletes, setAthletes] = useState([]);
@@ -22,22 +24,46 @@ export default function Metrics() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
 
+  // Get team IDs and athlete IDs for org filtering
+  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
+  const athleteIds = useMemo(() => athletes.map(a => a.id), [athletes]);
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedOrganization?.id]);
 
   const loadData = async () => {
+    if (!selectedOrganization) return;
+    
     setIsLoading(true);
     try {
+      // Load all data
       const [metricsData, recordsData, athletesData, categoriesData] = await Promise.all([
         Metric.list(),
         MetricRecord.list('-recorded_date'),
         Athlete.list(),
         MetricCategory.list()
       ]);
-      setMetrics(metricsData);
-      setRecords(recordsData);
-      setAthletes(athletesData);
+      
+      // Filter metrics by organization (system metrics + org metrics)
+      const filteredMetrics = metricsData.filter(m => 
+        !m.organization_id || m.organization_id === selectedOrganization.id
+      );
+      
+      // Filter athletes by org teams
+      const filteredAthletes = athletesData.filter(a =>
+        a.team_ids?.some(tid => teamIds.includes(tid))
+      );
+      
+      // Filter records by org athletes
+      const athleteIdsSet = new Set(filteredAthletes.map(a => a.id));
+      const filteredRecords = recordsData.filter(r =>
+        athleteIdsSet.has(r.athlete_id)
+      );
+      
+      setMetrics(filteredMetrics);
+      setRecords(filteredRecords);
+      setAthletes(filteredAthletes);
       setCategories(categoriesData);
     } finally {
       setIsLoading(false);
@@ -45,10 +71,16 @@ export default function Metrics() {
   };
 
   const handleSubmit = async (metricData) => {
+    // Add organization_id to new metrics
+    const dataToSave = {
+      ...metricData,
+      organization_id: selectedOrganization?.id
+    };
+    
     if (editingMetric) {
-      await Metric.update(editingMetric.id, metricData);
+      await Metric.update(editingMetric.id, dataToSave);
     } else {
-      await Metric.create(metricData);
+      await Metric.create(dataToSave);
     }
     setShowForm(false);
     setEditingMetric(null);
@@ -128,6 +160,7 @@ export default function Metrics() {
             <MetricForm
               metric={editingMetric}
               categories={categories}
+              organizationId={selectedOrganization?.id}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setShowForm(false);

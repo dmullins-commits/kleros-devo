@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { X, Save, Target } from "lucide-react";
 import { Team } from "@/entities/all";
 
-export default function MetricForm({ metric, categories, onSubmit, onCancel }) {
+export default function MetricForm({ metric, categories, organizationId, onSubmit, onCancel }) {
   const [teams, setTeams] = useState([]);
   const [formData, setFormData] = useState(metric || {
     name: '',
@@ -22,7 +22,8 @@ export default function MetricForm({ metric, categories, onSubmit, onCancel }) {
     decimal_places: 2,
     is_active: true,
     is_hidden: false,
-    team_ids: []
+    team_ids: [],
+    organization_id: organizationId
   });
 
   useEffect(() => {
