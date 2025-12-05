@@ -23,17 +23,24 @@ import {
 
 export default function Reports() {
   const { filteredTeams, selectedOrganization } = useTeam();
+  
+  // Use React Query hooks
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes([]);
+  const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
+  const { data: metrics = [], isLoading: metricsLoading } = useMetrics();
+  const { data: records = [], isLoading: recordsLoading } = useMetricRecords({}, { staleTime: 2 * 60 * 1000 });
+  const { data: categories = [], isLoading: categoriesLoading } = useMetricCategories();
+  const { data: classPeriods = [] } = useClassPeriods();
+  const { data: templates = [], refetch: refetchTemplates } = useReportTemplates(selectedOrganization?.id);
+
+  const isLoading = athletesLoading || teamsLoading || metricsLoading || recordsLoading || categoriesLoading;
+  
+  // Use local teams or filteredTeams
+  const teams = teamsData.length > 0 ? teamsData : filteredTeams;
+  
   const [step, setStep] = useState("type"); // "type", "date", "filter", "select", "editor"
   const [reportType, setReportType] = useState(""); // "team" or "individual"
-  const [athletes, setAthletes] = useState([]);
-  const [metrics, setMetrics] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [records, setRecords] = useState([]);
-  const [classPeriods, setClassPeriods] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [teams, setTeams] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Selection states
   const [filterType, setFilterType] = useState(""); // "team" or "class"
@@ -44,106 +51,6 @@ export default function Reports() {
   // Date range states
   const [dateRangeType, setDateRangeType] = useState(""); // "all", "last30", "custom"
   const [startDate, setStartDate] = useState(null);
-
-  useEffect(() => {
-    loadData();
-  }, [selectedOrganization]);
-
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [athletesData, metricsData, categoriesData, recordsData, classPeriodsData, templatesData, teamsData] = await Promise.all([
-        Athlete.list('-created_date', 10000),
-        Metric.list('-created_date', 1000),
-        MetricCategory.list('-created_date', 100),
-        MetricRecord.list('-recorded_date', 50000),
-        ClassPeriod.list('-created_date', 100),
-        ReportTemplate.list('-created_date', 100),
-        Team.list('-created_date', 100)
-      ]);
-      
-      // Normalize teams
-      const normalizedTeams = teamsData.map(t => ({
-        id: t.id,
-        ...t.data,
-        ...t,
-        name: t.data?.name || t.name,
-        sport: t.data?.sport || t.sport
-      }));
-      setTeams(normalizedTeams);
-      
-      // Normalize athletes - data may be nested or flat
-      const normalizedAthletes = athletesData.map(a => ({
-        id: a.id,
-        ...a.data,
-        ...a,
-        first_name: a.data?.first_name || a.first_name,
-        last_name: a.data?.last_name || a.last_name,
-        team_ids: a.data?.team_ids || a.team_ids || [],
-        class_period: a.data?.class_period || a.class_period
-      }));
-      setAthletes(normalizedAthletes);
-
-      // Normalize metrics - data is in nested 'data' object  
-      const normalizedMetrics = metricsData.map(m => ({
-        id: m.id,
-        ...m.data,
-        ...m,
-        name: m.data?.name || m.name,
-        unit: m.data?.unit || m.unit,
-        category: m.data?.category || m.category
-      }));
-      setMetrics(normalizedMetrics);
-      
-      // Normalize categories
-      const normalizedCategories = categoriesData.map(c => ({
-        id: c.id,
-        ...c.data
-      }));
-      setCategories(normalizedCategories.sort((a, b) => (a.order || 0) - (b.order || 0)));
-      
-      // Normalize records - all imported records store data in nested 'data' object
-      const normalizedRecords = recordsData.map(r => {
-        // Extract values from nested data object if present, otherwise use flat properties
-        const athleteId = r.data?.athlete_id || r.athlete_id;
-        const metricId = r.data?.metric_id || r.metric_id;
-        const value = r.data?.value ?? r.value;
-        const recordedDate = r.data?.recorded_date || r.recorded_date;
-        const notes = r.data?.notes || r.notes;
-        const workoutId = r.data?.workout_id || r.workout_id;
-        
-        return {
-          id: r.id,
-          athlete_id: athleteId,
-          metric_id: metricId,
-          value: value,
-          recorded_date: recordedDate,
-          notes: notes,
-          workout_id: workoutId
-        };
-      });
-      console.log('Reports - Loaded records:', recordsData.length, 'Normalized:', normalizedRecords.length);
-      console.log('Sample normalized record:', normalizedRecords[0]);
-      setRecords(normalizedRecords);
-      
-      // Normalize class periods
-      const normalizedClassPeriods = classPeriodsData.map(cp => ({
-        id: cp.id,
-        ...cp.data,
-        ...cp,
-        name: cp.data?.name || cp.name,
-        order: cp.data?.order ?? cp.order ?? 0
-      }));
-      setClassPeriods(normalizedClassPeriods.sort((a, b) => (a.order || 0) - (b.order || 0)));
-      
-      const orgTemplates = templatesData.filter(t => 
-        !t.organization_id || t.organization_id === selectedOrganization?.id
-      );
-      setTemplates(orgTemplates);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDeleteTemplate = async (templateId) => {
     try {
