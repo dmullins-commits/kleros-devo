@@ -80,7 +80,15 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
   const loadAllRecords = async () => {
     const recordsData = await MetricRecord.list();
-    setAllRecords(recordsData);
+    // Normalize records to handle nested data structures
+    const normalizedRecords = recordsData.map(r => ({
+      id: r.id,
+      athlete_id: r.data?.athlete_id || r.athlete_id,
+      metric_id: r.data?.metric_id || r.metric_id,
+      value: r.data?.value ?? r.value,
+      recorded_date: r.data?.recorded_date || r.recorded_date
+    }));
+    setAllRecords(normalizedRecords);
   };
 
   const handleMetricToggle = (metricId) => {
