@@ -125,31 +125,25 @@ export default function Dashboard() {
     setYesterdayOverviewData(overview);
   }, []);
 
-  const processIncompleteWorkouts = useCallback(async (athletesData) => {
-    try {
-      const vbtSessions = await withRetry(() => VBTSession.list());
-      const yesterdayIncomplete = vbtSessions.filter(session => {
-        if (!session.session_date) return false;
-        const sessionDate = new Date(session.session_date);
-        if (isNaN(sessionDate.getTime())) return false;
-        const isYesterdaySession = isYesterday(sessionDate);
-        const isIncomplete = session.completion_percentage < 100;
-        return isYesterdaySession && isIncomplete;
-      });
+  const processIncompleteWorkouts = useCallback((vbtSessions, athletesData) => {
+    const yesterdayIncomplete = vbtSessions.filter(session => {
+      if (!session.session_date) return false;
+      const sessionDate = new Date(session.session_date);
+      if (isNaN(sessionDate.getTime())) return false;
+      const isYesterdaySession = isYesterday(sessionDate);
+      const isIncomplete = session.completion_percentage < 100;
+      return isYesterdaySession && isIncomplete;
+    });
 
-      const incompleteWithNames = yesterdayIncomplete.map(session => {
-        const athlete = athletesData.find(a => a.id === session.athlete_id);
-        return {
-          ...session,
-          athleteName: athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown Athlete'
-        };
-      });
+    const incompleteWithNames = yesterdayIncomplete.map(session => {
+      const athlete = athletesData.find(a => a.id === session.athlete_id);
+      return {
+        ...session,
+        athleteName: athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown Athlete'
+      };
+    });
 
-      setIncompleteWorkouts(incompleteWithNames);
-    } catch (error) {
-      console.error('Error loading VBT sessions:', error);
-      setIncompleteWorkouts([]);
-    }
+    setIncompleteWorkouts(incompleteWithNames);
   }, []);
 
   const processPerformanceStats = useCallback((recordsData, athletesData, metricsData, teamsData, allAthletesData) => {
