@@ -34,7 +34,7 @@ export default function Dashboard() {
   // Use React Query hooks for data fetching
   const { data: allAthletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
   const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
-  const { data: metricsData = [], isLoading: metricsLoading } = useMetrics();
+  const { data: metricsData = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
   const { data: recordsData = [], isLoading: recordsLoading } = useMetricRecords({}, { staleTime: 2 * 60 * 1000 });
   const { data: categoriesData = [], isLoading: categoriesLoading } = useMetricCategories();
   const { data: workoutsData = [], isLoading: workoutsLoading } = useWorkouts();
