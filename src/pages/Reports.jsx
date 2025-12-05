@@ -55,7 +55,7 @@ export default function Reports() {
   const handleDeleteTemplate = async (templateId) => {
     try {
       await ReportTemplate.delete(templateId);
-      setTemplates(templates.filter(t => t.id !== templateId));
+      refetchTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
     }
