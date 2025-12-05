@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Athlete, Metric, MetricRecord, MetricCategory, Team, ClassPeriod, ReportTemplate } from "@/entities/all";
-import { base44 } from "@/api/base44Client";
+import React, { useState, useMemo } from "react";
+import { ReportTemplate } from "@/entities/all";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +9,17 @@ import { FileText, Users, User, Calendar as CalendarIcon, Bookmark, Trash2, Arro
 import { format } from "date-fns";
 import { useTeam } from "@/components/TeamContext";
 import ReportEditor from "@/components/reports/ReportEditor";
+
+import { 
+  useAthletes, 
+  useTeams, 
+  useMetrics, 
+  useMetricRecords, 
+  useMetricCategories,
+  useClassPeriods,
+  useReportTemplates,
+  useInvalidateQueries
+} from "@/components/hooks/useDataQueries";
 
 export default function Reports() {
   const { filteredTeams, selectedOrganization } = useTeam();
