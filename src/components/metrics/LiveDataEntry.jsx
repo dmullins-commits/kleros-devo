@@ -70,7 +70,13 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
   const loadTeams = async () => {
     const teamsData = await Team.list();
-    setTeams(teamsData);
+    // Normalize teams to handle nested data structures
+    const normalizedTeams = teamsData.map(t => ({
+      id: t.id,
+      name: t.data?.name || t.name,
+      sport: t.data?.sport || t.sport
+    }));
+    setTeams(normalizedTeams);
   };
 
   const loadClassPeriods = async () => {
