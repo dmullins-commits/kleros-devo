@@ -153,9 +153,8 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
   };
 
   const handleAthleteAdded = async (newAthlete) => {
-    onDataSaved(); // Notify parent component that athletes might have changed
-    
-    // Add the new athlete to the dataGrid immediately
+    // Add the new athlete to the dataGrid immediately without refreshing parent
+    // This prevents losing entered data during testing mode
     const newRow = {
       athlete_id: newAthlete.id,
       athlete_name: `${newAthlete.first_name} ${newAthlete.last_name}`,
