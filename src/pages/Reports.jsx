@@ -79,21 +79,17 @@ export default function Reports() {
     setSelectedTemplate(null);
   };
 
-  const filteredAthletes = athletes.filter(athlete => {
-    if (filterType === "team" && selectedTeamId) {
-      return athlete.team_ids?.includes(selectedTeamId);
-    }
-    if (filterType === "class" && selectedClassPeriod) {
-      // Handle variations in class period naming (e.g., "6" vs "6th", "4th" vs "4")
-      const athletePeriod = (athlete.class_period || "").toLowerCase().replace(/[^0-9a-z]/g, '');
-      const selectedPeriod = selectedClassPeriod.toLowerCase().replace(/[^0-9a-z]/g, '');
-      return athletePeriod === selectedPeriod || 
-             athlete.class_period === selectedClassPeriod ||
-             athletePeriod.replace('th', '').replace('st', '').replace('nd', '').replace('rd', '') === 
-             selectedPeriod.replace('th', '').replace('st', '').replace('nd', '').replace('rd', '');
-    }
-    return false;
-  });
+  const filteredAthletes = useMemo(() => {
+    return athletes.filter(athlete => {
+      if (filterType === "team" && selectedTeamId) {
+        return athlete.team_ids?.includes(selectedTeamId);
+      }
+      if (filterType === "class" && selectedClassPeriod) {
+        return athlete.class_period === selectedClassPeriod;
+      }
+      return false;
+    });
+  }, [athletes, filterType, selectedTeamId, selectedClassPeriod]);
 
   const selectedAthlete = athletes.find(a => a.id === selectedAthleteId);
   const selectedTeam = teams.find(t => t.id === selectedTeamId);
@@ -101,25 +97,29 @@ export default function Reports() {
   // Use locally loaded teams as primary source
   const availableTeams = teams.length > 0 ? teams : filteredTeams;
 
-  const availableDates = [...new Set(records.map(r => r.recorded_date))].sort();
+  const availableDates = useMemo(() => 
+    [...new Set(records.map(r => r.recorded_date))].sort()
+  , [records]);
 
-  const filteredRecords = records.filter(record => {
-    if (dateRangeType === "all") return true;
-    
-    if (dateRangeType === "last30") {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const recordDate = new Date(record.recorded_date);
-      return recordDate >= thirtyDaysAgo;
-    }
-    
-    if (dateRangeType === "custom" && startDate) {
-      const recordDate = new Date(record.recorded_date);
-      return recordDate >= startDate;
-    }
-    
-    return true;
-  });
+  const filteredRecords = useMemo(() => {
+    return records.filter(record => {
+      if (dateRangeType === "all") return true;
+      
+      if (dateRangeType === "last30") {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recordDate = new Date(record.recorded_date);
+        return recordDate >= thirtyDaysAgo;
+      }
+      
+      if (dateRangeType === "custom" && startDate) {
+        const recordDate = new Date(record.recorded_date);
+        return recordDate >= startDate;
+      }
+      
+      return true;
+    });
+  }, [records, dateRangeType, startDate]);
 
   // Show editor when ready
   if (step === "editor") {
