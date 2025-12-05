@@ -112,13 +112,19 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
   };
 
   const beginTesting = () => {
-    let teamAthletes = selectedTeamId
-      ? athletes.filter(a => a.team_ids?.includes(selectedTeamId))
-      : athletes;
+    // Filter to only active athletes
+    let teamAthletes = athletes.filter(a => a.status === 'active' || !a.status);
+    
+    // Filter by team if selected
+    if (selectedTeamId && selectedTeamId !== "" && selectedTeamId !== "null") {
+      teamAthletes = teamAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
+    }
 
     if (selectedClassPeriod !== "all") {
       teamAthletes = teamAthletes.filter(a => a.class_period === selectedClassPeriod);
     }
+    
+    console.log('Athletes for testing:', teamAthletes.length, teamAthletes);
 
     teamAthletes.sort((a, b) => {
       const periodA = a.class_period || 'ZZZ';
