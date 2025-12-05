@@ -119,13 +119,14 @@ function LayoutContent({ children, currentPageName }) {
   };
 
   const handleLogoUpload = async (file) => {
-    if (!file) return;
+    if (!file || !selectedOrganization) return;
     
     setUploadingLogo(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      await base44.auth.updateMe({ team_logo: file_url });
-      loadUser();
+      const { Organization } = await import("@/entities/all");
+      await Organization.update(selectedOrganization.id, { logo: file_url });
+      window.location.reload(); // Refresh to show new logo
     } catch (error) {
       console.error('Error uploading logo:', error);
     } finally {
@@ -186,7 +187,7 @@ function LayoutContent({ children, currentPageName }) {
           <div className="flex items-center gap-3 mb-4">
             <div className="relative group">
               <Avatar className="w-14 h-14 border-2 border-[#c9a961] shadow-lg shadow-[#c9a961]/50">
-                <AvatarImage src={user?.team_logo} />
+                <AvatarImage src={selectedOrganization?.logo} />
                 <AvatarFallback className="bg-gradient-to-br from-[#d4af37] to-[#a67c52]">
                   <School className="w-7 h-7 text-black" />
                 </AvatarFallback>
