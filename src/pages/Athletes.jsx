@@ -20,35 +20,48 @@ import { useAthletes, useClassPeriods, useInvalidateQueries } from "@/components
 
 export default function Athletes() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
-  const [athletes, setAthletes] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [classPeriods, setClassPeriods] = useState([]);
+  const { invalidateAthletes } = useInvalidateQueries();
+  
+  // Get team IDs for filtering
+  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
+  
+  // Use React Query hooks
+  const { data: allAthletes = [], isLoading: athletesLoading, refetch: refetchAthletes } = useAthletes(
+    selectedOrganization && teamIds.length > 0 ? teamIds : []
+  );
+  const { data: classPeriods = [] } = useClassPeriods();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingAthlete, setEditingAthlete] = useState(null);
   const [filters, setFilters] = useState({ team: "all", status: "all" });
-  const [isLoading, setIsLoading] = useState(true);
   const [showTeamManagement, setShowTeamManagement] = useState(false);
   const [showCSVUpload, setShowCSVUpload] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const [errorMessage, setErrorMessage] = useState(null);
-  const [duplicateCount, setDuplicateCount] = useState(0);
 
-  useEffect(() => {
-    loadData();
-  }, [selectedTeamId, selectedOrganization, filteredTeams]);
+  const teams = filteredTeams;
+  const isLoading = athletesLoading;
 
-  useEffect(() => {
-    // Calculate duplicate count whenever athletes change
-    if (athletes.length > 0) {
-      calculateDuplicates();
-    } else {
-      setDuplicateCount(0);
-    }
-  }, [athletes]);
+  // Filter and sort athletes
+  const athletes = useMemo(() => {
+    let filtered = selectedTeamId === 'all'
+      ? allAthletes
+      : allAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
+    
+    // Sort alphabetically by last name, then first name
+    return [...filtered].sort((a, b) => {
+      const lastNameCompare = (a.last_name || '').localeCompare(b.last_name || '');
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return (a.first_name || '').localeCompare(b.first_name || '');
+    });
+  }, [allAthletes, selectedTeamId]);
 
-  const calculateDuplicates = () => {
+  // Calculate duplicates
+  const duplicateCount = useMemo(() => {
+    if (athletes.length === 0) return 0;
+    
     const processed = new Set();
     let count = 0;
 
@@ -80,43 +93,12 @@ export default function Athletes() {
       }
     });
 
-    setDuplicateCount(count);
-  };
+    return count;
+  }, [athletes]);
 
   const loadData = async () => {
-    setIsLoading(true);
-    try {
-      // Get team IDs for this organization
-      const teamIds = filteredTeams.map(t => t.id);
-      
-      const athletesPromise = selectedOrganization && teamIds.length > 0
-        ? Athlete.list().then(all => all.filter(a => 
-            a.team_ids?.some(tid => teamIds.includes(tid))
-          ))
-        : Athlete.list();
-      
-      const [athletesData, periodsData] = await Promise.all([
-        athletesPromise,
-        ClassPeriod.list()
-      ]);
-      
-      // Sort athletes alphabetically by last name, then first name
-      const sortedAthletes = athletesData.sort((a, b) => {
-        const lastNameCompare = (a.last_name || '').localeCompare(b.last_name || '');
-        if (lastNameCompare !== 0) return lastNameCompare;
-        return (a.first_name || '').localeCompare(b.first_name || '');
-      });
-      
-      const teamFilteredAthletes = selectedTeamId === 'all'
-        ? sortedAthletes
-        : sortedAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
-      
-      setAthletes(teamFilteredAthletes);
-      setTeams(filteredTeams);
-      setClassPeriods(periodsData.sort((a, b) => a.order - b.order));
-    } finally {
-      setIsLoading(false);
-    }
+    invalidateAthletes();
+    await refetchAthletes();
   };
 
   const handleSubmit = async (athleteData) => {
