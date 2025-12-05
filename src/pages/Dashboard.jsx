@@ -334,15 +334,13 @@ export default function Dashboard() {
       );
 
       if (dates.length >= 2) {
-        const latestAvg = metricRecords
-          .filter(r => r.recorded_date === dates[0])
-          .reduce((sum, r) => sum + r.value, 0) / 
-          metricRecords.filter(r => r.recorded_date === dates[0]).length;
+        // Latest date = today's entries (or most recent date with entries)
+        const latestDateRecords = metricRecords.filter(r => r.recorded_date === dates[0]);
+        const latestAvg = latestDateRecords.reduce((sum, r) => sum + r.value, 0) / latestDateRecords.length;
 
-        const previousAvg = metricRecords
-          .filter(r => r.recorded_date === dates[1])
-          .reduce((sum, r) => sum + r.value, 0) / 
-          metricRecords.filter(r => r.recorded_date === dates[1]).length;
+        // Previous date = the last time this metric was tracked (second most recent date)
+        const previousDateRecords = metricRecords.filter(r => r.recorded_date === dates[1]);
+        const previousAvg = previousDateRecords.reduce((sum, r) => sum + r.value, 0) / previousDateRecords.length;
 
         const allPreviousRecords = metricRecords.filter(r => 
           new Date(r.recorded_date) < new Date(dates[0]) && 
@@ -352,7 +350,8 @@ export default function Dashboard() {
           ? allPreviousRecords.reduce((sum, r) => sum + r.value, 0) / allPreviousRecords.length
           : 0;
 
-        const percentChange = ((latestAvg - previousAvg) / previousAvg) * 100;
+        // Compare today's average to the previous session's average for this same metric
+        const percentChange = previousAvg !== 0 ? ((latestAvg - previousAvg) / previousAvg) * 100 : 0;
         setTrendPercentage(percentChange);
 
         const graphDataArray = [
