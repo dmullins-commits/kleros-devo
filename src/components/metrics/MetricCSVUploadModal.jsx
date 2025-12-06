@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, CheckCircle, AlertCircle, FileSpreadsheet, ArrowRight, AlertTriangle } from "lucide-react";
-import { Metric } from "@/entities/all";
+import { Metric, MetricRecord, Athlete } from "@/entities/all";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -17,6 +17,7 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
   const [columnMapping, setColumnMapping] = useState({});
   const [duplicateWarnings, setDuplicateWarnings] = useState([]);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const [isMultiMetricMode, setIsMultiMetricMode] = useState(false);
 
   const metricFields = [
     { key: 'name', label: 'Metric Name', required: true },
@@ -25,6 +26,14 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
     { key: 'description', label: 'Description', required: false },
     { key: 'target_higher', label: 'Target Higher (true/false)', required: false },
     { key: 'decimal_places', label: 'Decimal Places (0-4)', required: false }
+  ];
+
+  const multiMetricDataFields = [
+    { key: 'first_name', label: 'First Name', required: true },
+    { key: 'last_name', label: 'Last Name', required: true },
+    { key: 'date', label: 'Date', required: true },
+    { key: 'metric_name', label: 'Metric Name', required: true },
+    { key: 'value', label: 'Value', required: true }
   ];
 
   const checkForDuplicates = async (parsedMetrics) => {
@@ -70,9 +79,11 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
       
       const headers = preview[0];
       const autoMapping = {};
+      const fieldsToMatch = isMultiMetricMode ? multiMetricDataFields : metricFields;
+      
       headers.forEach((header, index) => {
         const normalizedHeader = header.toLowerCase().replace(/\s+/g, '_');
-        const matchingField = metricFields.find(f => 
+        const matchingField = fieldsToMatch.find(f => 
           f.key === normalizedHeader || 
           f.label.toLowerCase().replace(/[^a-z]/g, '') === normalizedHeader.replace(/[^a-z]/g, '')
         );
@@ -100,99 +111,11 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
     setUploadStatus(null);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const text = e.target.result;
-        const lines = text.split('\n').filter(line => line.trim());
-        const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
-
-        const parsedMetrics = [];
-        for (const row of rows) {
-          const metricData = {};
-          Object.entries(columnMapping).forEach(([colIndex, fieldKey]) => {
-            if (fieldKey) {
-              metricData[fieldKey] = row[parseInt(colIndex)] || '';
-            }
-          });
-
-          if (metricData.name && metricData.unit && metricData.category) {
-            // Parse boolean and number values
-            let targetHigher = true;
-            if (metricData.target_higher) {
-              const val = metricData.target_higher.toLowerCase();
-              targetHigher = val === 'true' || val === '1' || val === 'yes' || val === 'higher';
-            }
-
-            let decimalPlaces = 2;
-            if (metricData.decimal_places) {
-              const parsed = parseInt(metricData.decimal_places);
-              if (!isNaN(parsed) && parsed >= 0 && parsed <= 4) {
-                decimalPlaces = parsed;
-              }
-            }
-
-            parsedMetrics.push({
-              name: metricData.name,
-              unit: metricData.unit,
-              category: metricData.category,
-              description: metricData.description || '',
-              target_higher: targetHigher,
-              decimal_places: decimalPlaces,
-              is_active: true,
-              is_hidden: false,
-              organization_id: organizationId
-            });
-          }
-        }
-
-        const warnings = await checkForDuplicates(parsedMetrics);
-
-        if (warnings.length > 0 && skipDuplicates) {
-          setUploadStatus({
-            type: "warning",
-            message: `Found ${warnings.length} potential duplicate${warnings.length !== 1 ? 's' : ''}. These will be skipped.`,
-            warnings: warnings
-          });
-        }
-
-        const results = { success: 0, skipped: 0, errors: [] };
-
-        for (let i = 0; i < parsedMetrics.length; i++) {
-          try {
-            const metricRecord = parsedMetrics[i];
-            const rowIndex = i + 1;
-            
-            const isDuplicate = warnings.some(w => w.rowIndex === rowIndex);
-            
-            if (isDuplicate && skipDuplicates) {
-              results.skipped++;
-              continue;
-            }
-
-            await Metric.create(metricRecord);
-            results.success++;
-            
-            if (i < parsedMetrics.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-          } catch (error) {
-            results.errors.push(`Row ${i + 2}: ${error.message}`);
-          }
-        }
-
-        setUploadStatus({
-          type: results.errors.length === 0 ? "success" : "partial",
-          message: `Successfully imported ${results.success} metrics${results.skipped > 0 ? `, skipped ${results.skipped} duplicates` : ''}${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
-          errors: results.errors
-        });
-
-        if (results.success > 0) {
-          onUploadComplete();
-        }
-        setIsUploading(false);
-      };
-      reader.readAsText(file);
-
+      if (isMultiMetricMode) {
+        await handleMultiMetricDataUpload();
+      } else {
+        await handleMetricDefinitionsUpload();
+      }
     } catch (error) {
       setUploadStatus({
         type: "error",
@@ -200,6 +123,193 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
       });
       setIsUploading(false);
     }
+  };
+
+  const handleMultiMetricDataUpload = async () => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n').filter(line => line.trim());
+      const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+
+      // Load all athletes and metrics
+      const allAthletes = await Athlete.list();
+      const allMetrics = await Metric.list();
+      const orgMetrics = allMetrics.filter(m => !m.organization_id || m.organization_id === organizationId);
+
+      const parsedRecords = [];
+      const errors = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const recordData = {};
+        
+        Object.entries(columnMapping).forEach(([colIndex, fieldKey]) => {
+          if (fieldKey) {
+            recordData[fieldKey] = row[parseInt(colIndex)] || '';
+          }
+        });
+
+        if (recordData.first_name && recordData.last_name && recordData.metric_name && recordData.value && recordData.date) {
+          // Find athlete by name
+          const athlete = allAthletes.find(a => 
+            a.first_name?.toLowerCase() === recordData.first_name.toLowerCase() &&
+            a.last_name?.toLowerCase() === recordData.last_name.toLowerCase()
+          );
+
+          if (!athlete) {
+            errors.push(`Row ${i + 2}: Athlete not found - ${recordData.first_name} ${recordData.last_name}`);
+            continue;
+          }
+
+          // Find metric by name
+          const metric = orgMetrics.find(m => 
+            m.name?.toLowerCase() === recordData.metric_name.toLowerCase()
+          );
+
+          if (!metric) {
+            errors.push(`Row ${i + 2}: Metric not found - ${recordData.metric_name}`);
+            continue;
+          }
+
+          // Parse value
+          const value = parseFloat(recordData.value);
+          if (isNaN(value)) {
+            errors.push(`Row ${i + 2}: Invalid value - ${recordData.value}`);
+            continue;
+          }
+
+          parsedRecords.push({
+            athlete_id: athlete.id,
+            metric_id: metric.id,
+            value: value,
+            recorded_date: recordData.date
+          });
+        }
+      }
+
+      const results = { success: 0, errors: errors };
+
+      for (let i = 0; i < parsedRecords.length; i++) {
+        try {
+          await MetricRecord.create(parsedRecords[i]);
+          results.success++;
+          
+          if (i < parsedRecords.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+        } catch (error) {
+          results.errors.push(`Record ${i + 1}: ${error.message}`);
+        }
+      }
+
+      setUploadStatus({
+        type: results.errors.length === 0 ? "success" : "partial",
+        message: `Successfully imported ${results.success} metric records${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
+        errors: results.errors
+      });
+
+      if (results.success > 0) {
+        onUploadComplete();
+      }
+      setIsUploading(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleMetricDefinitionsUpload = async () => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n').filter(line => line.trim());
+      const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+
+      const parsedMetrics = [];
+      for (const row of rows) {
+        const metricData = {};
+        Object.entries(columnMapping).forEach(([colIndex, fieldKey]) => {
+          if (fieldKey) {
+            metricData[fieldKey] = row[parseInt(colIndex)] || '';
+          }
+        });
+
+        if (metricData.name && metricData.unit && metricData.category) {
+          // Parse boolean and number values
+          let targetHigher = true;
+          if (metricData.target_higher) {
+            const val = metricData.target_higher.toLowerCase();
+            targetHigher = val === 'true' || val === '1' || val === 'yes' || val === 'higher';
+          }
+
+          let decimalPlaces = 2;
+          if (metricData.decimal_places) {
+            const parsed = parseInt(metricData.decimal_places);
+            if (!isNaN(parsed) && parsed >= 0 && parsed <= 4) {
+              decimalPlaces = parsed;
+            }
+          }
+
+          parsedMetrics.push({
+            name: metricData.name,
+            unit: metricData.unit,
+            category: metricData.category,
+            description: metricData.description || '',
+            target_higher: targetHigher,
+            decimal_places: decimalPlaces,
+            is_active: true,
+            is_hidden: false,
+            organization_id: organizationId
+          });
+        }
+      }
+
+      const warnings = await checkForDuplicates(parsedMetrics);
+
+      if (warnings.length > 0 && skipDuplicates) {
+        setUploadStatus({
+          type: "warning",
+          message: `Found ${warnings.length} potential duplicate${warnings.length !== 1 ? 's' : ''}. These will be skipped.`,
+          warnings: warnings
+        });
+      }
+
+      const results = { success: 0, skipped: 0, errors: [] };
+
+      for (let i = 0; i < parsedMetrics.length; i++) {
+        try {
+          const metricRecord = parsedMetrics[i];
+          const rowIndex = i + 1;
+          
+          const isDuplicate = warnings.some(w => w.rowIndex === rowIndex);
+          
+          if (isDuplicate && skipDuplicates) {
+            results.skipped++;
+            continue;
+          }
+
+          await Metric.create(metricRecord);
+          results.success++;
+          
+          if (i < parsedMetrics.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        } catch (error) {
+          results.errors.push(`Row ${i + 2}: ${error.message}`);
+        }
+      }
+
+      setUploadStatus({
+        type: results.errors.length === 0 ? "success" : "partial",
+        message: `Successfully imported ${results.success} metrics${results.skipped > 0 ? `, skipped ${results.skipped} duplicates` : ''}${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
+        errors: results.errors
+      });
+
+      if (results.success > 0) {
+        onUploadComplete();
+      }
+      setIsUploading(false);
+    };
+    reader.readAsText(file);
   };
 
   const handleClose = () => {
@@ -223,15 +333,39 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
         </DialogHeader>
 
         <div className="mt-6 space-y-6">
+          <div className="flex items-center space-x-3 mb-4 p-4 bg-gray-900 border border-gray-700 rounded-lg">
+            <Checkbox
+              id="multi-metric-mode"
+              checked={isMultiMetricMode}
+              onCheckedChange={setIsMultiMetricMode}
+              className="border-2 border-amber-400/50 data-[state=checked]:bg-amber-400 data-[state=checked]:border-amber-400"
+            />
+            <label
+              htmlFor="multi-metric-mode"
+              className="text-sm text-white cursor-pointer font-semibold"
+            >
+              Multiple metrics in one CSV (performance data upload)
+            </label>
+          </div>
+
           <Alert className="bg-gray-900 border-gray-700">
             <AlertDescription className="text-gray-300">
               <p className="font-semibold mb-2">Upload Instructions:</p>
-              <ol className="list-decimal list-inside space-y-1 text-sm">
-                <li>Upload your CSV file with metric definitions</li>
-                <li>Map each CSV column to the corresponding metric field</li>
-                <li>Required fields: Metric Name, Unit, Category</li>
-                <li>The system will automatically detect and skip duplicate metrics</li>
-              </ol>
+              {isMultiMetricMode ? (
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Upload your CSV with columns: First Name, Last Name, Date, Metric Name, Value</li>
+                  <li>Each row represents one measurement for one athlete</li>
+                  <li>Date format: YYYY-MM-DD (e.g., 2025-12-06)</li>
+                  <li>Athletes and metrics must already exist in the system</li>
+                </ol>
+              ) : (
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Upload your CSV file with metric definitions</li>
+                  <li>Map each CSV column to the corresponding metric field</li>
+                  <li>Required fields: Metric Name, Unit, Category</li>
+                  <li>The system will automatically detect and skip duplicate metrics</li>
+                </ol>
+              )}
             </AlertDescription>
           </Alert>
 
@@ -282,7 +416,7 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
                         <SelectItem value="skip" className="text-gray-400 hover:bg-gray-800">
                           Skip this column
                         </SelectItem>
-                        {metricFields.map(field => (
+                        {(isMultiMetricMode ? multiMetricDataFields : metricFields).map(field => (
                           <SelectItem 
                             key={field.key} 
                             value={field.key} 
@@ -297,25 +431,27 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
                 ))}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-700">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="skip-duplicates"
-                    checked={skipDuplicates}
-                    onCheckedChange={setSkipDuplicates}
-                    className="border-2 border-amber-400/50 data-[state=checked]:bg-amber-400 data-[state=checked]:border-amber-400"
-                  />
-                  <label
-                    htmlFor="skip-duplicates"
-                    className="text-sm text-white cursor-pointer font-semibold"
-                  >
-                    Automatically skip duplicate metrics (recommended)
-                  </label>
+              {!isMultiMetricMode && (
+                <div className="mt-6 pt-6 border-t border-gray-700">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="skip-duplicates"
+                      checked={skipDuplicates}
+                      onCheckedChange={setSkipDuplicates}
+                      className="border-2 border-amber-400/50 data-[state=checked]:bg-amber-400 data-[state=checked]:border-amber-400"
+                    />
+                    <label
+                      htmlFor="skip-duplicates"
+                      className="text-sm text-white cursor-pointer font-semibold"
+                    >
+                      Automatically skip duplicate metrics (recommended)
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 ml-6">
+                    Duplicates are detected by matching metric names
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mt-2 ml-6">
-                  Duplicates are detected by matching metric names
-                </p>
-              </div>
+              )}
             </div>
           )}
 
