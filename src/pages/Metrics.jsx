@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Metric, MetricRecord, Athlete, MetricCategory } from "@/entities/all";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Calculator, Filter } from "lucide-react";
+import { Plus, Settings, Calculator, Filter, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTeam } from "@/components/TeamContext";
@@ -10,6 +10,7 @@ import MetricsList from "../components/metrics/MetricsList";
 import MetricForm from "../components/metrics/MetricForm";
 import CategoryManagementModal from "../components/metrics/CategoryManagementModal";
 import AutoCalcSettingsModal from "../components/metrics/AutoCalcSettingsModal";
+import MetricCSVUploadModal from "../components/metrics/MetricCSVUploadModal";
 
 export default function Metrics() {
   const { selectedOrganization, filteredTeams } = useTeam();
@@ -20,6 +21,7 @@ export default function Metrics() {
   const [showForm, setShowForm] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAutoCalcModal, setShowAutoCalcModal] = useState(false);
+  const [showCSVUpload, setShowCSVUpload] = useState(false);
   const [editingMetric, setEditingMetric] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
@@ -137,6 +139,13 @@ export default function Metrics() {
                   CREATE METRIC
                 </Button>
                 <Button 
+                  onClick={() => setShowCSVUpload(true)}
+                  className="bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-amber-400 font-black border-2 border-amber-400/30"
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  IMPORT CSV
+                </Button>
+                <Button 
                   onClick={() => setShowCategoryModal(true)}
                   className="bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-amber-400 font-black border-2 border-amber-400/30"
                 >
@@ -214,6 +223,14 @@ export default function Metrics() {
         <AutoCalcSettingsModal
           open={showAutoCalcModal}
           onOpenChange={setShowAutoCalcModal}
+        />
+
+        <MetricCSVUploadModal
+          open={showCSVUpload}
+          onOpenChange={setShowCSVUpload}
+          categories={categories}
+          organizationId={selectedOrganization?.id}
+          onUploadComplete={loadData}
         />
       </div>
     </div>
