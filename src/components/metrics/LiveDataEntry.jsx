@@ -621,7 +621,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
                           </th>
                           <th className="text-left p-3 bg-gray-900">
                             <div className="text-gray-300 font-semibold flex flex-col">
-                              <span>90% of PR</span>
+                              <span>{metric.target_higher ? '90%' : '110%'} of PR</span>
                               <span className="text-xs text-gray-500 font-normal">({metric.unit})</span>
                             </div>
                           </th>
@@ -664,7 +664,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
                             const step = decimalPlaces === 0 ? '1' : `0.${'0'.repeat(decimalPlaces - 1)}1`;
                             const placeholder = decimalPlaces === 0 ? '0' : `0.${'0'.repeat(decimalPlaces)}`;
                             const pr = getAthletePR(row.athlete_id, metric.id);
-                            const ninetyPercent = pr ? (pr * 0.9).toFixed(decimalPlaces) : null;
+                            const threshold = pr ? (metric.target_higher ? pr * 0.9 : pr * 1.1).toFixed(decimalPlaces) : null;
                             
                             return (
                               <React.Fragment key={metric.id}>
@@ -675,7 +675,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
                                 </td>
                                 <td className="p-3">
                                   <span className="text-gray-500 font-semibold">
-                                    {ninetyPercent !== null ? ninetyPercent : '-'}
+                                    {threshold !== null ? threshold : '-'}
                                   </span>
                                 </td>
                                 <td className="p-3">
