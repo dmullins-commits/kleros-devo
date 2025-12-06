@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, CheckCircle, AlertCircle, FileSpreadsheet, ArrowRight, AlertTriangle } from "lucide-react";
 import { Athlete } from "@/entities/all";
+import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function AthleteCSVUploadModal({ open, onOpenChange, teams, classPeriods, onUploadComplete }) {
+  // Get team IDs to filter athletes for duplicate checking
+  const teamIds = useMemo(() => teams.map(t => t.id), [teams]);
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
@@ -36,8 +39,11 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   ];
 
   const checkForDuplicates = async (parsedAthletes) => {
-    // Get existing athletes
-    const existingAthletes = await Athlete.list();
+    // Get existing athletes - ONLY from current organization's teams
+    const allAthletes = await Athlete.list();
+    const existingAthletes = allAthletes.filter(a => 
+      a.team_ids?.some(tid => teamIds.includes(tid))
+    );
     const warnings = [];
 
     parsedAthletes.forEach((newAthlete, index) => {
