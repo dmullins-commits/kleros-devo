@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Athlete, Team, Metric, MetricRecord, MetricCategory, ClassPeriod, Workout, VBTSession, ReportTemplate } from "@/entities/all";
+import { Athlete, Team, Metric, MetricRecord, MetricCategory, ClassPeriod, Workout, ReportTemplate } from "@/entities/all";
 
 // Query key factory for consistent key management
 export const queryKeys = {
@@ -10,7 +10,6 @@ export const queryKeys = {
   metricCategories: () => ['metricCategories'],
   classPeriods: () => ['classPeriods'],
   workouts: () => ['workouts'],
-  vbtSessions: (filters) => ['vbtSessions', filters],
   reportTemplates: (orgId) => ['reportTemplates', orgId],
 };
 
@@ -202,29 +201,10 @@ export function useWorkouts(options = {}) {
       const data = await Workout.list();
       return data.map(w => normalizeEntity(w, [
         'name', 'description', 'exercises', 'duration_minutes', 'difficulty',
-        'category', 'assigned_teams', 'assigned_athletes', 'vbt_compatible',
-        'pushed_to_device', 'device_workout_id'
+        'category', 'assigned_teams', 'assigned_athletes'
       ]));
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    ...options,
-  });
-}
-
-// VBT Sessions query hook
-export function useVBTSessions(filters = {}, options = {}) {
-  return useQuery({
-    queryKey: queryKeys.vbtSessions(filters),
-    queryFn: async () => {
-      const data = await VBTSession.list();
-      return data.map(s => normalizeEntity(s, [
-        'athlete_id', 'workout_id', 'exercise_name', 'programmed_sets',
-        'completed_sets', 'programmed_reps', 'completed_reps', 'avg_velocity',
-        'peak_velocity', 'avg_power', 'peak_power', 'load_used', 'session_date',
-        'completion_percentage', 'device_id', 'raw_data'
-      ]));
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
     ...options,
   });
 }

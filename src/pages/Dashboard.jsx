@@ -21,8 +21,7 @@ import {
   useMetrics, 
   useMetricRecords, 
   useMetricCategories,
-  useWorkouts,
-  useVBTSessions
+  useWorkouts
 } from "@/components/hooks/useDataQueries";
 
 export default function Dashboard() {
@@ -44,7 +43,6 @@ export default function Dashboard() {
   );
   const { data: categoriesData = [], isLoading: categoriesLoading } = useMetricCategories();
   const { data: workoutsData = [], isLoading: workoutsLoading } = useWorkouts();
-  const { data: vbtSessionsData = [], isLoading: vbtLoading } = useVBTSessions();
 
   const isLoading = athletesLoading || teamsLoading || metricsLoading || recordsLoading || categoriesLoading;
 
@@ -62,7 +60,6 @@ export default function Dashboard() {
 
   // State for processed stats
   const [yesterdayOverviewData, setYesterdayOverviewData] = useState([]);
-  const [incompleteWorkouts, setIncompleteWorkouts] = useState([]);
 
   // Performance stats
   const [prsInLastSession, setPrsInLastSession] = useState(0);
@@ -131,26 +128,7 @@ export default function Dashboard() {
     setYesterdayOverviewData(overview);
   }, []);
 
-  const processIncompleteWorkouts = useCallback((vbtSessions, athletesData) => {
-    const yesterdayIncomplete = vbtSessions.filter(session => {
-      if (!session.session_date) return false;
-      const sessionDate = new Date(session.session_date);
-      if (isNaN(sessionDate.getTime())) return false;
-      const isYesterdaySession = isYesterday(sessionDate);
-      const isIncomplete = session.completion_percentage < 100;
-      return isYesterdaySession && isIncomplete;
-    });
 
-    const incompleteWithNames = yesterdayIncomplete.map(session => {
-      const athlete = athletesData.find(a => a.id === session.athlete_id);
-      return {
-        ...session,
-        athleteName: athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown Athlete'
-      };
-    });
-
-    setIncompleteWorkouts(incompleteWithNames);
-  }, []);
 
   const processPerformanceStats = useCallback((recordsData, athletesData, metricsData, teamsData, allAthletesData) => {
     // Filter out records with invalid dates
@@ -500,9 +478,8 @@ export default function Dashboard() {
     if (isLoading || !allRecords.length) return;
     
     processYesterdayData(allRecords, athletes, metrics);
-    processIncompleteWorkouts(vbtSessionsData, athletes);
     processPerformanceStats(allRecords, athletes, metrics, teams, allAthletes);
-  }, [isLoading, allRecords, athletes, metrics, teams, allAthletes, vbtSessionsData, processYesterdayData, processIncompleteWorkouts, processPerformanceStats]);
+  }, [isLoading, allRecords, athletes, metrics, teams, allAthletes, processYesterdayData, processPerformanceStats]);
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
@@ -562,7 +539,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             <YesterdayOverview 
               overviewData={yesterdayOverviewData} 
-              incompleteWorkouts={incompleteWorkouts}
+              incompleteWorkouts={[]}
               prsInLastSession={prsInLastSession}
               athletesInLastSession={athletesInLastSession}
               prsByTeam={prsByTeam}
