@@ -9,6 +9,7 @@ import { useTeam } from "@/components/TeamContext";
 
 import TeamProgressView from "../components/progress/TeamProgressView";
 import IndividualProgressView from "../components/progress/IndividualProgressView";
+import SnapshotView from "../components/progress/SnapshotView";
 
 export default function ProgressTracking() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
@@ -205,7 +206,7 @@ export default function ProgressTracking() {
 
         {/* Step 1: View Mode Selection */}
         {!viewMode && (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card
               className="bg-gray-950 border-2 border-gray-800 hover:border-yellow-400 cursor-pointer transition-all group"
               onClick={() => setViewMode("team")}
@@ -232,6 +233,21 @@ export default function ProgressTracking() {
                 <h2 className="text-2xl font-black text-white mb-2">Individual</h2>
                 <p className="text-gray-400">
                   View performance data for a specific athlete
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="bg-gray-950 border-2 border-gray-800 hover:border-blue-400 cursor-pointer transition-all group"
+              onClick={() => setViewMode("snapshot")}
+            >
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-blue-400/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-400/30 transition-all">
+                  <BarChart3 className="w-8 h-8 text-blue-400" />
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2">Snapshot</h2>
+                <p className="text-gray-400">
+                  Excel-style view of all data for a metric
                 </p>
               </CardContent>
             </Card>
@@ -395,6 +411,18 @@ export default function ProgressTracking() {
               isLoading={isLoading}
             />
           </div>
+        )}
+
+        {/* Snapshot View */}
+        {viewMode === "snapshot" && (
+          <SnapshotView
+            athletes={athletes}
+            metrics={metrics}
+            records={records}
+            teams={teams}
+            classPeriods={classPeriods}
+            onBack={() => setViewMode("")}
+          />
         )}
       </div>
     </div>
