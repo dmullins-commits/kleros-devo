@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Medal, Award, FileDown } from "lucide-react";
+import { Trophy, Medal, Award, Check, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MetricRecord } from "@/entities/all";
@@ -49,7 +49,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     if (selectedDate && selectedMetricId && records.length > 0 && metrics.length > 0 && athletes.length > 0) {
       generateLeaderboard();
     }
-  }, [selectedDate, selectedMetricId, records, metrics, athletes]);
+  }, [selectedDate, selectedMetricId, records, metrics, athletes, groupByClassPeriod, groupByClassGrade]);
 
   const generateLeaderboard = () => {
     const metric = metrics.find(m => m.id === selectedMetricId);
@@ -128,7 +128,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
         fullContent += `"${group}"\n`;
 
         if (splitByGender) {
-          const headers = ['Male Rank', 'Male Athlete', 'Male Value', 'Male PR', 'Male New PR', '', '', 'Female Rank', 'Female Athlete', 'Female Value', 'Female PR', 'Female New PR'];
+          const headers = ['Rank', 'Name', metric.name, 'New PR?', '', '', 'Rank', 'Name', metric.name, 'New PR?'];
           fullContent += headers.map(h => `"${h}"`).join(',') + '\n';
           
           const maxRows = Math.max(maleData.length, femaleData.length);
@@ -139,14 +139,12 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
               male ? i + 1 : '',
               male ? male.athlete_name : '',
               male ? male.current_value.toFixed(metric.decimal_places ?? 2) : '',
-              male ? male.pr.toFixed(metric.decimal_places ?? 2) : '',
               male ? (male.is_new_pr ? 'PR' : '') : '',
               '',
               '',
               female ? i + 1 : '',
               female ? female.athlete_name : '',
               female ? female.current_value.toFixed(metric.decimal_places ?? 2) : '',
-              female ? female.pr.toFixed(metric.decimal_places ?? 2) : '',
               female ? (female.is_new_pr ? 'PR' : '') : ''
             ];
             fullContent += row.map(cell => `"${cell}"`).join(',') + '\n';
@@ -155,10 +153,10 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
           const combinedData = [...maleData, ...femaleData].sort((a, b) => 
             metric.target_higher ? b.current_value - a.current_value : a.current_value - b.current_value
           );
-          const headers = ['Rank', 'Athlete', 'Gender', 'Value', 'PR', 'New PR'];
+          const headers = ['Rank', 'Name', metric.name, 'New PR?'];
           fullContent += headers.map(h => `"${h}"`).join(',') + '\n';
           combinedData.forEach((item, index) => {
-            const row = [index + 1, item.athlete_name, item.gender || '', item.current_value.toFixed(metric.decimal_places ?? 2), item.pr.toFixed(metric.decimal_places ?? 2), item.is_new_pr ? 'PR' : ''];
+            const row = [index + 1, item.athlete_name, item.current_value.toFixed(metric.decimal_places ?? 2), item.is_new_pr ? 'PR' : ''];
             fullContent += row.map(cell => `"${cell}"`).join(',') + '\n';
           });
         }
@@ -178,7 +176,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     if (splitByGender) {
       // Create side-by-side male/female CSV with 2 column gap
       const maxRows = Math.max(leaderboardData.male.length, leaderboardData.female.length);
-      const headers = ['Male Rank', 'Male Athlete', 'Male Value', 'Male PR', 'Male New PR', '', '', 'Female Rank', 'Female Athlete', 'Female Value', 'Female PR', 'Female New PR'];
+      const headers = ['Rank', 'Name', metric.name, 'New PR?', '', '', 'Rank', 'Name', metric.name, 'New PR?'];
       const rows = [headers];
       
       for (let i = 0; i < maxRows; i++) {
@@ -188,14 +186,12 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
           male ? i + 1 : '',
           male ? male.athlete_name : '',
           male ? male.current_value.toFixed(metric.decimal_places ?? 2) : '',
-          male ? male.pr.toFixed(metric.decimal_places ?? 2) : '',
           male ? (male.is_new_pr ? 'PR' : '') : '',
           '',
           '',
           female ? i + 1 : '',
           female ? female.athlete_name : '',
           female ? female.current_value.toFixed(metric.decimal_places ?? 2) : '',
-          female ? female.pr.toFixed(metric.decimal_places ?? 2) : '',
           female ? (female.is_new_pr ? 'PR' : '') : ''
         ]);
       }
@@ -205,15 +201,13 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
       const allAthletes = [...leaderboardData.male, ...leaderboardData.female].sort((a, b) => {
         return metric.target_higher ? b.current_value - a.current_value : a.current_value - b.current_value;
       });
-      const headers = ['Rank', 'Athlete', 'Gender', 'Value', 'PR', 'New PR'];
+      const headers = ['Rank', 'Name', metric.name, 'New PR?'];
       const rows = [headers];
       allAthletes.forEach((item, index) => {
         rows.push([
           index + 1,
           item.athlete_name,
-          item.gender || '',
           item.current_value.toFixed(metric.decimal_places ?? 2),
-          item.pr.toFixed(metric.decimal_places ?? 2),
           item.is_new_pr ? 'PR' : ''
         ]);
       });
