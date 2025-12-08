@@ -210,13 +210,16 @@ export default function SnapshotView({
                     <SelectValue placeholder="Choose a metric..." />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
-                    {metrics.filter(m => !m.is_auto_calculated).map(metric => (
+                    {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).map(metric => (
                       <SelectItem key={metric.id} value={metric.id} className="text-white">
                         {metric.name} ({metric.unit})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).length === 0 && (
+                  <p className="text-sm text-gray-400">No metrics available. Please create metrics first.</p>
+                )}
               </div>
             )}
 
