@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Athlete, Metric, MetricRecord, VBTSession } from "@/entities/all";
+import { Athlete, Metric, MetricRecord } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,11 @@ export default function Upload() {
     setError(null);
     setSuccess(null);
     setDataType(null);
+    
+    // Automatically process the file
+    if (selectedFile) {
+      setTimeout(() => processFile(), 100);
+    }
   };
 
   const parseCSV = (text) => {
@@ -70,12 +75,12 @@ export default function Upload() {
     });
   };
 
-  const processFile = async (type) => {
+  const processFile = async () => {
     if (!file) return;
 
     setIsProcessing(true);
     setError(null);
-    setDataType(type);
+    setDataType('metric_records');
 
     try {
       // Read CSV file
@@ -334,42 +339,13 @@ export default function Upload() {
             <FileUploadZone onFileSelect={handleFileSelect} />
           )}
 
-          {file && !processedData && (
+          {file && !processedData && isProcessing && (
             <Card className="bg-gradient-to-br from-gray-950 to-gray-900 border border-gray-800">
-              <CardHeader className="border-b border-gray-800">
-                <CardTitle className="text-white">Select Data Type</CardTitle>
-                <p className="text-gray-400 text-sm">Choose what type of data you're uploading</p>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button
-                    onClick={() => processFile('metric_records')}
-                    disabled={isProcessing}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black h-24 flex flex-col gap-2 font-black shadow-lg"
-                  >
-                    <FileSpreadsheet className="w-8 h-8" />
-                    Performance Data
-                    <span className="text-xs font-normal opacity-80">Import athlete metrics with column mapping</span>
-                  </Button>
-                  <Button
-                    onClick={() => processFile('vbt_sessions')}
-                    disabled={isProcessing}
-                    className="bg-gray-800 hover:bg-gray-700 text-white h-24 flex flex-col gap-2 font-semibold border border-gray-700"
-                  >
-                    <Activity className="w-8 h-8" />
-                    VBT Sessions
-                    <span className="text-xs font-normal opacity-70">Import velocity-based training data</span>
-                  </Button>
+              <CardContent className="p-12 text-center">
+                <div className="inline-flex items-center gap-2 text-amber-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+                  <span className="font-semibold text-lg">Processing your file...</span>
                 </div>
-                
-                {isProcessing && (
-                  <div className="mt-6 text-center">
-                    <div className="inline-flex items-center gap-2 text-amber-500">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-500" />
-                      <span className="font-semibold">Processing your file...</span>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
