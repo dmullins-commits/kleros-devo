@@ -268,8 +268,9 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
         }
         
         setSaveSuccess(true);
-        await loadAllRecords();
-        onDataSaved();
+        
+        // Load records in background without triggering parent reload during testing
+        loadAllRecords();
 
         setTimeout(() => {
           setShowPrintableLeaderboard(true);
@@ -281,6 +282,8 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           setSelectedTeamId("");
           setSelectedClassPeriod("all");
           setDataGrid([]);
+          // Only reload parent data after we exit testing mode
+          onDataSaved();
         }, 2000);
       }
     } catch (error) {
@@ -435,7 +438,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
   const selectableMetrics = metrics.filter(m => !m.is_auto_calculated);
 
-  if (isLoading) {
+  if (isLoading && !isTestingMode) {
     return (
       <Card className="bg-gray-950 border border-gray-800">
         <CardContent className="p-12 text-center">
