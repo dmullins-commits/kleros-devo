@@ -55,7 +55,7 @@ export default function Upload() {
     
     // Automatically process the file
     if (selectedFile) {
-      setTimeout(() => processFile(), 100);
+      processFile(selectedFile);
     }
   };
 
@@ -75,8 +75,8 @@ export default function Upload() {
     });
   };
 
-  const processFile = async () => {
-    if (!file) return;
+  const processFile = async (fileToProcess) => {
+    if (!fileToProcess) return;
 
     setIsProcessing(true);
     setError(null);
@@ -96,7 +96,7 @@ export default function Upload() {
         setError('Failed to read file');
         setIsProcessing(false);
       };
-      reader.readAsText(file);
+      reader.readAsText(fileToProcess);
     } catch (error) {
       setError(error.message || "Error processing file");
       setIsProcessing(false);
