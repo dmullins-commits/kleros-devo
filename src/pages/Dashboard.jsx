@@ -70,6 +70,7 @@ export default function Dashboard() {
 
   // Expanded data
   const [prsData, setPrsData] = useState([]);
+  const [streakData, setStreakData] = useState([]);
   const [flaggedData, setFlaggedData] = useState([]);
   const [categoryGraphData, setCategoryGraphData] = useState({});
   const [categoryColors, setCategoryColors] = useState({});
@@ -213,6 +214,64 @@ export default function Dashboard() {
     setTotalPRsThisMonth(prsThisMonth);
     setPrsData(Array.from(prsDataMap.values()));
     setAthletesInLastSession(athletesInSession.size);
+
+    // Calculate PR streaks
+    const streakMap = new Map();
+
+    athletesData.forEach(athlete => {
+      metricsData.forEach(metric => {
+        const athleteRecords = validRecords
+          .filter(r => r.athlete_id === athlete.id && r.metric_id === metric.id)
+          .sort((a, b) => new Date(a.recorded_date) - new Date(b.recorded_date));
+
+        if (athleteRecords.length < 2) return;
+
+        // Track streak
+        let currentStreak = 0;
+        let maxStreak = 0;
+
+        for (let i = 0; i < athleteRecords.length; i++) {
+          const currentRecord = athleteRecords[i];
+          const previousRecords = athleteRecords.slice(0, i);
+
+          if (previousRecords.length === 0) {
+            currentStreak = 1;
+          } else {
+            const bestPrevious = metric.target_higher
+              ? Math.max(...previousRecords.map(r => r.value))
+              : Math.min(...previousRecords.map(r => r.value));
+
+            const isPR = metric.target_higher 
+              ? currentRecord.value > bestPrevious 
+              : currentRecord.value < bestPrevious;
+
+            if (isPR) {
+              currentStreak++;
+            } else {
+              currentStreak = 0;
+            }
+          }
+
+          maxStreak = Math.max(maxStreak, currentStreak);
+        }
+
+        if (maxStreak >= 2) {
+          const key = `${athlete.id}_${metric.id}`;
+          streakMap.set(key, {
+            athleteName: `${athlete.first_name} ${athlete.last_name}`,
+            metricName: metric.name,
+            streakCount: maxStreak
+          });
+        }
+      });
+    });
+
+    // Sort by streak count and take top streaks
+    const sortedStreaks = Array.from(streakMap.values())
+      .sort((a, b) => b.streakCount - a.streakCount)
+      .slice(0, 10);
+
+    setStreakData(sortedStreaks);
 
     // Calculate PRs by Team
     const teamPrMap = new Map();
@@ -523,7 +582,7 @@ export default function Dashboard() {
         />
 
         <div className="grid lg:grid-cols-2 gap-6 mt-8">
-          <PRsList prsData={prsData} isLoading={isLoading} />
+          <PRsList streakData={streakData} isLoading={isLoading} />
           <FlaggedAthletesList flaggedData={flaggedData} isLoading={isLoading} />
         </div>
 
