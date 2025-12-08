@@ -15,6 +15,7 @@ import AthleteFilters from "../components/athletes/AthleteFilters";
 import TeamManagementModal from "../components/teams/TeamManagementModal";
 import AthleteCSVUploadModal from "../components/athletes/AthleteCSVUploadModal";
 import DuplicateManagementModal from "../components/athletes/DuplicateManagementModal";
+import BulkTeamAssignmentModal from "../components/athletes/BulkTeamAssignmentModal";
 
 import { useAthletes, useClassPeriods, useInvalidateQueries } from "@/components/hooks/useDataQueries";
 
@@ -38,6 +39,7 @@ export default function Athletes() {
   const [showTeamManagement, setShowTeamManagement] = useState(false);
   const [showCSVUpload, setShowCSVUpload] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
+  const [showBulkTeamAssignment, setShowBulkTeamAssignment] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -227,6 +229,13 @@ export default function Athletes() {
                   Upload CSV
                 </Button>
                 <Button 
+                  onClick={() => setShowBulkTeamAssignment(true)}
+                  className="bg-gray-900 hover:bg-gray-800 text-white font-semibold border border-gray-700"
+                >
+                  <Users className="w-5 h-5 mr-2" />
+                  Assign Teams
+                </Button>
+                <Button 
                   onClick={() => setShowTeamManagement(true)}
                   className="bg-gray-900 hover:bg-gray-800 text-white font-semibold border border-gray-700"
                 >
@@ -328,6 +337,12 @@ export default function Athletes() {
           onOpenChange={setShowDuplicates}
           athletes={athletes}
           onDuplicatesDeleted={handleDuplicatesDeleted}
+        />
+
+        <BulkTeamAssignmentModal
+          open={showBulkTeamAssignment}
+          onOpenChange={setShowBulkTeamAssignment}
+          onComplete={loadData}
         />
       </div>
     </div>
