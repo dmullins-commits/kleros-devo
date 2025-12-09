@@ -180,7 +180,7 @@ export default function SnapshotView({
   };
 
   const handleValueEdit = (athleteId, metricId, date, value) => {
-    const key = `${athleteId}-${metricId}-${date}`;
+    const key = `${athleteId}|||${metricId}|||${date}`;
     setEditedValues(prev => ({
       ...prev,
       [key]: value
@@ -192,7 +192,7 @@ export default function SnapshotView({
     try {
       // Process edited values
       for (const [key, value] of Object.entries(editedValues)) {
-        const [athleteId, metricId, date] = key.split('-');
+        const [athleteId, metricId, date] = key.split('|||');
         const numValue = parseFloat(value);
         
         if (isNaN(numValue)) continue;
@@ -543,7 +543,7 @@ export default function SnapshotView({
                           {dates.map(date => {
                             const value = dataByAthlete[athlete.id][date];
                             const isPR = value !== undefined && pr !== undefined && value === pr;
-                            const key = `${athlete.id}-${metric.id}-${date}`;
+                            const key = `${athlete.id}|||${metric.id}|||${date}`;
                             const editedValue = editedValues[key];
                             const displayValue = editedValue !== undefined ? editedValue : value;
                             
