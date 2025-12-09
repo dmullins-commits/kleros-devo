@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Save, Crown, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { X, Save, User, Crown, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { ClassPeriod } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -272,22 +272,28 @@ export default function AthleteForm({ athlete, teams, onSubmit, onCancel }) {
             <div className="space-y-3">
               <Label className="text-amber-300 font-bold">ASSIGNED TEAMS * (Select all that apply)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-black/50 border-2 border-amber-400/30 rounded-lg max-h-48 overflow-y-auto">
-                {teams.map(team => (
-                  <div key={team.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`team-${team.id}`}
-                      checked={formData.team_ids?.includes(team.id)}
-                      onCheckedChange={() => handleTeamToggle(team.id)}
-                      className="border-2 border-amber-400/50 data-[state=checked]:bg-amber-400 data-[state=checked]:border-amber-400"
-                    />
-                    <label
-                      htmlFor={`team-${team.id}`}
-                      className="text-sm text-amber-200 cursor-pointer font-semibold"
-                    >
-                      {team.name}
-                    </label>
+                {teams && teams.length > 0 ? (
+                  teams.map(team => (
+                    <div key={team.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`team-${team.id}`}
+                        checked={formData.team_ids?.includes(team.id)}
+                        onCheckedChange={() => handleTeamToggle(team.id)}
+                        className="border-2 border-amber-400/50 data-[state=checked]:bg-amber-400 data-[state=checked]:border-amber-400"
+                      />
+                      <label
+                        htmlFor={`team-${team.id}`}
+                        className="text-sm text-amber-200 cursor-pointer font-semibold"
+                      >
+                        {team.name}
+                      </label>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-4">
+                    <p className="text-amber-400/60 font-semibold">No teams available. Please create a team first in Team Management.</p>
                   </div>
-                ))}
+                )}
               </div>
               <p className="text-xs text-amber-400/60 font-semibold">For multisport athletes, select all applicable teams</p>
             </div>
