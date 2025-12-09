@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, CheckCircle, AlertCircle, FileSpreadsheet, ArrowRight, AlertTriangle } from "lucide-react";
-import { Athlete } from "@/entities/all";
+import { Athlete, Team } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +23,38 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [duplicateActions, setDuplicateActions] = useState({}); // { rowIndex: 'skip' | 'import' }
 
+  // Get or create default team for unassigned athletes
+  useEffect(() => {
+    const ensureDefaultTeam = async () => {
+      if (!selectedOrganization) return;
+      
+      // Check if "Unassigned" team exists for this org
+      const unassignedTeam = teams.find(t => 
+        t.name === 'Unassigned' && t.organization_id === selectedOrganization.id
+      );
+      
+      if (unassignedTeam) {
+        setDefaultTeamForOrg(unassignedTeam);
+      } else {
+        // Create "Unassigned" team for this organization
+        try {
+          const newTeam = await Team.create({
+            name: 'Unassigned',
+            sport: 'General',
+            organization_id: selectedOrganization.id,
+            description: 'Default team for athletes without assigned teams'
+          });
+          setDefaultTeamForOrg(newTeam);
+        } catch (error) {
+          console.error('Error creating default team:', error);
+        }
+      }
+    };
+    
+    if (open && selectedOrganization) {
+      ensureDefaultTeam();
+    }
+  }, [open, selectedOrganization, teams]);
 
   const athleteFields = [
     { key: 'first_name', label: 'First Name', required: true },
