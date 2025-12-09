@@ -329,6 +329,7 @@ export default function Athletes() {
           onOpenChange={setShowCSVUpload}
           teams={teams}
           classPeriods={classPeriods}
+          selectedOrganization={selectedOrganization}
           onUploadComplete={loadData}
         />
 
