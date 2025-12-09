@@ -21,6 +21,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   const [duplicateWarnings, setDuplicateWarnings] = useState([]);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [duplicateActions, setDuplicateActions] = useState({}); // { rowIndex: 'skip' | 'import' }
+  const [defaultTeamId, setDefaultTeamId] = useState(teams.length > 0 ? teams[0].id : '');
 
   const athleteFields = [
     { key: 'first_name', label: 'First Name', required: true },
@@ -147,24 +148,21 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
 
           if (athleteData.first_name && athleteData.last_name) {
             // Match team from the already-filtered teams prop (org-specific)
-            const team = athleteData.team_name 
-              ? teams.find(t => t.name.toLowerCase().trim() === athleteData.team_name.toLowerCase().trim()) 
-              : null;
+            let teamId = null;
+            if (athleteData.team_name) {
+              const team = teams.find(t => t.name.toLowerCase().trim() === athleteData.team_name.toLowerCase().trim());
+              teamId = team ? team.id : defaultTeamId;
+            } else {
+              teamId = defaultTeamId;
+            }
             
             parsedAthletes.push({
-              pin: athleteData.pin || '',
               first_name: athleteData.first_name,
               last_name: athleteData.last_name,
-              email: athleteData.email || '',
               class_grade: athleteData.class_grade || '',
               gender: athleteData.gender || '',
-              position: athleteData.position || '',
-              jersey_number: athleteData.jersey_number ? parseInt(athleteData.jersey_number) : null,
-              team_ids: team ? [team.id] : [],
-              class_period: athleteData.class_period || '',
-              height: athleteData.height ? parseFloat(athleteData.height) : null,
-              weight: athleteData.weight ? parseFloat(athleteData.weight) : null,
-              status: athleteData.status || 'active'
+              team_ids: teamId ? [teamId] : [],
+              status: 'active'
             });
           }
         }
@@ -338,6 +336,27 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
                     </Select>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <label className="text-sm font-semibold text-white mb-3 block">
+                  Default Team Assignment
+                </label>
+                <Select value={defaultTeamId} onValueChange={setDefaultTeamId}>
+                  <SelectTrigger className="bg-black/50 border-amber-400/30 text-white focus:border-amber-500">
+                    <SelectValue placeholder="Select default team..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-950 border-gray-700">
+                    {teams.map(team => (
+                      <SelectItem key={team.id} value={team.id} className="text-white hover:bg-gray-800">
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-400 mt-2">
+                  All athletes will be assigned to this team (used when team name doesn't match or is missing)
+                </p>
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-700">
