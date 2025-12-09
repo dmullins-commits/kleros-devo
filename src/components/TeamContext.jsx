@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Team, Organization } from "@/entities/all";
+import { Team, Organization, PendingUser } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 
@@ -30,6 +30,10 @@ export const TeamProvider = ({ children }) => {
     try {
       setIsLoading(true);
       const user = await base44.auth.me();
+      
+      // Check for pending user profile and apply settings
+      await checkAndApplyPendingProfile(user);
+      
       setCurrentUser(user);
 
       // If user has an organization_id assigned, they can only access that org
@@ -106,6 +110,30 @@ export const TeamProvider = ({ children }) => {
       console.error('Error loading data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkAndApplyPendingProfile = async (user) => {
+    try {
+      const pendingProfiles = await PendingUser.filter({ email: user.email, is_matched: false });
+      
+      if (pendingProfiles.length > 0) {
+        const profile = pendingProfiles[0];
+        
+        // Apply settings from pending profile to actual user
+        await base44.auth.updateMe({
+          first_name: profile.first_name || user.first_name,
+          last_name: profile.last_name || user.last_name,
+          user_role: profile.user_role,
+          organization_id: profile.organization_ids?.[0],
+          organization_ids: profile.organization_ids
+        });
+        
+        // Mark as matched
+        await PendingUser.update(profile.id, { is_matched: true });
+      }
+    } catch (error) {
+      console.error('Error checking pending profile:', error);
     }
   };
 
