@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,13 +21,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   const [duplicateWarnings, setDuplicateWarnings] = useState([]);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [duplicateActions, setDuplicateActions] = useState({}); // { rowIndex: 'skip' | 'import' }
-  const [defaultTeamId, setDefaultTeamId] = useState(teams[0]?.id || '');
-  
-  useEffect(() => {
-    if (teams.length > 0 && !defaultTeamId) {
-      setDefaultTeamId(teams[0].id);
-    }
-  }, [teams]);
+
 
   const athleteFields = [
     { key: 'first_name', label: 'First Name', required: true },
@@ -154,12 +148,12 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
 
           if (athleteData.first_name && athleteData.last_name) {
             // Match team from the already-filtered teams prop (org-specific)
-            let teamId = null;
+            let teamIds = [];
             if (athleteData.team_name) {
               const team = teams.find(t => t.name.toLowerCase().trim() === athleteData.team_name.toLowerCase().trim());
-              teamId = team ? team.id : defaultTeamId;
-            } else {
-              teamId = defaultTeamId;
+              if (team) {
+                teamIds = [team.id];
+              }
             }
             
             parsedAthletes.push({
@@ -167,7 +161,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
               last_name: athleteData.last_name,
               class_grade: athleteData.class_grade || '',
               gender: athleteData.gender || '',
-              team_ids: teamId ? [teamId] : [],
+              team_ids: teamIds,
               status: 'active'
             });
           }
@@ -228,7 +222,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
 
         setUploadStatus({
           type: results.errors.length === 0 ? "success" : "partial",
-          message: `Successfully imported ${results.success} athletes to ${teams.find(t => t.id === defaultTeamId)?.name || 'selected team'}${results.skipped > 0 ? `, skipped ${results.skipped} duplicates` : ''}${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
+          message: `Successfully imported ${results.success} athletes${results.skipped > 0 ? `, skipped ${results.skipped} duplicates` : ''}${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}. Athletes without teams can be filtered and reassigned.`,
           errors: results.errors
         });
 
@@ -345,27 +339,6 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
                     </Select>
                   </div>
                 ))}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-700">
-                <label className="text-sm font-semibold text-white mb-3 block">
-                  Default Team Assignment
-                </label>
-                <Select value={defaultTeamId} onValueChange={setDefaultTeamId}>
-                  <SelectTrigger className="bg-black/50 border-amber-400/30 text-white focus:border-amber-500">
-                    <SelectValue placeholder="Select default team..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-950 border-gray-700">
-                    {teams.map(team => (
-                      <SelectItem key={team.id} value={team.id} className="text-white hover:bg-gray-800">
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-400 mt-2">
-                  All athletes will be assigned to this team (used when team name doesn't match or is missing)
-                </p>
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-700">
@@ -488,7 +461,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
             </Button>
             <Button
             onClick={handleUpload}
-            disabled={!file || !showMapping || isUploading || !defaultTeamId}
+            disabled={!file || !showMapping || isUploading}
             className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold"
             >
               {isUploading ? (
