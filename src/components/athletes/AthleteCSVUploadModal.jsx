@@ -154,7 +154,10 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
           });
 
           if (athleteData.first_name && athleteData.last_name) {
-            const team = athleteData.team_name ? teams.find(t => t.name.toLowerCase() === athleteData.team_name.toLowerCase()) : null;
+            // Match team from the already-filtered teams prop (org-specific)
+            const team = athleteData.team_name 
+              ? teams.find(t => t.name.toLowerCase().trim() === athleteData.team_name.toLowerCase().trim()) 
+              : null;
             
             parsedAthletes.push({
               pin: athleteData.pin || '',
