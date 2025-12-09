@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Users, Shield, Building2, Pencil, Search, 
+  Users, Plus, Shield, Building2, Pencil, Search, 
   Crown, UserCog, Briefcase, User as UserIcon 
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +52,9 @@ export default function ManageUsers() {
       
       const normalizedOrgs = orgsData.map(o => ({
         id: o.id,
-        ...o.data
+        ...o.data,
+        ...o,
+        name: o.data?.name || o.name
       }));
       
       setUsers(normalizedUsers);
