@@ -8,52 +8,27 @@ import { Input } from "@/components/ui/input";
 import { MetricRecord } from "@/entities/all";
 
 export default function SnapshotView({ 
-  athletes, 
+  athletes, // Pre-filtered by parent
   metrics, 
   records, 
   teams, 
   classPeriods,
   onBack 
 }) {
-  const [filterType, setFilterType] = useState(""); // "team" or "class"
-  const [selectedFilterId, setSelectedFilterId] = useState("");
   const [selectedMetricIds, setSelectedMetricIds] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // When selectedFilterId changes in results view, keep the same metrics
-  useEffect(() => {
-    if (showResults && selectedFilterId && selectedMetricIds.length > 0) {
-      // Just trigger a re-render with new filtered athletes
-      // The useMemo hooks will automatically recalculate with new data
-    }
-  }, [selectedFilterId, showResults]);
-
-  // Get filtered athletes
+  // Athletes are already filtered by parent component
   const filteredAthletes = useMemo(() => {
-    if (!selectedFilterId) return [];
-
-    return athletes.filter(athlete => {
-      if (filterType === "team") {
-        return athlete.team_ids?.includes(selectedFilterId);
-      }
-      if (filterType === "class") {
-        const athletePeriod = (athlete.class_period || "").toLowerCase().replace(/[^0-9a-z]/g, '');
-        const selectedPeriod = selectedFilterId.toLowerCase().replace(/[^0-9a-z]/g, '');
-        return athletePeriod === selectedPeriod || 
-               athlete.class_period === selectedFilterId ||
-               athletePeriod.replace('th', '').replace('st', '').replace('nd', '').replace('rd', '') === 
-               selectedPeriod.replace('th', '').replace('st', '').replace('nd', '').replace('rd', '');
-      }
-      return false;
-    }).sort((a, b) => {
+    return [...athletes].sort((a, b) => {
       const lastNameCompare = (a.last_name || '').localeCompare(b.last_name || '');
       if (lastNameCompare !== 0) return lastNameCompare;
       return (a.first_name || '').localeCompare(b.first_name || '');
     });
-  }, [athletes, filterType, selectedFilterId]);
+  }, [athletes]);
 
   // Get all records for selected metrics and athletes
   const snapshotData = useMemo(() => {
@@ -107,7 +82,7 @@ export default function SnapshotView({
   }, [selectedMetricIds, filteredAthletes, metrics, records]);
 
   const handleView = () => {
-    if (selectedFilterId && selectedMetricIds.length > 0) {
+    if (selectedMetricIds.length > 0) {
       setShowResults(true);
     }
   };
@@ -152,19 +127,13 @@ export default function SnapshotView({
     const link = document.createElement('a');
     link.href = url;
     
-    const filterName = filterType === "team" 
-      ? teams.find(t => t.id === selectedFilterId)?.name || 'Team'
-      : selectedFilterId;
-    
     const metricNames = snapshotData.map(d => d.metric.name).join('_');
-    link.download = `${filterName}_${metricNames}_Snapshot.csv`;
+    link.download = `Snapshot_${metricNames}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const handleReset = () => {
-    setFilterType("");
-    setSelectedFilterId("");
     setSelectedMetricIds([]);
     setShowResults(false);
     setIsEditing(false);
@@ -228,8 +197,6 @@ export default function SnapshotView({
     }
   };
 
-  const selectedTeam = teams.find(t => t.id === selectedFilterId);
-
   // Setup view
   if (!showResults) {
     return (
@@ -242,99 +209,51 @@ export default function SnapshotView({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
-            {/* Filter Type Selection */}
-            {!filterType && (
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-300">Step 1: Select Filter Type</label>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Button
-                    onClick={() => setFilterType("team")}
-                    variant="outline"
-                    className="h-16 bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:border-blue-400"
-                  >
-                    <span className="font-bold">By Team</span>
-                  </Button>
-                  <Button
-                    onClick={() => setFilterType("class")}
-                    variant="outline"
-                    className="h-16 bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:border-blue-400"
-                  >
-                    <span className="font-bold">By Class Period</span>
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Team/Class Selection */}
-            {filterType && !selectedFilterId && (
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-300">
-                  Step 2: Select {filterType === "team" ? "Team" : "Class Period"}
-                </label>
-                <Select value={selectedFilterId} onValueChange={setSelectedFilterId}>
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                    <SelectValue placeholder={`Choose a ${filterType === "team" ? "team" : "class period"}...`} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-700">
-                    {filterType === "team" ? (
-                      teams.map(team => (
-                        <SelectItem key={team.id} value={team.id} className="text-white">
-                          {team.name} - {team.sport}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      classPeriods.map(period => (
-                        <SelectItem key={period.id} value={period.name} className="text-white">
-                          {period.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="mb-4">
+              <Badge className="bg-gray-800 text-white border border-gray-700">
+                {filteredAthletes.length} Athletes Selected
+              </Badge>
+            </div>
 
             {/* Metric Selection */}
-            {selectedFilterId && (
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-300">Step 3: Select Metrics</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-900 rounded-lg border border-gray-700 max-h-96 overflow-y-auto">
-                  {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).map(metric => (
-                    <label
-                      key={metric.id}
-                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${
-                        selectedMetricIds.includes(metric.id)
-                          ? 'bg-blue-500/20 border-2 border-blue-400'
-                          : 'bg-gray-800 border-2 border-gray-700 hover:border-gray-600'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedMetricIds.includes(metric.id)}
-                        onChange={() => handleMetricToggle(metric.id)}
-                        className="mt-1 w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500"
-                      />
-                      <div className="flex-1">
-                        <div className="text-white font-semibold">{metric.name}</div>
-                        <div className="text-gray-400 text-xs">{metric.unit}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).length === 0 && (
-                  <p className="text-sm text-gray-400">No metrics available. Please create metrics first.</p>
-                )}
-                {selectedMetricIds.length > 0 && (
-                  <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/50">
-                    {selectedMetricIds.length} metric{selectedMetricIds.length !== 1 ? 's' : ''} selected
-                  </Badge>
-                )}
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-gray-300">Select Metrics</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-900 rounded-lg border border-gray-700 max-h-96 overflow-y-auto">
+                {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).map(metric => (
+                  <label
+                    key={metric.id}
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                      selectedMetricIds.includes(metric.id)
+                        ? 'bg-blue-500/20 border-2 border-blue-400'
+                        : 'bg-gray-800 border-2 border-gray-700 hover:border-gray-600'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMetricIds.includes(metric.id)}
+                      onChange={() => handleMetricToggle(metric.id)}
+                      className="mt-1 w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <div className="text-white font-semibold">{metric.name}</div>
+                      <div className="text-gray-400 text-xs">{metric.unit}</div>
+                    </div>
+                  </label>
+                ))}
               </div>
-            )}
+              {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).length === 0 && (
+                <p className="text-sm text-gray-400">No metrics available. Please create metrics first.</p>
+              )}
+              {selectedMetricIds.length > 0 && (
+                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/50">
+                  {selectedMetricIds.length} metric{selectedMetricIds.length !== 1 ? 's' : ''} selected
+                </Badge>
+              )}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
-              {(filterType || selectedFilterId || selectedMetricIds.length > 0) && (
+              {selectedMetricIds.length > 0 && (
                 <Button
                   variant="outline"
                   onClick={handleReset}
@@ -343,16 +262,7 @@ export default function SnapshotView({
                   Reset
                 </Button>
               )}
-              {filterType && !selectedFilterId && (
-                <Button
-                  variant="outline"
-                  onClick={() => setFilterType("")}
-                  className="border-gray-700 text-gray-300"
-                >
-                  Back
-                </Button>
-              )}
-              {selectedFilterId && selectedMetricIds.length > 0 && (
+              {selectedMetricIds.length > 0 && (
                 <Button
                   onClick={handleView}
                   className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
@@ -393,44 +303,17 @@ export default function SnapshotView({
         <CardContent className="p-6">
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white mb-3">
-                Performance Snapshot
-              </h2>
-              <div className="flex flex-wrap gap-3 mb-4">
-                <Badge className="bg-gray-800 text-white border border-gray-700">
-                  {filteredAthletes.length} Athletes
-                </Badge>
-                <Badge className="bg-gray-800 text-white border border-gray-700">
-                  {selectedMetricIds.length} Metric{selectedMetricIds.length !== 1 ? 's' : ''}
-                </Badge>
-              </div>
-              
-              {/* Filter Toggle Dropdown */}
-              <div className="max-w-sm">
-                <label className="text-sm font-semibold text-gray-300 mb-2 block">
-                  Switch {filterType === "team" ? "Team" : "Class Period"}
-                </label>
-                <Select value={selectedFilterId} onValueChange={setSelectedFilterId}>
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-700">
-                    {filterType === "team" ? (
-                      teams.map(team => (
-                        <SelectItem key={team.id} value={team.id} className="text-white">
-                          {team.name} - {team.sport}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      classPeriods.map(period => (
-                        <SelectItem key={period.id} value={period.name} className="text-white">
-                          {period.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Performance Snapshot
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              <Badge className="bg-gray-800 text-white border border-gray-700">
+                {filteredAthletes.length} Athletes
+              </Badge>
+              <Badge className="bg-gray-800 text-white border border-gray-700">
+                {selectedMetricIds.length} Metric{selectedMetricIds.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
             </div>
             
             <div className="flex gap-3">
