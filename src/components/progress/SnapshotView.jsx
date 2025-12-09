@@ -2,8 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, Grid3X3 } from "lucide-react";
+import { FileDown, Grid3X3, Edit, Save, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { MetricRecord } from "@/entities/all";
 
 export default function SnapshotView({ 
   athletes, 
@@ -17,6 +19,9 @@ export default function SnapshotView({
   const [selectedFilterId, setSelectedFilterId] = useState("");
   const [selectedMetricIds, setSelectedMetricIds] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedValues, setEditedValues] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   // When selectedFilterId changes in results view, keep the same metrics
   useEffect(() => {
@@ -162,6 +167,65 @@ export default function SnapshotView({
     setSelectedFilterId("");
     setSelectedMetricIds([]);
     setShowResults(false);
+    setIsEditing(false);
+    setEditedValues({});
+  };
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Cancel editing
+      setEditedValues({});
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleValueEdit = (athleteId, metricId, date, value) => {
+    const key = `${athleteId}-${metricId}-${date}`;
+    setEditedValues(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Process edited values
+      for (const [key, value] of Object.entries(editedValues)) {
+        const [athleteId, metricId, date] = key.split('-');
+        const numValue = parseFloat(value);
+        
+        if (isNaN(numValue)) continue;
+
+        // Find existing record
+        const existingRecord = records.find(r => 
+          r.athlete_id === athleteId && 
+          r.metric_id === metricId && 
+          r.recorded_date === date
+        );
+
+        if (existingRecord) {
+          // Update existing record
+          await MetricRecord.update(existingRecord.id, { value: numValue });
+        } else {
+          // Create new record
+          await MetricRecord.create({
+            athlete_id: athleteId,
+            metric_id: metricId,
+            value: numValue,
+            recorded_date: date
+          });
+        }
+      }
+
+      // Refresh data - trigger parent reload
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving records:', error);
+      alert('Error saving changes. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const selectedTeam = teams.find(t => t.id === selectedFilterId);
@@ -370,20 +434,59 @@ export default function SnapshotView({
             </div>
             
             <div className="flex gap-3">
-              <Button
-                onClick={handleExportCSV}
-                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold"
-              >
-                <FileDown className="w-4 h-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowResults(false)}
-                className="border-gray-700 text-gray-300"
-              >
-                Back
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSaving || Object.keys(editedValues).length === 0}
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleEditToggle}
+                    variant="outline"
+                    className="border-gray-700 text-gray-300"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleEditToggle}
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={handleExportCSV}
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold"
+                  >
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowResults(false)}
+                    className="border-gray-700 text-gray-300"
+                  >
+                    Back
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
@@ -440,11 +543,14 @@ export default function SnapshotView({
                           {dates.map(date => {
                             const value = dataByAthlete[athlete.id][date];
                             const isPR = value !== undefined && pr !== undefined && value === pr;
+                            const key = `${athlete.id}-${metric.id}-${date}`;
+                            const editedValue = editedValues[key];
+                            const displayValue = editedValue !== undefined ? editedValue : value;
                             
                             return (
                               <td 
                                 key={`${athlete.id}-${metric.id}-${date}`} 
-                                className={`p-3 text-center font-mono font-semibold border-r border-gray-800 ${
+                                className={`p-2 text-center font-mono font-semibold border-r border-gray-800 ${
                                   isPR 
                                     ? 'bg-yellow-400 text-black' 
                                     : value !== undefined 
@@ -452,7 +558,18 @@ export default function SnapshotView({
                                       : ''
                                 }`}
                               >
-                                {value !== undefined ? value.toFixed(metric.decimal_places ?? 2) : '-'}
+                                {isEditing ? (
+                                  <Input
+                                    type="number"
+                                    step={metric.decimal_places === 0 ? '1' : `0.${'0'.repeat(metric.decimal_places - 1)}1`}
+                                    value={displayValue !== undefined ? displayValue : ''}
+                                    onChange={(e) => handleValueEdit(athlete.id, metric.id, date, e.target.value)}
+                                    className="w-20 h-8 text-center bg-gray-800 border-gray-700 text-white font-mono"
+                                    placeholder="-"
+                                  />
+                                ) : (
+                                  displayValue !== undefined ? displayValue.toFixed(metric.decimal_places ?? 2) : '-'
+                                )}
                               </td>
                             );
                           })}
