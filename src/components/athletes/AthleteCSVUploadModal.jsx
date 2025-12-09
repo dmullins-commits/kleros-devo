@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,7 +21,13 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   const [duplicateWarnings, setDuplicateWarnings] = useState([]);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [duplicateActions, setDuplicateActions] = useState({}); // { rowIndex: 'skip' | 'import' }
-  const [defaultTeamId, setDefaultTeamId] = useState(teams.length > 0 ? teams[0].id : '');
+  const [defaultTeamId, setDefaultTeamId] = useState('');
+  
+  useEffect(() => {
+    if (teams.length > 0 && !defaultTeamId) {
+      setDefaultTeamId(teams[0].id);
+    }
+  }, [teams, defaultTeamId]);
 
   const athleteFields = [
     { key: 'first_name', label: 'First Name', required: true },
@@ -222,12 +228,15 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
 
         setUploadStatus({
           type: results.errors.length === 0 ? "success" : "partial",
-          message: `Successfully imported ${results.success} athletes${results.skipped > 0 ? `, skipped ${results.skipped} duplicates` : ''}${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
+          message: `Successfully imported ${results.success} athletes to ${teams.find(t => t.id === defaultTeamId)?.name || 'selected team'}${results.skipped > 0 ? `, skipped ${results.skipped} duplicates` : ''}${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
           errors: results.errors
         });
 
         if (results.success > 0) {
-          onUploadComplete();
+          // Small delay to ensure database writes complete
+          setTimeout(() => {
+            onUploadComplete();
+          }, 1000);
         }
         setIsUploading(false);
       };
@@ -478,9 +487,9 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
               Cancel
             </Button>
             <Button
-              onClick={handleUpload}
-              disabled={!file || !showMapping || isUploading}
-              className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold"
+            onClick={handleUpload}
+            disabled={!file || !showMapping || isUploading || !defaultTeamId}
+            className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold"
             >
               {isUploading ? (
                 <>
