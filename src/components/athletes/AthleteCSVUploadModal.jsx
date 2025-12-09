@@ -218,9 +218,9 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
             await Athlete.create(athleteRecord);
             results.success++;
             
-            // Add small delay between creates to avoid rate limiting
+            // Add delay between creates to avoid rate limiting
             if (i < parsedAthletes.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
           } catch (error) {
             results.errors.push(`Row ${i + 2}: ${error.message}`);
