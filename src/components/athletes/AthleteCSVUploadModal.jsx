@@ -23,19 +23,11 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   const [duplicateActions, setDuplicateActions] = useState({}); // { rowIndex: 'skip' | 'import' }
 
   const athleteFields = [
-    { key: 'pin', label: 'PIN (4 digits)', required: false },
     { key: 'first_name', label: 'First Name', required: true },
     { key: 'last_name', label: 'Last Name', required: true },
-    { key: 'email', label: 'Email', required: false },
     { key: 'class_grade', label: 'Class/Grade', required: false },
     { key: 'gender', label: 'Gender', required: false },
-    { key: 'position', label: 'Position', required: false },
-    { key: 'jersey_number', label: 'Jersey Number', required: false },
-    { key: 'team_name', label: 'Team Name', required: false },
-    { key: 'class_period', label: 'Class Period', required: false },
-    { key: 'height', label: 'Height (inches)', required: false },
-    { key: 'weight', label: 'Weight (lbs)', required: false },
-    { key: 'status', label: 'Status', required: false }
+    { key: 'team_name', label: 'Assigned Team', required: false }
   ];
 
   const checkForDuplicates = async (parsedAthletes) => {
