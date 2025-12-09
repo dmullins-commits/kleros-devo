@@ -47,9 +47,9 @@ export default function Metrics() {
         MetricCategory.list()
       ]);
       
-      // Filter metrics by organization (system metrics + org metrics)
+      // Filter metrics by organization (only org-specific metrics)
       const filteredMetrics = metricsData.filter(m => 
-        !m.organization_id || m.organization_id === selectedOrganization.id
+        m.organization_id === selectedOrganization.id
       );
       
       // Filter athletes by org teams

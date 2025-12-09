@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, Users, Clock, GripVertical } from "lucide-react";
+import { Plus, X, Edit, Trash2, Users, Clock, GripVertical } from "lucide-react";
 import { Team, Athlete, ClassPeriod } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 
@@ -42,13 +42,27 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
   const loadData = async () => {
     setIsLoading(true);
     try {
+      const currentUser = await base44.auth.me();
       const [teamsData, athletesData, periodsData] = await Promise.all([
         Team.list(),
         Athlete.list(),
         ClassPeriod.list()
       ]);
-      setTeams(teamsData);
-      setAthletes(athletesData);
+      
+      // Filter by user's organization if assigned
+      const userOrgId = currentUser.organization_id;
+      const filteredTeams = userOrgId 
+        ? teamsData.filter(t => t.organization_id === userOrgId)
+        : teamsData;
+      
+      // Get team IDs to filter athletes
+      const teamIds = filteredTeams.map(t => t.id);
+      const filteredAthletes = athletesData.filter(a => 
+        a.team_ids?.some(tid => teamIds.includes(tid))
+      );
+      
+      setTeams(filteredTeams);
+      setAthletes(filteredAthletes);
       setClassPeriods(periodsData.sort((a, b) => a.order - b.order));
     } finally {
       setIsLoading(false);
@@ -59,10 +73,16 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
     e.preventDefault();
     setIsSaving(true);
     try {
+      const currentUser = await base44.auth.me();
+      const dataWithOrg = {
+        ...teamFormData,
+        organization_id: currentUser.organization_id
+      };
+      
       if (editingTeam) {
-        await Team.update(editingTeam.id, teamFormData);
+        await Team.update(editingTeam.id, dataWithOrg);
       } else {
-        await Team.create(teamFormData);
+        await Team.create(dataWithOrg);
         
         if (teamFormData.coach_email) {
           try {
