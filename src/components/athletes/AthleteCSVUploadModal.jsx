@@ -21,13 +21,13 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   const [duplicateWarnings, setDuplicateWarnings] = useState([]);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [duplicateActions, setDuplicateActions] = useState({}); // { rowIndex: 'skip' | 'import' }
-  const [defaultTeamId, setDefaultTeamId] = useState('');
+  const [defaultTeamId, setDefaultTeamId] = useState(teams[0]?.id || '');
   
   useEffect(() => {
     if (teams.length > 0 && !defaultTeamId) {
       setDefaultTeamId(teams[0].id);
     }
-  }, [teams, defaultTeamId]);
+  }, [teams]);
 
   const athleteFields = [
     { key: 'first_name', label: 'First Name', required: true },
