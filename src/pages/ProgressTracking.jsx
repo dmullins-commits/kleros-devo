@@ -414,14 +414,90 @@ export default function ProgressTracking() {
         )}
 
         {/* Snapshot View */}
-        {viewMode === "snapshot" && (
+        {viewMode === "snapshot" && !filterType && (
+          <Card className="bg-gray-950 border border-gray-800">
+            <CardHeader className="border-b border-gray-800">
+              <CardTitle className="text-white">
+                Select Filter Type
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <Button
+                  onClick={() => setFilterType("team")}
+                  variant="outline"
+                  className="h-20 bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:border-yellow-400 flex flex-col items-center justify-center"
+                >
+                  <Users className="w-6 h-6 mb-2 text-yellow-400" />
+                  <span className="font-bold">By Team</span>
+                </Button>
+                <Button
+                  onClick={() => setFilterType("class")}
+                  variant="outline"
+                  className="h-20 bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:border-yellow-400 flex flex-col items-center justify-center"
+                >
+                  <BarChart3 className="w-6 h-6 mb-2 text-yellow-400" />
+                  <span className="font-bold">By Class Period</span>
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setViewMode("")}
+                className="border-gray-700 text-gray-300 mt-4"
+              >
+                Back
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {viewMode === "snapshot" && filterType && !selectedFilterId && (
+          <Card className="bg-gray-950 border border-gray-800">
+            <CardHeader className="border-b border-gray-800">
+              <CardTitle className="text-white">
+                Select {filterType === "team" ? "Team" : "Class Period"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <Select value={selectedFilterId} onValueChange={setSelectedFilterId}>
+                <SelectTrigger className="w-full bg-gray-900 border-gray-700 text-white">
+                  <SelectValue placeholder={`Choose a ${filterType === "team" ? "team" : "class period"}...`} />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700">
+                  {filterType === "team" ? (
+                    availableTeams.map(team => (
+                      <SelectItem key={team.id} value={team.id} className="text-white">
+                        {team.name} - {team.sport}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    classPeriods.map(period => (
+                      <SelectItem key={period.id} value={period.name} className="text-white">
+                        {period.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="border-gray-700 text-gray-300"
+              >
+                Back
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {viewMode === "snapshot" && filterType && selectedFilterId && (
           <SnapshotView
-            athletes={athletes}
+            athletes={filteredAthletes}
             metrics={metrics}
-            records={records}
+            records={filteredRecords}
             teams={teams}
             classPeriods={classPeriods}
-            onBack={() => setViewMode("")}
+            onBack={handleBack}
           />
         )}
       </div>
