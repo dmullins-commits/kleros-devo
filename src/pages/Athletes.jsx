@@ -20,7 +20,7 @@ import BulkTeamAssignmentModal from "../components/athletes/BulkTeamAssignmentMo
 import { useAthletes, useClassPeriods, useInvalidateQueries } from "@/components/hooks/useDataQueries";
 
 export default function Athletes() {
-  const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
+  const { selectedTeamId, selectedOrganization, filteredTeams, refreshTeams } = useTeam();
   const { invalidateAthletes } = useInvalidateQueries();
   
   // Get team IDs for filtering - CRITICAL for org data isolation
@@ -100,6 +100,7 @@ export default function Athletes() {
 
   const loadData = async () => {
     invalidateAthletes();
+    await refreshTeams(); // Refresh teams to include newly created teams
     await refetchAthletes();
   };
 
