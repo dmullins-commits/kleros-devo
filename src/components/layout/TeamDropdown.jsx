@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Edit, Plus, School, Building2, Trash2 } from "lucide-react";
 import { useTeam } from "@/components/TeamContext";
+import { base44 } from "@/api/base44Client";
 import { Team, Organization } from "@/entities/all";
 import TeamEditModal from "./TeamEditModal";
 import OrganizationEditModal from "./OrganizationEditModal";
@@ -93,15 +94,10 @@ export default function TeamDropdown() {
   };
 
   const getDisplayText = () => {
-    if (selectedTeamId !== 'all' && selectedTeam) {
-      return {
-        title: selectedTeam.name,
-        subtitle: selectedTeam.sport
-      };
-    } else if (selectedOrgId !== 'all' && selectedOrganization) {
+    if (selectedOrgId !== 'all' && selectedOrganization) {
       return {
         title: selectedOrganization.name,
-        subtitle: 'ALL TEAMS'
+        subtitle: 'ORGANIZATION'
       };
     } else {
       return {
@@ -157,123 +153,65 @@ export default function TeamDropdown() {
 
           <DropdownMenuSeparator className="bg-gray-800" />
 
-          {/* Organizations with their Teams */}
+          {/* Organizations */}
           {organizations.map(org => {
             const orgTeams = teams.filter(t => t.organization_id === org.id);
             const isOrgSelected = selectedOrgId === org.id;
             
             return (
-              <div key={org.id} className="py-1">
-                {/* Organization Header */}
-                <DropdownMenuLabel 
-                  className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-800 group ${
-                    isOrgSelected && selectedTeamId === 'all' ? 'bg-amber-500/10' : ''
-                  }`}
-                  onClick={() => {
-                    selectOrganization(org.id);
-                    selectTeam('all');
-                  }}
-                >
-                  <div className="flex items-center flex-1">
-                    <Building2 className={`w-4 h-4 mr-3 ${
-                      isOrgSelected ? 'text-amber-400' : 'text-gray-500'
-                    }`} />
-                    <div className="flex-1">
-                      <div className={`font-bold text-sm ${
-                        isOrgSelected ? 'text-amber-400' : 'text-white'
-                      }`}>
-                        {org.name}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {orgTeams.length} team{orgTeams.length !== 1 ? 's' : ''}
-                      </div>
-                    </div>
+              <DropdownMenuItem
+                key={org.id}
+                onClick={() => {
+                  selectOrganization(org.id);
+                  selectTeam('all');
+                }}
+                className={`cursor-pointer px-3 py-2 group ${
+                  isOrgSelected ? 'bg-amber-500/10 text-amber-400' : 'text-white hover:bg-gray-800'
+                }`}
+              >
+                <Building2 className={`w-4 h-4 mr-3 ${
+                  isOrgSelected ? 'text-amber-400' : 'text-gray-500'
+                }`} />
+                <div className="flex-1">
+                  <div className="font-bold">{org.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {orgTeams.length} team{orgTeams.length !== 1 ? 's' : ''}
                   </div>
-                  <div className="flex gap-1">
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => handleEditOrg(org, e)}
+                    className="opacity-0 group-hover:opacity-100 hover:bg-gray-700 h-7 w-7"
+                  >
+                    <Edit className="w-3 h-3 text-gray-400" />
+                  </Button>
+                  {isAdmin && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={(e) => handleEditOrg(org, e)}
-                      className="opacity-0 group-hover:opacity-100 hover:bg-gray-700 h-7 w-7"
+                      onClick={(e) => handleDeleteOrg(org, e)}
+                      className="opacity-0 group-hover:opacity-100 hover:bg-red-600 h-7 w-7"
                     >
-                      <Edit className="w-3 h-3 text-gray-400" />
+                      <Trash2 className="w-3 h-3 text-red-400" />
                     </Button>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleDeleteOrg(org, e)}
-                        className="opacity-0 group-hover:opacity-100 hover:bg-red-600 h-7 w-7"
-                      >
-                        <Trash2 className="w-3 h-3 text-red-400" />
-                      </Button>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
-
-                {/* Teams under Organization */}
-                {orgTeams.length > 0 && (
-                  <div className="ml-6 space-y-1">
-                    {orgTeams.map(team => (
-                      <DropdownMenuItem
-                        key={team.id}
-                        onClick={() => selectTeam(team.id)}
-                        className={`cursor-pointer px-3 py-2 group ${
-                          selectedTeamId === team.id 
-                            ? 'bg-amber-500/10 text-amber-400' 
-                            : 'text-gray-300 hover:bg-gray-800'
-                        }`}
-                      >
-                        <School className="w-3 h-3 mr-3 text-amber-400" />
-                        <div className="flex-1">
-                          <div className="font-semibold text-sm">{team.name}</div>
-                          <div className="text-xs text-gray-500">{team.sport}</div>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => handleEditTeam(team, e)}
-                            className="opacity-0 group-hover:opacity-100 hover:bg-gray-700 h-6 w-6"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          {isAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => handleDeleteTeam(team, e)}
-                              className="opacity-0 group-hover:opacity-100 hover:bg-red-600 h-6 w-6"
-                            >
-                              <Trash2 className="w-3 h-3 text-red-400" />
-                            </Button>
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </DropdownMenuItem>
             );
           })}
 
           <DropdownMenuSeparator className="bg-gray-800" />
 
           {/* Add Actions */}
-          <div className="p-2 space-y-1">
+          <div className="p-2">
             <Button
               onClick={handleAddOrg}
               className="w-full justify-start bg-amber-600/10 hover:bg-amber-600/20 text-amber-400 font-bold border border-amber-600/30"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add New Organization
-            </Button>
-            <Button
-              onClick={handleAddTeam}
-              className="w-full justify-start bg-gray-800 hover:bg-gray-700 text-white font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Team
             </Button>
           </div>
         </DropdownMenuContent>

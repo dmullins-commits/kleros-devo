@@ -97,12 +97,10 @@ export const TeamProvider = ({ children }) => {
         } else if (normalizedOrgs.length > 0) {
           setSelectedOrgId('all');
         }
-        
-        if (savedTeamId && normalizedTeams.find(t => t.id === savedTeamId)) {
-          setSelectedTeamId(savedTeamId);
-        } else if (normalizedTeams.length > 0) {
-          setSelectedTeamId('all');
-        }
+
+        // Always set to 'all' - teams are for filtering only
+        setSelectedTeamId('all');
+        localStorage.removeItem('selectedTeamId');
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -127,26 +125,19 @@ export const TeamProvider = ({ children }) => {
   };
 
   const selectTeam = (teamId) => {
-    setSelectedTeamId(teamId);
-    localStorage.setItem('selectedTeamId', teamId);
-    
-    // If a specific team is selected, also set the org
-    if (teamId !== 'all') {
-      const team = teams.find(t => t.id === teamId);
-      if (team?.organization_id) {
-        setSelectedOrgId(team.organization_id);
-        localStorage.setItem('selectedOrgId', team.organization_id);
-      }
-    }
+    // Teams are now only for filtering, not context switching
+    // This function is kept for compatibility but doesn't change context
+    setSelectedTeamId('all');
+    localStorage.setItem('selectedTeamId', 'all');
   };
 
   const selectOrganization = (orgId) => {
     setSelectedOrgId(orgId);
     localStorage.setItem('selectedOrgId', orgId);
-    
-    // Reset team selection when org changes
+
+    // Teams are for filtering only, always keep 'all'
     setSelectedTeamId('all');
-    localStorage.setItem('selectedTeamId', 'all');
+    localStorage.removeItem('selectedTeamId');
   };
 
   const selectedTeam = teams.find(t => t.id === selectedTeamId);
