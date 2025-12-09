@@ -157,12 +157,32 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || !selectedOrganization) return;
 
     setIsUploading(true);
     setUploadStatus(null);
 
     try {
+      // Ensure default team exists before processing
+      let ensuredDefaultTeam = defaultTeamForOrg;
+      if (!ensuredDefaultTeam) {
+        const unassignedTeam = teams.find(t => 
+          t.name === 'Unassigned' && t.organization_id === selectedOrganization.id
+        );
+        
+        if (unassignedTeam) {
+          ensuredDefaultTeam = unassignedTeam;
+        } else {
+          ensuredDefaultTeam = await Team.create({
+            name: 'Unassigned',
+            sport: 'General',
+            organization_id: selectedOrganization.id,
+            description: 'Default team for athletes without assigned teams'
+          });
+        }
+        setDefaultTeamForOrg(ensuredDefaultTeam);
+      }
+
       const reader = new FileReader();
       reader.onload = async (e) => {
         const text = e.target.result;
@@ -181,18 +201,13 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
 
           if (athleteData.first_name && athleteData.last_name) {
             // Match team from the already-filtered teams prop (org-specific)
-            let teamIds = [];
+            let teamIds = [ensuredDefaultTeam.id]; // Always start with default team
+            
             if (athleteData.team_name) {
               const team = teams.find(t => t.name.toLowerCase().trim() === athleteData.team_name.toLowerCase().trim());
               if (team) {
                 teamIds = [team.id];
-              } else if (defaultTeamForOrg) {
-                // Team name provided but not found - use default
-                teamIds = [defaultTeamForOrg.id];
               }
-            } else if (defaultTeamForOrg) {
-              // No team name provided - use default
-              teamIds = [defaultTeamForOrg.id];
             }
             
             parsedAthletes.push({
