@@ -62,9 +62,15 @@ export default function Metrics() {
           .map(r => r.metric_id)
       );
       
-      // Filter metrics by organization - show system metrics (no org_id) + org-specific metrics
+      // Filter metrics by organization - show:
+      // 1. System metrics (no org_id)
+      // 2. Org-specific metrics (org_id matches)
+      // 3. Orphaned metrics with data for this org's athletes
       const filteredMetrics = metricsData.filter(m => {
-        return !m.organization_id || m.organization_id === selectedOrganization.id;
+        const hasMatchingOrg = m.organization_id === selectedOrganization.id;
+        const isSystemMetric = !m.organization_id;
+        const isOrphanedWithData = !m.organization_id && orgMetricsWithData.has(m.id);
+        return hasMatchingOrg || isSystemMetric || isOrphanedWithData;
       });
       
       // Filter categories by organization (system categories + org-specific)
