@@ -47,14 +47,23 @@ export default function Metrics() {
         MetricCategory.list()
       ]);
       
-      // Filter metrics by organization
-      // Include metrics with matching org_id OR metrics without org_id that have records
+      // Filter athletes by org teams FIRST
+      const filteredAthletes = athletesData.filter(a =>
+        a.team_ids?.some(tid => teamIds.includes(tid))
+      );
+      
+      // Get athlete IDs for filtering
+      const athleteIdsSet = new Set(filteredAthletes.map(a => a.id));
+      
+      // Find which metrics have data for this org's athletes
       const orgMetricsWithData = new Set(
         recordsData
           .filter(r => athleteIdsSet.has(r.athlete_id))
           .map(r => r.metric_id)
       );
       
+      // Filter metrics by organization
+      // Include metrics with matching org_id OR metrics without org_id that have records
       const filteredMetrics = metricsData.filter(m => {
         const hasMatchingOrg = m.organization_id === selectedOrganization.id;
         const isOrphanedWithData = !m.organization_id && orgMetricsWithData.has(m.id);
