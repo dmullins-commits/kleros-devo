@@ -187,13 +187,20 @@ export function useMetricCategories(orgId = null, options = {}) {
 }
 
 // Class Periods query hook
-export function useClassPeriods(options = {}) {
+export function useClassPeriods(orgId = null, options = {}) {
   return useQuery({
     queryKey: queryKeys.classPeriods(),
     queryFn: async () => {
       const data = await ClassPeriod.list();
-      const normalized = data.map(cp => normalizeEntity(cp, ['name', 'order', 'is_active']));
-      return normalized.sort((a, b) => (a.order || 0) - (b.order || 0));
+      const normalized = data.map(cp => normalizeEntity(cp, ['name', 'order', 'is_active', 'organization_id']));
+      
+      // CRITICAL: Filter by organization to enforce data isolation
+      let filtered = normalized;
+      if (orgId && orgId !== 'all') {
+        filtered = normalized.filter(cp => cp.organization_id === orgId);
+      }
+      
+      return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     ...options,

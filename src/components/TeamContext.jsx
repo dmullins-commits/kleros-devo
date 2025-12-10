@@ -79,13 +79,14 @@ export const TeamProvider = ({ children }) => {
           return;
         }
 
+        // Load ALL teams but we'll filter them per organization in filteredTeams
         const teamsData = await Team.list();
         const normalizedTeams = teamsData.map(t => {
           // Handle both flat and nested data structures
           if (t.data && typeof t.data === 'object') {
             return { id: t.id, ...t.data };
           }
-          return { id: t.id, name: t.name, ...t };
+          return { id: t.id, name: t.name, sport: t.sport, organization_id: t.organization_id, ...t };
         });
         setTeams(normalizedTeams);
         
@@ -144,9 +145,10 @@ export const TeamProvider = ({ children }) => {
   const selectedOrganization = organizations.find(o => o.id === selectedOrgId);
   
   // Get teams filtered by selected organization
+  // CRITICAL: Only show teams that belong to the selected organization
   const filteredTeams = selectedOrgId === 'all' 
-    ? teams 
-    : teams.filter(t => (t.organization_id || t.data?.organization_id) === selectedOrgId);
+    ? [] // Don't show any teams if 'all' is selected to prevent cross-org data leakage
+    : teams.filter(t => t.organization_id === selectedOrgId);
 
   const value = {
     teams,

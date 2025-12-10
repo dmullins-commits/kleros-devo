@@ -30,7 +30,7 @@ export default function Athletes() {
   const { data: allAthletes = [], isLoading: athletesLoading, refetch: refetchAthletes } = useAthletes(
     teamIds.length > 0 ? teamIds : []
   );
-  const { data: classPeriods = [] } = useClassPeriods();
+  const { data: classPeriods = [] } = useClassPeriods(selectedOrganization?.id);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
