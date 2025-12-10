@@ -126,8 +126,13 @@ export default function ProgressTracking() {
       });
       setRecords(normalizedRecords);
       
-      // Normalize class periods
-      const normalizedClassPeriods = classPeriodsData.map(cp => ({
+      // Filter and normalize class periods by org
+      const orgClassPeriods = classPeriodsData.filter(cp => {
+        const cpOrgId = cp.data?.organization_id || cp.organization_id;
+        return cpOrgId === selectedOrganization.id;
+      });
+      
+      const normalizedClassPeriods = orgClassPeriods.map(cp => ({
         id: cp.id,
         ...cp.data,
         ...cp,
@@ -492,9 +497,9 @@ export default function ProgressTracking() {
 
         {viewMode === "snapshot" && filterType && selectedFilterId && (
           <SnapshotView
-            athletes={filteredAthletes}
+            athletes={athletes}
             metrics={metrics}
-            records={filteredRecords}
+            records={records}
             teams={teams}
             classPeriods={classPeriods}
             onBack={handleBack}
