@@ -59,13 +59,10 @@ export default function TestingCenter() {
           .map(r => r.data?.metric_id || r.metric_id)
       );
       
-      // Filter metrics: system (no org_id) + org-specific + orphaned with data
+      // Filter metrics: ONLY show metrics belonging to this organization
       const orgMetrics = metricsData.filter(m => {
         const metricOrgId = m.data?.organization_id || m.organization_id;
-        const hasMatchingOrg = metricOrgId === selectedOrganization.id;
-        const isSystemMetric = !metricOrgId;
-        const isOrphanedWithData = !metricOrgId && orgMetricsWithData.has(m.id);
-        return hasMatchingOrg || isSystemMetric || isOrphanedWithData;
+        return metricOrgId === selectedOrganization.id;
       });
       
       // Normalize metrics
