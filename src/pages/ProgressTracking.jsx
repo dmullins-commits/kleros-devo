@@ -78,11 +78,11 @@ export default function ProgressTracking() {
       }));
       setAthletes(normalizedAthletes);
       
-      // Filter metrics by org (system + org-specific)
-      const orgMetrics = metricsData.filter(m =>
-        !m.organization_id || m.organization_id === selectedOrganization.id ||
-        !m.data?.organization_id || m.data?.organization_id === selectedOrganization.id
-      );
+      // Filter metrics by org - ONLY org-specific metrics
+      const orgMetrics = metricsData.filter(m => {
+        const metricOrgId = m.data?.organization_id || m.organization_id;
+        return metricOrgId === selectedOrganization.id;
+      });
       
       // Normalize metrics - data is in nested 'data' object  
       const normalizedMetrics = orgMetrics.map(m => ({
