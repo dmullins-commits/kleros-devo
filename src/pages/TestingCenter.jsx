@@ -48,17 +48,6 @@ export default function TestingCenter() {
         (a.data?.team_ids || a.team_ids || []).some(tid => teamIds.includes(tid))
       );
       
-      // Get athlete IDs for filtering metrics
-      const athleteIdsSet = new Set(orgAthletes.map(a => a.id));
-      
-      // Load all records to see which metrics have data for this org
-      const recordsData = await MetricRecord.list();
-      const orgMetricsWithData = new Set(
-        recordsData
-          .filter(r => athleteIdsSet.has(r.data?.athlete_id || r.athlete_id))
-          .map(r => r.data?.metric_id || r.metric_id)
-      );
-      
       // Filter metrics: ONLY show metrics belonging to this organization
       const orgMetrics = metricsData.filter(m => {
         const metricOrgId = m.data?.organization_id || m.organization_id;
