@@ -60,6 +60,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
     { key: 'first_name', label: 'First Name', required: true },
     { key: 'last_name', label: 'Last Name', required: true },
     { key: 'class_grade', label: 'Class/Grade', required: false },
+    { key: 'class_period', label: 'Class Period', required: false },
     { key: 'gender', label: 'Gender', required: false },
     { key: 'team_name', label: 'Assigned Team', required: false }
   ];
@@ -214,6 +215,7 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
               first_name: athleteData.first_name,
               last_name: athleteData.last_name,
               class_grade: athleteData.class_grade || '',
+              class_period: athleteData.class_period || '',
               gender: athleteData.gender || '',
               team_ids: teamIds,
               status: 'active'
