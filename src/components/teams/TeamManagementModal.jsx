@@ -9,8 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, X, Edit, Trash2, Users, Clock, GripVertical } from "lucide-react";
 import { Team, Athlete, ClassPeriod } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
+import { useTeam } from "@/components/TeamContext";
 
 export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated }) {
+  const { selectedOrganization } = useTeam();
   const [teams, setTeams] = useState([]);
   const [athletes, setAthletes] = useState([]);
   const [classPeriods, setClassPeriods] = useState([]);
@@ -40,20 +42,18 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
   }, [open]);
 
   const loadData = async () => {
+    if (!selectedOrganization) return;
+    
     setIsLoading(true);
     try {
-      const currentUser = await base44.auth.me();
       const [teamsData, athletesData, periodsData] = await Promise.all([
         Team.list(),
         Athlete.list(),
         ClassPeriod.list()
       ]);
       
-      // Filter by user's organization if assigned
-      const userOrgId = currentUser.organization_id;
-      const filteredTeams = userOrgId 
-        ? teamsData.filter(t => t.organization_id === userOrgId)
-        : teamsData;
+      // Filter by selected organization - CRITICAL for data isolation
+      const filteredTeams = teamsData.filter(t => t.organization_id === selectedOrganization.id);
       
       // Get team IDs to filter athletes
       const teamIds = filteredTeams.map(t => t.id);
@@ -61,10 +61,8 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
         a.team_ids?.some(tid => teamIds.includes(tid))
       );
       
-      // Filter class periods by organization
-      const filteredPeriods = userOrgId
-        ? periodsData.filter(p => p.organization_id === userOrgId)
-        : periodsData;
+      // Filter class periods by selected organization
+      const filteredPeriods = periodsData.filter(p => p.organization_id === selectedOrganization.id);
       
       setTeams(filteredTeams);
       setAthletes(filteredAthletes);
@@ -76,12 +74,13 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
 
   const handleTeamSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedOrganization) return;
+    
     setIsSaving(true);
     try {
-      const currentUser = await base44.auth.me();
       const dataWithOrg = {
         ...teamFormData,
-        organization_id: currentUser.organization_id
+        organization_id: selectedOrganization.id
       };
       
       if (editingTeam) {
@@ -121,12 +120,13 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
 
   const handlePeriodSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedOrganization) return;
+    
     setIsSaving(true);
     try {
-      const currentUser = await base44.auth.me();
       const dataWithOrg = {
         ...periodFormData,
-        organization_id: currentUser.organization_id
+        organization_id: selectedOrganization.id
       };
       
       if (editingPeriod) {
@@ -170,6 +170,15 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
   };
 
   const handleDeleteTeam = async (teamId) => {
+    if (!selectedOrganization) return;
+    
+    // Verify team belongs to current organization before deleting
+    const team = teams.find(t => t.id === teamId);
+    if (!team || team.organization_id !== selectedOrganization.id) {
+      alert('Cannot delete team: It does not belong to this organization.');
+      return;
+    }
+    
     if (confirm('Are you sure you want to delete this team? This action cannot be undone.')) {
       try {
         await Team.delete(teamId);
@@ -182,6 +191,15 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
   };
 
   const handleDeletePeriod = async (periodId) => {
+    if (!selectedOrganization) return;
+    
+    // Verify period belongs to current organization before deleting
+    const period = classPeriods.find(p => p.id === periodId);
+    if (!period || period.organization_id !== selectedOrganization.id) {
+      alert('Cannot delete class period: It does not belong to this organization.');
+      return;
+    }
+    
     if (confirm('Are you sure you want to delete this class period? Athletes assigned to this period will need to be reassigned.')) {
       try {
         await ClassPeriod.delete(periodId);
