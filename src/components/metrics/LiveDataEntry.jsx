@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clipboard, Play, Save, ArrowUpDown, CheckCircle, Trophy, Medal, Award, Check, UserPlus } from "lucide-react";
+import { Clipboard, Play, Save, ArrowUpDown, CheckCircle, Trophy, Medal, Award, Check, UserPlus, Plus } from "lucide-react";
 import { Team, MetricRecord, ClassPeriod, Athlete } from "@/entities/all";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -452,9 +452,20 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
     return (
       <Card className="bg-gray-950 border border-gray-800">
         <CardHeader className="border-b border-gray-800">
-          <CardTitle className="flex items-center gap-3 text-white">
-            <Clipboard className="w-6 h-6 text-yellow-400" />
-            Setup Live Data Entry
+          <CardTitle className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-3">
+              <Clipboard className="w-6 h-6 text-yellow-400" />
+              Setup Live Data Entry
+            </div>
+            {metrics.onQuickAddMetric && (
+              <Button
+                onClick={metrics.onQuickAddMetric}
+                className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-black"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Metric
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-6">

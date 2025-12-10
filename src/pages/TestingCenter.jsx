@@ -1,34 +1,74 @@
 import React, { useState, useEffect } from "react";
-import { Metric, MetricRecord, Athlete } from "@/entities/all";
+import { Metric, MetricRecord, Athlete, MetricCategory } from "@/entities/all";
 import { Clipboard, Zap, Target, FileSpreadsheet, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTeam } from "@/components/TeamContext";
 
 import LiveDataEntry from "../components/metrics/LiveDataEntry";
 import RawDataPanel from "../components/metrics/RawDataPanel";
 import LatestLeaderboardModal from "../components/metrics/LatestLeaderboardModal";
+import QuickAddMetricModal from "../components/metrics/QuickAddMetricModal";
 
 export default function TestingCenter() {
+  const { selectedOrganization, filteredTeams } = useTeam();
   const [metrics, setMetrics] = useState([]);
   const [athletes, setAthletes] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showRawData, setShowRawData] = useState(false);
   const [showLatestLeaderboard, setShowLatestLeaderboard] = useState(false);
+  const [showQuickAddMetric, setShowQuickAddMetric] = useState(false);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedOrganization?.id]);
+  
+  const handleMetricAdded = (newMetric) => {
+    setMetrics(prev => [...prev, newMetric]);
+    setShowQuickAddMetric(false);
+  };
 
   const loadData = async () => {
+    if (!selectedOrganization) return;
+    
     setIsLoading(true);
     try {
-      const [metricsData, athletesData] = await Promise.all([
+      const [metricsData, athletesData, categoriesData] = await Promise.all([
         Metric.list(),
-        Athlete.list('-created_date', 10000)
+        Athlete.list('-created_date', 10000),
+        MetricCategory.list()
       ]);
       
-      // Normalize metrics to handle nested data structures
-      const normalizedMetrics = metricsData.map(m => ({
+      // Get team IDs for this org
+      const teamIds = filteredTeams.map(t => t.id);
+      
+      // Filter athletes by org teams
+      const orgAthletes = athletesData.filter(a => 
+        (a.data?.team_ids || a.team_ids || []).some(tid => teamIds.includes(tid))
+      );
+      
+      // Get athlete IDs for filtering metrics
+      const athleteIdsSet = new Set(orgAthletes.map(a => a.id));
+      
+      // Load all records to see which metrics have data for this org
+      const recordsData = await MetricRecord.list();
+      const orgMetricsWithData = new Set(
+        recordsData
+          .filter(r => athleteIdsSet.has(r.data?.athlete_id || r.athlete_id))
+          .map(r => r.data?.metric_id || r.metric_id)
+      );
+      
+      // Filter metrics: org-specific OR orphaned with data
+      const orgMetrics = metricsData.filter(m => {
+        const metricOrgId = m.data?.organization_id || m.organization_id;
+        const hasMatchingOrg = metricOrgId === selectedOrganization.id;
+        const isOrphanedWithData = !metricOrgId && orgMetricsWithData.has(m.id);
+        return hasMatchingOrg || isOrphanedWithData;
+      });
+      
+      // Normalize metrics
+      const normalizedMetrics = orgMetrics.map(m => ({
         id: m.id,
         name: m.data?.name || m.name,
         unit: m.data?.unit || m.unit,
@@ -39,8 +79,8 @@ export default function TestingCenter() {
         is_hidden: m.data?.is_hidden ?? m.is_hidden ?? false
       }));
       
-      // Normalize athletes to handle nested data structures
-      const normalizedAthletes = athletesData.map(a => ({
+      // Normalize athletes
+      const normalizedAthletes = orgAthletes.map(a => ({
         id: a.id,
         first_name: a.data?.first_name || a.first_name,
         last_name: a.data?.last_name || a.last_name,
@@ -50,8 +90,14 @@ export default function TestingCenter() {
         status: a.data?.status || a.status || 'active'
       }));
       
+      // Filter categories by org
+      const orgCategories = categoriesData.filter(c => 
+        !c.organization_id || c.is_mandatory || c.organization_id === selectedOrganization.id
+      );
+      
       setMetrics(normalizedMetrics);
       setAthletes(normalizedAthletes);
+      setCategories(orgCategories);
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +161,10 @@ export default function TestingCenter() {
         </div>
 
         <LiveDataEntry 
-          metrics={metrics}
+          metrics={{ 
+            ...metrics, 
+            onQuickAddMetric: () => setShowQuickAddMetric(true) 
+          }}
           athletes={athletes}
           onDataSaved={loadData}
           isLoading={isLoading}
@@ -132,6 +181,13 @@ export default function TestingCenter() {
             athletes={athletes}
           />
         )}
+
+        <QuickAddMetricModal
+          open={showQuickAddMetric}
+          onClose={() => setShowQuickAddMetric(false)}
+          onMetricAdded={handleMetricAdded}
+          categories={categories}
+        />
       </div>
     </div>
   );
