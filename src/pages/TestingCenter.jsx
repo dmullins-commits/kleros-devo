@@ -161,13 +161,11 @@ export default function TestingCenter() {
         </div>
 
         <LiveDataEntry 
-          metrics={{ 
-            ...metrics, 
-            onQuickAddMetric: () => setShowQuickAddMetric(true) 
-          }}
+          metrics={metrics}
           athletes={athletes}
           onDataSaved={loadData}
           isLoading={isLoading}
+          onQuickAddMetric={() => setShowQuickAddMetric(true)}
         />
 
         {showRawData && (

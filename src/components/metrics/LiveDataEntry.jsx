@@ -21,7 +21,7 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthletes, onDataSaved, isLoading }) {
+export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthletes, onDataSaved, isLoading, onQuickAddMetric }) {
   const { selectedOrganization } = useTeam();
   const [teams, setTeams] = useState([]);
   const [classPeriods, setClassPeriods] = useState([]);
@@ -457,9 +457,9 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
               <Clipboard className="w-6 h-6 text-yellow-400" />
               Setup Live Data Entry
             </div>
-            {metrics.onQuickAddMetric && (
+            {onQuickAddMetric && (
               <Button
-                onClick={metrics.onQuickAddMetric}
+                onClick={onQuickAddMetric}
                 className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-black"
               >
                 <Plus className="w-4 h-4 mr-2" />
