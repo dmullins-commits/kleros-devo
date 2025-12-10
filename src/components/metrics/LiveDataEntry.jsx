@@ -63,30 +63,40 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
   }));
 
   useEffect(() => {
-    loadTeams();
-    loadClassPeriods();
-    loadAllRecords();
-  }, []);
+    if (selectedOrganization) {
+      loadTeams();
+      loadClassPeriods();
+      loadAllRecords();
+    }
+  }, [selectedOrganization?.id]);
 
   const loadTeams = async () => {
+    if (!selectedOrganization) return;
+    
     const teamsData = await Team.list();
-    // Normalize teams to handle nested data structures
-    const normalizedTeams = teamsData.map(t => ({
-      id: t.id,
-      name: t.data?.name || t.name,
-      sport: t.data?.sport || t.sport
-    }));
+    // Normalize and filter teams by organization
+    const normalizedTeams = teamsData
+      .filter(t => (t.data?.organization_id || t.organization_id) === selectedOrganization.id)
+      .map(t => ({
+        id: t.id,
+        name: t.data?.name || t.name,
+        sport: t.data?.sport || t.sport
+      }));
     setTeams(normalizedTeams);
   };
 
   const loadClassPeriods = async () => {
+    if (!selectedOrganization) return;
+    
     const periodsData = await ClassPeriod.list();
-    // Normalize class periods to handle nested data structures
-    const normalizedPeriods = periodsData.map(p => ({
-      id: p.id,
-      name: p.data?.name || p.name,
-      order: p.data?.order ?? p.order ?? 0
-    }));
+    // Normalize and filter class periods by organization
+    const normalizedPeriods = periodsData
+      .filter(p => (p.data?.organization_id || p.organization_id) === selectedOrganization.id)
+      .map(p => ({
+        id: p.id,
+        name: p.data?.name || p.name,
+        order: p.data?.order ?? p.order ?? 0
+      }));
     setClassPeriods(normalizedPeriods.sort((a, b) => a.order - b.order));
   };
 
