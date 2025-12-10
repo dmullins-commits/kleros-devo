@@ -78,10 +78,10 @@ export default function ProgressTracking() {
       }));
       setAthletes(normalizedAthletes);
       
-      // Filter metrics by org - ONLY org-specific metrics
+      // Filter metrics by org - show system metrics (no org_id) + org-specific metrics
       const orgMetrics = metricsData.filter(m => {
         const metricOrgId = m.data?.organization_id || m.organization_id;
-        return metricOrgId === selectedOrganization.id;
+        return !metricOrgId || metricOrgId === selectedOrganization.id;
       });
       
       // Normalize metrics - data is in nested 'data' object  
