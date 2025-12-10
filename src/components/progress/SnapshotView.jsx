@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { MetricRecord } from "@/entities/all";
 
 export default function SnapshotView({ 
-  athletes, // Pre-filtered by parent
+  athletes, // All athletes from parent
   metrics, 
   records, 
   teams, 
@@ -20,15 +20,25 @@ export default function SnapshotView({
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'team', 'class'
+  const [filterValue, setFilterValue] = useState('all');
 
-  // Athletes are already filtered by parent component
+  // Filter athletes based on selected filter
   const filteredAthletes = useMemo(() => {
-    return [...athletes].sort((a, b) => {
+    let filtered = athletes;
+    
+    if (filterType === 'team' && filterValue !== 'all') {
+      filtered = athletes.filter(a => a.team_ids?.includes(filterValue));
+    } else if (filterType === 'class' && filterValue !== 'all') {
+      filtered = athletes.filter(a => a.class_period === filterValue);
+    }
+    
+    return [...filtered].sort((a, b) => {
       const lastNameCompare = (a.last_name || '').localeCompare(b.last_name || '');
       if (lastNameCompare !== 0) return lastNameCompare;
       return (a.first_name || '').localeCompare(b.first_name || '');
     });
-  }, [athletes]);
+  }, [athletes, filterType, filterValue]);
 
   // Get all records for selected metrics and athletes
   const snapshotData = useMemo(() => {
@@ -306,6 +316,56 @@ export default function SnapshotView({
             <h2 className="text-2xl font-bold text-white mb-3">
               Performance Snapshot
             </h2>
+            
+            {/* Filter Dropdown */}
+            <div className="flex gap-3 mb-4">
+              <Select value={filterType} onValueChange={(value) => {
+                setFilterType(value);
+                setFilterValue('all');
+              }}>
+                <SelectTrigger className="w-[180px] bg-gray-900 border-gray-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700">
+                  <SelectItem value="all">All Athletes</SelectItem>
+                  <SelectItem value="team">Filter by Team</SelectItem>
+                  <SelectItem value="class">Filter by Class</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {filterType === 'team' && (
+                <Select value={filterValue} onValueChange={setFilterValue}>
+                  <SelectTrigger className="w-[200px] bg-gray-900 border-gray-700 text-white">
+                    <SelectValue placeholder="Select team" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-700">
+                    <SelectItem value="all">All Teams</SelectItem>
+                    {teams.map(team => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              
+              {filterType === 'class' && (
+                <Select value={filterValue} onValueChange={setFilterValue}>
+                  <SelectTrigger className="w-[200px] bg-gray-900 border-gray-700 text-white">
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-700">
+                    <SelectItem value="all">All Classes</SelectItem>
+                    {classPeriods.map(period => (
+                      <SelectItem key={period.id} value={period.name}>
+                        {period.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            
             <div className="flex flex-wrap gap-3">
               <Badge className="bg-gray-800 text-white border border-gray-700">
                 {filteredAthletes.length} Athletes
