@@ -61,9 +61,14 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
         a.team_ids?.some(tid => teamIds.includes(tid))
       );
       
+      // Filter class periods by organization
+      const filteredPeriods = userOrgId
+        ? periodsData.filter(p => p.organization_id === userOrgId)
+        : periodsData;
+      
       setTeams(filteredTeams);
       setAthletes(filteredAthletes);
-      setClassPeriods(periodsData.sort((a, b) => a.order - b.order));
+      setClassPeriods(filteredPeriods.sort((a, b) => a.order - b.order));
     } finally {
       setIsLoading(false);
     }
@@ -118,10 +123,16 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
     e.preventDefault();
     setIsSaving(true);
     try {
+      const currentUser = await base44.auth.me();
+      const dataWithOrg = {
+        ...periodFormData,
+        organization_id: currentUser.organization_id
+      };
+      
       if (editingPeriod) {
-        await ClassPeriod.update(editingPeriod.id, periodFormData);
+        await ClassPeriod.update(editingPeriod.id, dataWithOrg);
       } else {
-        await ClassPeriod.create(periodFormData);
+        await ClassPeriod.create(dataWithOrg);
       }
       
       setShowPeriodForm(false);
