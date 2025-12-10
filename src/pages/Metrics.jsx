@@ -52,6 +52,11 @@ export default function Metrics() {
         m.organization_id === selectedOrganization.id
       );
       
+      // Filter categories by organization (system categories + org-specific)
+      const filteredCategories = categoriesData.filter(c =>
+        !c.organization_id || c.is_mandatory || c.organization_id === selectedOrganization.id
+      );
+      
       // Filter athletes by org teams
       const filteredAthletes = athletesData.filter(a =>
         a.team_ids?.some(tid => teamIds.includes(tid))
@@ -66,7 +71,7 @@ export default function Metrics() {
       setMetrics(filteredMetrics);
       setRecords(filteredRecords);
       setAthletes(filteredAthletes);
-      setCategories(categoriesData);
+      setCategories(filteredCategories);
     } finally {
       setIsLoading(false);
     }

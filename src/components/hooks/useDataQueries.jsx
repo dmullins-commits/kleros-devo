@@ -164,15 +164,22 @@ export function useRecentMetricRecords(limit = 100, options = {}) {
 }
 
 // Metric Categories query hook
-export function useMetricCategories(options = {}) {
+export function useMetricCategories(orgId = null, options = {}) {
   return useQuery({
     queryKey: queryKeys.metricCategories(),
     queryFn: async () => {
       const data = await MetricCategory.list();
       const normalized = data.map(c => normalizeEntity(c, [
-        'name', 'description', 'color', 'icon', 'order', 'is_mandatory', 'is_hidden'
+        'name', 'description', 'color', 'icon', 'order', 'is_mandatory', 'is_hidden', 'organization_id'
       ]));
-      return normalized.sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      // Show system categories (no org_id or is_mandatory) + org-specific categories
+      let filtered = normalized;
+      if (orgId && orgId !== 'all') {
+        filtered = normalized.filter(c => !c.organization_id || c.is_mandatory || c.organization_id === orgId);
+      }
+      
+      return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     ...options,
