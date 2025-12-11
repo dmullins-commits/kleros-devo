@@ -199,15 +199,15 @@ export default function Metrics() {
               <SelectTrigger className="w-64 bg-gray-900 border-amber-400/30 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700">
-                <SelectItem value="all" className="text-white font-semibold">
+              <SelectContent className="bg-gray-900 border-gray-700 text-white">
+                <SelectItem value="all" className="text-white focus:bg-white focus:text-black font-semibold">
                   All Categories
                 </SelectItem>
-                <SelectItem value="blank" className="text-gray-400 font-semibold italic">
+                <SelectItem value="blank" className="text-white focus:bg-white focus:text-black font-semibold italic">
                   No Category Assigned
                 </SelectItem>
                 {categories.sort((a, b) => a.order - b.order).map(category => (
-                  <SelectItem key={category.id} value={category.name} className="text-white">
+                  <SelectItem key={category.id} value={category.name} className="text-white focus:bg-white focus:text-black">
                     {category.name}
                   </SelectItem>
                 ))}

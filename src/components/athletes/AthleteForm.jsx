@@ -167,9 +167,9 @@ export default function AthleteForm({ athlete, teams, onSubmit, onCancel }) {
                   <SelectTrigger className="bg-black/50 border-2 border-amber-400/30 text-amber-200 focus:border-amber-400 font-semibold">
                     <SelectValue placeholder="Select period..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-950 border-2 border-amber-400/30">
+                  <SelectContent className="bg-gray-950 border-2 border-amber-400/30 text-white">
                     {classPeriods.map(period => (
-                      <SelectItem key={period.id} value={period.name} className="text-amber-200 hover:bg-amber-400/20 font-semibold">
+                      <SelectItem key={period.id} value={period.name} className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">
                         {period.name}
                       </SelectItem>
                     ))}
@@ -219,10 +219,10 @@ export default function AthleteForm({ athlete, teams, onSubmit, onCancel }) {
                   <SelectTrigger className="bg-black/50 border-2 border-amber-400/30 text-amber-200 focus:border-amber-400 font-semibold">
                     <SelectValue placeholder="Select gender..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-950 border-2 border-amber-400/30">
-                    <SelectItem value="Male" className="text-amber-200 hover:bg-amber-400/20 font-semibold">Male</SelectItem>
-                    <SelectItem value="Female" className="text-amber-200 hover:bg-amber-400/20 font-semibold">Female</SelectItem>
-                    <SelectItem value="Other" className="text-amber-200 hover:bg-amber-400/20 font-semibold">Other</SelectItem>
+                  <SelectContent className="bg-gray-950 border-2 border-amber-400/30 text-white">
+                    <SelectItem value="Male" className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">Male</SelectItem>
+                    <SelectItem value="Female" className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">Female</SelectItem>
+                    <SelectItem value="Other" className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -260,10 +260,10 @@ export default function AthleteForm({ athlete, teams, onSubmit, onCancel }) {
                   <SelectTrigger className="bg-black/50 border-2 border-amber-400/30 text-amber-200 focus:border-amber-400 font-semibold">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-950 border-2 border-amber-400/30">
-                    <SelectItem value="active" className="text-green-400 hover:bg-amber-400/20 font-semibold">Active</SelectItem>
-                    <SelectItem value="injured" className="text-red-400 hover:bg-amber-400/20 font-semibold">Injured</SelectItem>
-                    <SelectItem value="inactive" className="text-gray-400 hover:bg-amber-400/20 font-semibold">Inactive</SelectItem>
+                  <SelectContent className="bg-gray-950 border-2 border-amber-400/30 text-white">
+                    <SelectItem value="active" className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">Active</SelectItem>
+                    <SelectItem value="injured" className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">Injured</SelectItem>
+                    <SelectItem value="inactive" className="text-white focus:bg-amber-400 focus:text-black hover:bg-amber-400/20 font-semibold">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

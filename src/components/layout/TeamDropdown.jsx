@@ -183,18 +183,18 @@ export default function TeamDropdown() {
                     variant="ghost"
                     size="icon"
                     onClick={(e) => handleEditOrg(org, e)}
-                    className="opacity-0 group-hover:opacity-100 hover:bg-gray-700 h-7 w-7"
+                    className="opacity-0 group-hover:opacity-100 hover:bg-gray-700 h-7 w-7 text-white"
                   >
-                    <Edit className="w-3 h-3 text-gray-400" />
+                    <Edit className="w-3 h-3 text-white" />
                   </Button>
                   {isAdmin && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={(e) => handleDeleteOrg(org, e)}
-                      className="opacity-0 group-hover:opacity-100 hover:bg-red-600 h-7 w-7"
+                      className="opacity-0 group-hover:opacity-100 hover:bg-red-600 h-7 w-7 text-white"
                     >
-                      <Trash2 className="w-3 h-3 text-red-400" />
+                      <Trash2 className="w-3 h-3 text-white" />
                     </Button>
                   )}
                 </div>
