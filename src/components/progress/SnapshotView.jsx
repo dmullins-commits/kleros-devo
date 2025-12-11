@@ -197,6 +197,8 @@ export default function SnapshotView({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const updates = [];
+      
       // Process edited values
       for (const [key, value] of Object.entries(editedValues)) {
         const [athleteId, metricId, date] = key.split('|||');
@@ -204,26 +206,37 @@ export default function SnapshotView({
         
         if (isNaN(numValue)) continue;
 
-        // Find existing record
-        const existingRecord = records.find(r => 
-          r.athlete_id === athleteId && 
-          r.metric_id === metricId && 
-          r.recorded_date === date
-        );
+        // Find existing record - check both flat and nested structures
+        const existingRecord = records.find(r => {
+          const rAthleteId = r.athlete_id || r.data?.athlete_id;
+          const rMetricId = r.metric_id || r.data?.metric_id;
+          const rDate = r.recorded_date || r.data?.recorded_date;
+          
+          return rAthleteId === athleteId && 
+                 rMetricId === metricId && 
+                 rDate === date;
+        });
 
         if (existingRecord) {
           // Update existing record
-          await MetricRecord.update(existingRecord.id, { value: numValue });
+          updates.push(MetricRecord.update(existingRecord.id, { value: numValue }));
         } else {
           // Create new record
-          await MetricRecord.create({
+          updates.push(MetricRecord.create({
             athlete_id: athleteId,
             metric_id: metricId,
             value: numValue,
             recorded_date: date
-          });
+          }));
         }
       }
+
+      // Wait for all updates to complete
+      await Promise.all(updates);
+
+      // Clear edited values and exit edit mode
+      setEditedValues({});
+      setIsEditing(false);
 
       // Refresh data - trigger parent reload
       window.location.reload();
