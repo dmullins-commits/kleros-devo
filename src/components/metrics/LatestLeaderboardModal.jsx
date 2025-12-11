@@ -47,7 +47,20 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
 
   useEffect(() => {
     if (selectedDate && selectedMetricId && records.length > 0 && metrics.length > 0 && athletes.length > 0) {
-      generateLeaderboard();
+      // Check if selected metric has data on selected date
+      const hasData = records.some(r => r.recorded_date === selectedDate && r.metric_id === selectedMetricId);
+      if (!hasData) {
+        // Reset to first available metric for this date
+        const firstMetricWithData = metrics.find(m => 
+          !m.is_auto_calculated && 
+          records.some(r => r.recorded_date === selectedDate && r.metric_id === m.id)
+        );
+        if (firstMetricWithData) {
+          setSelectedMetricId(firstMetricWithData.id);
+        }
+      } else {
+        generateLeaderboard();
+      }
     }
   }, [selectedDate, selectedMetricId, records, metrics, athletes, groupByClassPeriod, groupByClassGrade]);
 
@@ -317,7 +330,12 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     });
   };
 
-  const selectableMetrics = metrics.filter(m => !m.is_auto_calculated);
+  // Filter metrics to only show those with data on the selected date
+  const selectableMetrics = metrics.filter(m => {
+    if (m.is_auto_calculated) return false;
+    if (!selectedDate) return true;
+    return records.some(r => r.recorded_date === selectedDate && r.metric_id === m.id);
+  });
   const selectedMetric = metrics.find(m => m.id === selectedMetricId);
 
   return (
