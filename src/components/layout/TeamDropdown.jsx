@@ -130,7 +130,7 @@ export default function TeamDropdown() {
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="start" 
-          className="w-96 max-h-[600px] overflow-y-auto bg-gray-950 border-gray-800 shadow-2xl"
+          className="w-96 max-h-[600px] overflow-y-auto bg-gray-950 border-gray-800 shadow-2xl text-white"
         >
           {/* All Organizations Option */}
           <DropdownMenuItem
