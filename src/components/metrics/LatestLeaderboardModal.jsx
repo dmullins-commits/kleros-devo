@@ -300,7 +300,8 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   };
 
   const renderLeaderboard = (data, title) => {
-    const metric = metrics.find(m => m.id === selectedMetricId);
+    const metricId = viewMode === 'alltime' ? allTimeMetricId : selectedMetricId;
+    const metric = metrics.find(m => m.id === metricId);
     if (!metric) return null;
 
     return (
@@ -358,7 +359,8 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   };
 
   const renderGroupedLeaderboards = () => {
-    const metric = metrics.find(m => m.id === selectedMetricId);
+    const metricId = viewMode === 'alltime' ? allTimeMetricId : selectedMetricId;
+    const metric = metrics.find(m => m.id === metricId);
     if (!metric) return null;
 
     const groupField = groupByClassPeriod ? 'class_period' : 'class_grade';
@@ -629,7 +631,8 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
                       <div>
                         {renderLeaderboard(
                           [...leaderboardData.male, ...leaderboardData.female].sort((a, b) => {
-                            const metric = metrics.find(m => m.id === selectedMetricId);
+                            const metricId = viewMode === 'alltime' ? allTimeMetricId : selectedMetricId;
+                            const metric = metrics.find(m => m.id === metricId);
                             return metric?.target_higher 
                               ? b.current_value - a.current_value 
                               : a.current_value - b.current_value;
