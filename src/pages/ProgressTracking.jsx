@@ -259,8 +259,8 @@ export default function ProgressTracking() {
           </div>
         )}
 
-        {/* Step 2: Filter Type Selection (Team or Class) */}
-        {viewMode && !filterType && (
+        {/* Step 2: Filter Type Selection (Team or Class) - Skip for snapshot */}
+        {viewMode && viewMode !== "snapshot" && !filterType && (
           <Card className="bg-gray-950 border border-gray-800">
             <CardHeader className="border-b border-gray-800">
               <CardTitle className="text-white">
@@ -297,8 +297,8 @@ export default function ProgressTracking() {
           </Card>
         )}
 
-        {/* Step 3: Select Team or Class */}
-        {viewMode && filterType && !selectedFilterId && (
+        {/* Step 3: Select Team or Class - Skip for snapshot */}
+        {viewMode && viewMode !== "snapshot" && filterType && !selectedFilterId && (
           <Card className="bg-gray-950 border border-gray-800">
             <CardHeader className="border-b border-gray-800">
               <CardTitle className="text-white">
