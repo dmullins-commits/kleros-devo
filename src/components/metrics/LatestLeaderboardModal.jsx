@@ -93,9 +93,9 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
       return {
         athlete_id: athlete.id,
         athlete_name: `${athlete.first_name} ${athlete.last_name}`,
-        gender: athlete.gender,
-        class_period: athlete.class_period,
-        class_grade: athlete.class_grade,
+        gender: athlete.gender || athlete.data?.gender,
+        class_period: athlete.class_period || athlete.data?.class_period,
+        class_grade: athlete.class_grade || athlete.data?.class_grade,
         current_value: pr,
         pr: pr,
         is_new_pr: false // Not applicable for all-time
@@ -142,9 +142,9 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
       return {
         athlete_id: athlete.id,
         athlete_name: `${athlete.first_name} ${athlete.last_name}`,
-        gender: athlete.gender,
-        class_period: athlete.class_period,
-        class_grade: athlete.class_grade,
+        gender: athlete.gender || athlete.data?.gender,
+        class_period: athlete.class_period || athlete.data?.class_period,
+        class_grade: athlete.class_grade || athlete.data?.class_grade,
         current_value: record.value,
         pr: pr,
         is_new_pr: isNewPR
