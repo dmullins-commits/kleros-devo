@@ -16,7 +16,6 @@ export default function SnapshotView({
   onBack 
 }) {
   const [selectedMetricIds, setSelectedMetricIds] = useState([]);
-  const [showResults, setShowResults] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -91,13 +90,7 @@ export default function SnapshotView({
     return metricsData.length > 0 ? metricsData : null;
   }, [selectedMetricIds, filteredAthletes, metrics, records]);
 
-  const handleView = () => {
-    if (selectedMetricIds.length > 0) {
-      setShowResults(true);
-      setIsEditing(false);
-      setEditedValues({});
-    }
-  };
+
 
   const handleMetricToggle = (metricId) => {
     setSelectedMetricIds(prev =>
@@ -147,7 +140,6 @@ export default function SnapshotView({
 
   const handleReset = () => {
     setSelectedMetricIds([]);
-    setShowResults(false);
     setIsEditing(false);
     setEditedValues({});
   };
@@ -209,24 +201,18 @@ export default function SnapshotView({
     }
   };
 
-  // Setup view
-  if (!showResults) {
+  // Metric selection view
+  if (selectedMetricIds.length === 0) {
     return (
       <div className="space-y-6">
         <Card className="bg-gray-950 border border-gray-800">
           <CardHeader className="border-b border-gray-800">
             <CardTitle className="flex items-center gap-3 text-white">
               <Grid3X3 className="w-6 h-6 text-blue-400" />
-              Snapshot Configuration
+              Select Metrics for Snapshot
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
-            <div className="mb-4">
-              <Badge className="bg-gray-800 text-white border border-gray-700">
-                {filteredAthletes.length} Athletes Selected
-              </Badge>
-            </div>
-
             {/* Metric Selection */}
             <div className="space-y-3">
               <label className="text-sm font-semibold text-gray-300">Select Metrics</label>
@@ -255,32 +241,6 @@ export default function SnapshotView({
               </div>
               {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).length === 0 && (
                 <p className="text-sm text-gray-400">No metrics available. Please create metrics first.</p>
-              )}
-              {selectedMetricIds.length > 0 && (
-                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/50">
-                  {selectedMetricIds.length} metric{selectedMetricIds.length !== 1 ? 's' : ''} selected
-                </Badge>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              {selectedMetricIds.length > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={handleReset}
-                  className="border-gray-700 text-gray-300"
-                >
-                  Reset
-                </Button>
-              )}
-              {selectedMetricIds.length > 0 && (
-                <Button
-                  onClick={handleView}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
-                >
-                  View Snapshot
-                </Button>
               )}
             </div>
           </CardContent>
@@ -329,9 +289,9 @@ export default function SnapshotView({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700">
-                  <SelectItem value="all">All Athletes</SelectItem>
-                  <SelectItem value="team">Filter by Team</SelectItem>
-                  <SelectItem value="class">Filter by Class</SelectItem>
+                  <SelectItem value="all" className="text-white focus:bg-white focus:text-black">All Athletes</SelectItem>
+                  <SelectItem value="team" className="text-white focus:bg-white focus:text-black">Filter by Team</SelectItem>
+                  <SelectItem value="class" className="text-white focus:bg-white focus:text-black">Filter by Class</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -341,9 +301,9 @@ export default function SnapshotView({
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
-                    <SelectItem value="all">All Teams</SelectItem>
+                    <SelectItem value="all" className="text-white focus:bg-white focus:text-black">All Teams</SelectItem>
                     {teams.map(team => (
-                      <SelectItem key={team.id} value={team.id}>
+                      <SelectItem key={team.id} value={team.id} className="text-white focus:bg-white focus:text-black">
                         {team.name}
                       </SelectItem>
                     ))}
@@ -357,9 +317,9 @@ export default function SnapshotView({
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
-                    <SelectItem value="all">All Classes</SelectItem>
+                    <SelectItem value="all" className="text-white focus:bg-white focus:text-black">All Classes</SelectItem>
                     {classPeriods.map(period => (
-                      <SelectItem key={period.id} value={period.name}>
+                      <SelectItem key={period.id} value={period.name} className="text-white focus:bg-white focus:text-black">
                         {period.name}
                       </SelectItem>
                     ))}
@@ -425,7 +385,7 @@ export default function SnapshotView({
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setShowResults(false)}
+                    onClick={handleReset}
                     className="border-gray-700 text-gray-300"
                   >
                     Back
