@@ -73,6 +73,7 @@ export default function TestingCenter() {
         last_name: a.data?.last_name || a.last_name,
         team_ids: a.data?.team_ids || a.team_ids || [],
         class_period: a.data?.class_period || a.class_period,
+        class_grade: a.data?.class_grade || a.class_grade,
         gender: a.data?.gender || a.gender,
         status: a.data?.status || a.status || 'active'
       }));
