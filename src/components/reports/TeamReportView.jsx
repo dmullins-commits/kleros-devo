@@ -203,6 +203,10 @@ export default function TeamReportView({ filterType, teamId, team, classPeriod, 
                 dataKey="date" 
                 stroke="#9ca3af"
                 tick={{ fill: '#9ca3af' }}
+                tickFormatter={(date) => {
+                  const [year, month, day] = date.split('-');
+                  return format(new Date(year, month - 1, day), "MMM d");
+                }}
               />
               <YAxis 
                 yAxisId="left"

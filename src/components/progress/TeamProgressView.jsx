@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, BarChart3 } from "lucide-react";
+import { TrendingUp, BarChart3, Users } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -110,9 +110,11 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const [year, month, day] = label.split('-');
+      const safeDate = new Date(year, month - 1, day);
       return (
         <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
-          <p className="text-white font-medium">{format(new Date(label), "MMM d, yyyy")}</p>
+          <p className="text-white font-medium">{format(safeDate, "MMM d, yyyy")}</p>
           {payload.map((entry, index) => {
             if (entry.value == null) return null;
             const metric = metrics.find(m => m.id === entry.dataKey);
@@ -194,7 +196,10 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                         dataKey="date" 
                         stroke="#9CA3AF"
                         fontSize={12}
-                        tickFormatter={(date) => format(new Date(date), "MMM d")}
+                        tickFormatter={(date) => {
+                          const [year, month, day] = date.split('-');
+                          return format(new Date(year, month - 1, day), "MMM d");
+                        }}
                       />
                       <YAxis stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
                       <Tooltip content={<CustomTooltip />} />

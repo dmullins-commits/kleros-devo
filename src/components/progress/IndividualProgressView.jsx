@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { TrendingUp, BarChart3, User, FileDown, Crown } from "lucide-react";
 import { format } from "date-fns";
 
@@ -213,9 +213,11 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const [year, month, day] = label.split('-');
+      const safeDate = new Date(year, month - 1, day);
       return (
         <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
-          <p className="text-white font-medium">{format(new Date(label), "MMM d, yyyy")}</p>
+          <p className="text-white font-medium">{format(safeDate, "MMM d, yyyy")}</p>
           {payload.map((entry, index) => {
             const metric = metrics.find(m => m.id === entry.dataKey);
             return (
@@ -416,12 +418,18 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                             <div className="stat-box text-center">
                               <div className="text-amber-400/80 text-xs uppercase mb-1 font-black">First Record</div>
                               <div className="text-white font-black">{formatValue(firstValue, metric)} {metric.unit}</div>
-                              <div className="text-amber-500/60 text-xs font-semibold">{format(new Date(firstDate), "MMM d, yyyy")}</div>
+                              <div className="text-amber-500/60 text-xs font-semibold">{(() => {
+                                const [year, month, day] = firstDate.split('-');
+                                return format(new Date(year, month - 1, day), "MMM d, yyyy");
+                              })()}</div>
                             </div>
                             <div className="stat-box text-center">
                               <div className="text-amber-400/80 text-xs uppercase mb-1 font-black">Latest</div>
                               <div className="text-amber-400 font-black">{formatValue(latestValue, metric)} {metric.unit}</div>
-                              <div className="text-amber-500/60 text-xs font-semibold">{format(new Date(latestDate), "MMM d, yyyy")}</div>
+                              <div className="text-amber-500/60 text-xs font-semibold">{(() => {
+                                const [year, month, day] = latestDate.split('-');
+                                return format(new Date(year, month - 1, day), "MMM d, yyyy");
+                              })()}</div>
                             </div>
                             <div className="stat-box text-center">
                               <div className="text-amber-400/80 text-xs uppercase mb-1 font-black">PR</div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileDown, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { FileDown, ArrowLeft, TrendingUp, TrendingDown, Star } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceDot } from "recharts";
 import { base44 } from "@/api/base44Client";
 
@@ -675,6 +675,10 @@ export default function IndividualReportView({ athlete, team, metrics, categorie
                         dataKey="date" 
                         stroke="#9ca3af"
                         tick={{ fill: '#9ca3af' }}
+                        tickFormatter={(date) => {
+                          const [year, month, day] = date.split('-');
+                          return format(new Date(year, month - 1, day), "MMM d");
+                        }}
                       />
                       <YAxis 
                         yAxisId="left"

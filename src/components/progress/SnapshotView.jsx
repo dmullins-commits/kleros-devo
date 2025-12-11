@@ -537,7 +537,10 @@ export default function SnapshotView({
                     <React.Fragment key={dates.join('-')}>
                       {dates.map(date => (
                         <th key={date} className="bg-gray-900 p-2 text-center text-white font-semibold text-xs min-w-[100px] border-r border-gray-800">
-                          {new Date(date).toLocaleDateString()}
+                          {(() => {
+                            const [year, month, day] = date.split('-');
+                            return new Date(year, month - 1, day).toLocaleDateString();
+                          })()}
                         </th>
                       ))}
                     </React.Fragment>
@@ -575,7 +578,7 @@ export default function SnapshotView({
                                       ? 'bg-black text-white' 
                                       : ''
                                 }`}
-                              >
+                                >
                                 {isEditing ? (
                                   <Input
                                     type="number"
