@@ -340,7 +340,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                           dataKey="date" 
                           stroke="#9CA3AF"
                           fontSize={12}
-                          tickFormatter={(date) => format(new Date(date), "MMM d")}
+                          tickFormatter={(date) => {
+                            const [year, month, day] = date.split('-');
+                            return format(new Date(year, month - 1, day), "MMM d");
+                          }}
                         />
                         <YAxis stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
                         <Tooltip content={<CustomTooltip />} />
