@@ -1,12 +1,57 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trophy, Medal, Award, Check, Download } from "lucide-react";
+import { Trophy, Medal, Award, Check, Download, FileSpreadsheet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function PrintableLeaderboard({ open, onClose, maleLeaderboard, femaleLeaderboard, metric, testDate }) {
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportCSV = () => {
+    const rows = [];
+    
+    // Add header
+    rows.push(['Rank', 'Name', 'Gender', 'Value', 'Previous PR', 'New PR?']);
+    
+    // Add male athletes
+    maleLeaderboard.forEach((item, index) => {
+      rows.push([
+        index + 1,
+        item.athlete_name,
+        'Male',
+        item.current_value.toFixed(metric?.decimal_places ?? 2),
+        item.pr ? item.pr.toFixed(metric?.decimal_places ?? 2) : 'N/A',
+        item.is_new_pr ? 'Yes' : 'No'
+      ]);
+    });
+    
+    // Add female athletes
+    femaleLeaderboard.forEach((item, index) => {
+      rows.push([
+        index + 1,
+        item.athlete_name,
+        'Female',
+        item.current_value.toFixed(metric?.decimal_places ?? 2),
+        item.pr ? item.pr.toFixed(metric?.decimal_places ?? 2) : 'N/A',
+        item.is_new_pr ? 'Yes' : 'No'
+      ]);
+    });
+    
+    // Convert to CSV
+    const csvContent = rows.map(row => row.join(',')).join('\n');
+    
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `leaderboard_${metric?.name}_${testDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   const renderLeaderboard = (leaderboardData, title) => {
@@ -76,13 +121,22 @@ export default function PrintableLeaderboard({ open, onClose, maleLeaderboard, f
               <Trophy className="w-6 h-6 text-yellow-400" />
               Session Leaderboard - {new Date(testDate).toLocaleDateString()}
             </div>
-            <Button
-              onClick={handlePrint}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export to PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleExportCSV}
+                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                onClick={handlePrint}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export to PDF
+              </Button>
+            </div>
           </DialogTitle>
         </DialogHeader>
 

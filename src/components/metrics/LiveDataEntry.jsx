@@ -278,23 +278,13 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
         }
         
         setSaveSuccess(true);
-        
+
         // Load records in background without triggering parent reload during testing
         loadAllRecords();
 
         setTimeout(() => {
           setShowPrintableLeaderboard(true);
         }, 1000);
-
-        setTimeout(() => {
-          setIsTestingMode(false);
-          setSelectedMetrics([]);
-          setSelectedTeamId("");
-          setSelectedClassPeriod("all");
-          setDataGrid([]);
-          // Only reload parent data after we exit testing mode
-          onDataSaved();
-        }, 2000);
       }
     } catch (error) {
       console.error('Error saving records:', error);
@@ -777,7 +767,15 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
       <PrintableLeaderboard
         open={showPrintableLeaderboard}
-        onClose={() => setShowPrintableLeaderboard(false)}
+        onClose={() => {
+          setShowPrintableLeaderboard(false);
+          setIsTestingMode(false);
+          setSelectedMetrics([]);
+          setSelectedTeamId("");
+          setSelectedClassPeriod("all");
+          setDataGrid([]);
+          onDataSaved();
+        }}
         maleLeaderboard={maleLeaderboard}
         femaleLeaderboard={femaleLeaderboard}
         metric={primaryMetric}
