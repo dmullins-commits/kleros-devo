@@ -2,10 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, Grid3X3, Edit, Save, X } from "lucide-react";
+import { FileDown, Grid3X3, Edit, Save, X, Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MetricRecord } from "@/entities/all";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 export default function SnapshotView({ 
   athletes, // All athletes from parent
@@ -22,6 +25,8 @@ export default function SnapshotView({
   const [isSaving, setIsSaving] = useState(false);
   const [filterType, setFilterType] = useState('all'); // 'all', 'team', 'class'
   const [filterValue, setFilterValue] = useState('all');
+  const [startDate, setStartDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Filter athletes based on selected filter
   const filteredAthletes = useMemo(() => {
@@ -40,6 +45,19 @@ export default function SnapshotView({
     });
   }, [athletes, filterType, filterValue]);
 
+  // Get all dates with data for selected metrics
+  const datesWithData = useMemo(() => {
+    if (selectedMetricIds.length === 0) return new Set();
+    
+    const dates = new Set();
+    records.forEach(r => {
+      if (selectedMetricIds.includes(r.metric_id)) {
+        dates.add(r.recorded_date);
+      }
+    });
+    return dates;
+  }, [records, selectedMetricIds]);
+
   // Get all records for selected metrics and athletes
   const snapshotData = useMemo(() => {
     if (selectedMetricIds.length === 0 || filteredAthletes.length === 0) return null;
@@ -51,9 +69,16 @@ export default function SnapshotView({
       const metric = metrics.find(m => m.id === metricId);
       if (!metric) return null;
 
-      const metricRecords = records.filter(r => 
+      let metricRecords = records.filter(r => 
         r.metric_id === metricId && athleteIds.has(r.athlete_id)
       );
+
+      // Filter by start date if set
+      if (startDate) {
+        metricRecords = metricRecords.filter(r => 
+          new Date(r.recorded_date) >= new Date(startDate)
+        );
+      }
 
       // Get unique dates and sort them
       const dates = [...new Set(metricRecords.map(r => r.recorded_date))].sort();
@@ -89,7 +114,7 @@ export default function SnapshotView({
     }).filter(Boolean);
 
     return metricsData.length > 0 ? metricsData : null;
-  }, [selectedMetricIds, filteredAthletes, metrics, records]);
+  }, [selectedMetricIds, filteredAthletes, metrics, records, startDate]);
 
 
 
@@ -150,6 +175,7 @@ export default function SnapshotView({
     setShowResults(false);
     setIsEditing(false);
     setEditedValues({});
+    setStartDate(null);
   };
 
   const handleEditToggle = () => {
@@ -361,8 +387,58 @@ export default function SnapshotView({
               </Badge>
             </div>
             </div>
-            
-            <div className="flex gap-3">
+
+            <div className="flex gap-3 flex-wrap">
+              <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+                <PopoverTrigger asChild>
+                  <Button
+                    className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-bold"
+                  >
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {startDate ? `Since ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Show since...'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate ? new Date(startDate) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setStartDate(format(date, 'yyyy-MM-dd'));
+                        setShowDatePicker(false);
+                      }
+                    }}
+                    modifiers={{
+                      hasData: (date) => {
+                        const dateStr = format(date, 'yyyy-MM-dd');
+                        return datesWithData.has(dateStr);
+                      }
+                    }}
+                    modifiersStyles={{
+                      hasData: {
+                        border: '2px solid #60a5fa',
+                        borderRadius: '4px'
+                      }
+                    }}
+                    className="bg-gray-950 text-white"
+                  />
+                  {startDate && (
+                    <div className="p-2 border-t border-gray-800">
+                      <Button
+                        onClick={() => {
+                          setStartDate(null);
+                          setShowDatePicker(false);
+                        }}
+                        variant="outline"
+                        className="w-full border-gray-700 text-white hover:bg-gray-800"
+                      >
+                        Clear Date Filter
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+
               {isEditing ? (
                 <>
                   <Button
