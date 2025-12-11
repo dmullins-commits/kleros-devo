@@ -94,6 +94,8 @@ export default function SnapshotView({
   const handleView = () => {
     if (selectedMetricIds.length > 0) {
       setShowResults(true);
+      setIsEditing(false);
+      setEditedValues({});
     }
   };
 
