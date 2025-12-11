@@ -16,6 +16,7 @@ export default function SnapshotView({
   onBack 
 }) {
   const [selectedMetricIds, setSelectedMetricIds] = useState([]);
+  const [showResults, setShowResults] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -138,8 +139,15 @@ export default function SnapshotView({
     URL.revokeObjectURL(url);
   };
 
+  const handleView = () => {
+    setShowResults(true);
+    setIsEditing(false);
+    setEditedValues({});
+  };
+
   const handleReset = () => {
     setSelectedMetricIds([]);
+    setShowResults(false);
     setIsEditing(false);
     setEditedValues({});
   };
@@ -202,7 +210,7 @@ export default function SnapshotView({
   };
 
   // Metric selection view
-  if (selectedMetricIds.length === 0) {
+  if (!showResults) {
     return (
       <div className="space-y-6">
         <Card className="bg-gray-950 border border-gray-800">
@@ -242,17 +250,33 @@ export default function SnapshotView({
               {metrics.filter(m => !m.is_auto_calculated && m.is_active !== false).length === 0 && (
                 <p className="text-sm text-gray-400">No metrics available. Please create metrics first.</p>
               )}
+              {selectedMetricIds.length > 0 && (
+                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/50">
+                  {selectedMetricIds.length} metric{selectedMetricIds.length !== 1 ? 's' : ''} selected
+                </Badge>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={onBack}
+                className="border-gray-700 text-gray-300"
+              >
+                Back
+              </Button>
+              {selectedMetricIds.length > 0 && (
+                <Button
+                  onClick={handleView}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold"
+                >
+                  View Snapshot
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
-
-        <Button
-          variant="outline"
-          onClick={onBack}
-          className="border-gray-700 text-gray-300"
-        >
-          Back to Progress Tracking
-        </Button>
       </div>
     );
   }
