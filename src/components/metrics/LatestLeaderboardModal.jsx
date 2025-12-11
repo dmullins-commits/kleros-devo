@@ -177,18 +177,18 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     if (groupByClassPeriod || groupByClassGrade) {
       const groupField = groupByClassPeriod ? 'class_period' : 'class_grade';
       const allData = [...leaderboardData.male, ...leaderboardData.female];
-      const groups = [...new Set(allData.map(a => a[groupField]).filter(Boolean))].sort();
+      const groups = [...new Set(allData.map(a => a[groupField] || 'Unassigned'))].sort();
 
       // Create separate CSV content for each group as tabs in a single file
       let fullContent = '';
       
       groups.forEach((group, groupIndex) => {
         const maleData = leaderboardData.male
-          .filter(a => a[groupField] === group)
+          .filter(a => (a[groupField] || 'Unassigned') === group)
           .sort((a, b) => metric.target_higher ? b.current_value - a.current_value : a.current_value - b.current_value);
         
         const femaleData = leaderboardData.female
-          .filter(a => a[groupField] === group)
+          .filter(a => (a[groupField] || 'Unassigned') === group)
           .sort((a, b) => metric.target_higher ? b.current_value - a.current_value : a.current_value - b.current_value);
 
         if (groupIndex > 0) {
@@ -365,17 +365,17 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
 
     const groupField = groupByClassPeriod ? 'class_period' : 'class_grade';
 
-    // Get all unique groups
+    // Get all unique groups, including empty/null values as "Unassigned"
     const allData = [...leaderboardData.male, ...leaderboardData.female];
-    const groups = [...new Set(allData.map(a => a[groupField]).filter(Boolean))].sort();
+    const groups = [...new Set(allData.map(a => a[groupField] || 'Unassigned'))].sort();
 
     return groups.map(group => {
       const maleData = leaderboardData.male
-        .filter(a => a[groupField] === group)
+        .filter(a => (a[groupField] || 'Unassigned') === group)
         .sort((a, b) => metric.target_higher ? b.current_value - a.current_value : a.current_value - b.current_value);
       
       const femaleData = leaderboardData.female
-        .filter(a => a[groupField] === group)
+        .filter(a => (a[groupField] || 'Unassigned') === group)
         .sort((a, b) => metric.target_higher ? b.current_value - a.current_value : a.current_value - b.current_value);
 
       return (
