@@ -310,16 +310,16 @@ export default function ProgressTracking() {
                 <SelectTrigger className="w-full bg-gray-900 border-gray-700 text-white">
                   <SelectValue placeholder={`Choose a ${filterType === "team" ? "team" : "class period"}...`} />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700">
+                <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {filterType === "team" ? (
                     availableTeams.map(team => (
-                      <SelectItem key={team.id} value={team.id} className="text-white">
+                      <SelectItem key={team.id} value={team.id} className="text-white focus:bg-white focus:text-black">
                         {team.name} - {team.sport}
                       </SelectItem>
                     ))
                   ) : (
                     classPeriods.map(period => (
-                      <SelectItem key={period.id} value={period.name} className="text-white">
+                      <SelectItem key={period.id} value={period.name} className="text-white focus:bg-white focus:text-black">
                         {period.name}
                       </SelectItem>
                     ))
@@ -348,9 +348,9 @@ export default function ProgressTracking() {
                 <SelectTrigger className="w-full bg-gray-900 border-gray-700 text-white">
                   <SelectValue placeholder="Choose an athlete..." />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700">
+                <SelectContent className="bg-gray-900 border-gray-700 text-white">
                   {filteredAthletes.map(athlete => (
-                    <SelectItem key={athlete.id} value={athlete.id} className="text-white">
+                    <SelectItem key={athlete.id} value={athlete.id} className="text-white focus:bg-white focus:text-black">
                       {athlete.first_name} {athlete.last_name} {athlete.jersey_number ? `- #${athlete.jersey_number}` : ''}
                     </SelectItem>
                   ))}

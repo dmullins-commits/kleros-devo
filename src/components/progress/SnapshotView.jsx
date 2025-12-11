@@ -324,7 +324,7 @@ export default function SnapshotView({
                   <SelectTrigger className="w-[200px] bg-gray-900 border-gray-700 text-white">
                     <SelectValue placeholder="Select team" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-700">
+                  <SelectContent className="bg-gray-900 border-gray-700 text-white">
                     <SelectItem value="all" className="text-white focus:bg-white focus:text-black">All Teams</SelectItem>
                     {teams.map(team => (
                       <SelectItem key={team.id} value={team.id} className="text-white focus:bg-white focus:text-black">
@@ -340,7 +340,7 @@ export default function SnapshotView({
                   <SelectTrigger className="w-[200px] bg-gray-900 border-gray-700 text-white">
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-700">
+                  <SelectContent className="bg-gray-900 border-gray-700 text-white">
                     <SelectItem value="all" className="text-white focus:bg-white focus:text-black">All Classes</SelectItem>
                     {classPeriods.map(period => (
                       <SelectItem key={period.id} value={period.name} className="text-white focus:bg-white focus:text-black">
