@@ -17,6 +17,9 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   const [groupByClassPeriod, setGroupByClassPeriod] = useState(false);
   const [groupByClassGrade, setGroupByClassGrade] = useState(false);
   const [splitByGender, setSplitByGender] = useState(true);
+  const [viewMode, setViewMode] = useState('latest'); // 'latest' or 'alltime'
+  const [allTimeMetricId, setAllTimeMetricId] = useState('');
+  const [showAllTimeLeaderboard, setShowAllTimeLeaderboard] = useState(false);
 
   useEffect(() => {
     loadRecords();
@@ -46,7 +49,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   };
 
   useEffect(() => {
-    if (selectedDate && selectedMetricId && records.length > 0 && metrics.length > 0 && athletes.length > 0) {
+    if (viewMode === 'latest' && selectedDate && selectedMetricId && records.length > 0 && metrics.length > 0 && athletes.length > 0) {
       // Check if selected metric has data on selected date
       const hasData = records.some(r => r.recorded_date === selectedDate && r.metric_id === selectedMetricId);
       if (!hasData) {
@@ -62,7 +65,56 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
         generateLeaderboard();
       }
     }
-  }, [selectedDate, selectedMetricId, records, metrics, athletes, groupByClassPeriod, groupByClassGrade]);
+  }, [selectedDate, selectedMetricId, records, metrics, athletes, groupByClassPeriod, groupByClassGrade, viewMode]);
+
+  useEffect(() => {
+    if (viewMode === 'alltime' && showAllTimeLeaderboard && allTimeMetricId && records.length > 0 && metrics.length > 0 && athletes.length > 0) {
+      generateAllTimeLeaderboard();
+    }
+  }, [allTimeMetricId, records, metrics, athletes, groupByClassPeriod, groupByClassGrade, viewMode, showAllTimeLeaderboard]);
+
+  const generateAllTimeLeaderboard = () => {
+    const metric = metrics.find(m => m.id === allTimeMetricId);
+    if (!metric) return;
+
+    // Get all athletes with records for this metric
+    const athleteData = athletes.map(athlete => {
+      const athleteRecords = records.filter(r => 
+        r.athlete_id === athlete.id && 
+        r.metric_id === allTimeMetricId
+      );
+
+      if (athleteRecords.length === 0) return null;
+
+      const pr = metric.target_higher
+        ? Math.max(...athleteRecords.map(r => r.value))
+        : Math.min(...athleteRecords.map(r => r.value));
+
+      return {
+        athlete_id: athlete.id,
+        athlete_name: `${athlete.first_name} ${athlete.last_name}`,
+        gender: athlete.gender,
+        class_period: athlete.class_period,
+        class_grade: athlete.class_grade,
+        current_value: pr,
+        pr: pr,
+        is_new_pr: false // Not applicable for all-time
+      };
+    }).filter(Boolean);
+
+    const sortedData = athleteData.sort((a, b) => {
+      if (metric.target_higher) {
+        return b.current_value - a.current_value;
+      } else {
+        return a.current_value - b.current_value;
+      }
+    });
+
+    setLeaderboardData({
+      male: sortedData.filter(a => a.gender === 'Male'),
+      female: sortedData.filter(a => a.gender === 'Female')
+    });
+  };
 
   const generateLeaderboard = () => {
     const metric = metrics.find(m => m.id === selectedMetricId);
@@ -114,8 +166,12 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   };
 
   const handleExportCSV = () => {
-    const metric = metrics.find(m => m.id === selectedMetricId);
+    const metric = viewMode === 'alltime' 
+      ? metrics.find(m => m.id === allTimeMetricId)
+      : metrics.find(m => m.id === selectedMetricId);
     if (!metric) return;
+    
+    const dateLabel = viewMode === 'alltime' ? 'AllTime' : selectedDate;
 
     // If grouping by class period or grade, export as multi-sheet Excel file
     if (groupByClassPeriod || groupByClassGrade) {
@@ -179,7 +235,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${metric.name}_Leaderboard_${selectedDate}_by_${groupField}.csv`;
+      link.download = `${metric.name}_Leaderboard_${dateLabel}_by_${groupField}.csv`;
       link.click();
       URL.revokeObjectURL(url);
       return;
@@ -232,7 +288,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${metric.name}_Leaderboard_${selectedDate}.csv`;
+    link.download = `${metric.name}_Leaderboard_${dateLabel}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -392,9 +448,34 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
       <Dialog open={true} onOpenChange={onClose}>
         <DialogContent className="bg-gray-950 border-gray-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-2xl text-yellow-400">
-              <Trophy className="w-7 h-7" />
-              Latest Leaderboard
+            <DialogTitle className="flex items-center justify-between text-2xl text-yellow-400">
+              <div className="flex items-center gap-3">
+                <Trophy className="w-7 h-7" />
+                {viewMode === 'latest' ? 'Latest Leaderboard' : 'All-Time Leaderboard'}
+              </div>
+              {viewMode === 'latest' ? (
+                <Button
+                  onClick={() => {
+                    setViewMode('alltime');
+                    setShowAllTimeLeaderboard(false);
+                    setAllTimeMetricId('');
+                  }}
+                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-bold text-sm"
+                >
+                  All-Time Leaderboard
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    setViewMode('latest');
+                    setShowAllTimeLeaderboard(false);
+                  }}
+                  variant="outline"
+                  className="border-gray-700 text-white font-bold text-sm"
+                >
+                  Back to Latest
+                </Button>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -402,9 +483,45 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400" />
             </div>
+          ) : viewMode === 'alltime' && !showAllTimeLeaderboard ? (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Select Metric</label>
+                <Select value={allTimeMetricId} onValueChange={setAllTimeMetricId}>
+                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                    <SelectValue placeholder="Select metric" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-700">
+                    {metrics.filter(m => !m.is_auto_calculated).map(metric => (
+                      <SelectItem key={metric.id} value={metric.id} className="text-white focus:bg-white focus:text-black">
+                        {metric.name} ({metric.unit})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="border-gray-700 text-gray-300"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => setShowAllTimeLeaderboard(true)}
+                  disabled={!allTimeMetricId}
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold"
+                >
+                  View
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 print:hidden">
+              {viewMode === 'latest' && (
+                <div className="grid grid-cols-2 gap-4 print:hidden">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-300">Select Date</label>
                   <Select value={selectedDate} onValueChange={setSelectedDate}>
@@ -437,6 +554,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
                   </Select>
                 </div>
               </div>
+              )}
 
               <div className="space-y-3 print:hidden">
                 <div className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-lg">
@@ -482,15 +600,17 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
                 </div>
               </div>
 
-              {selectedDate && selectedMetric && (
+              {((viewMode === 'latest' && selectedDate && selectedMetric) || (viewMode === 'alltime' && showAllTimeLeaderboard && allTimeMetricId)) && (
                 <>
                   <div id="printable-content" className="print:block">
                     <div className="text-center mb-6 print:mb-2">
                       <h2 className="text-3xl font-black text-white mb-2 print:text-base print:mb-0.5">
-                        {selectedMetric.name} Leaderboard
+                        {viewMode === 'alltime' 
+                          ? metrics.find(m => m.id === allTimeMetricId)?.name 
+                          : selectedMetric.name} Leaderboard
                       </h2>
                       <p className="text-gray-400 print:text-[0.6rem]">
-                        {formatDateDisplay(selectedDate)}
+                        {viewMode === 'alltime' ? 'All-Time PRs' : formatDateDisplay(selectedDate)}
                       </p>
                     </div>
 
