@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload as UploadIcon, FileSpreadsheet, Users, Target, Zap, CheckCircle, Activity } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import FileUploadZone from "../components/upload/FileUploadZone";
@@ -27,6 +28,7 @@ export default function Upload() {
   const [showMissingAthletesModal, setShowMissingAthletesModal] = useState(false);
   const [pendingRecordsData, setPendingRecordsData] = useState(null);
   const [pendingMapping, setPendingMapping] = useState(null);
+  const [multiMetricMode, setMultiMetricMode] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -156,18 +158,45 @@ export default function Upload() {
           continue;
         }
         
-        // Process each metric column
-        for (const [columnIndex, metricId] of Object.entries(mapping.metricColumns)) {
-          const value = parseFloat(row[parseInt(columnIndex)]?.trim());
+        // Multi-metric mode: Get metric from a column
+        if (multiMetricMode && mapping.metricNameColumn !== undefined) {
+          const metricName = row[parseInt(mapping.metricNameColumn)]?.trim();
+          if (!metricName) continue;
+          
+          // Find metric by name
+          const metric = metrics.find(m => 
+            m.name?.toLowerCase() === metricName.toLowerCase()
+          );
+          
+          if (!metric) {
+            console.warn(`Metric not found: ${metricName}`);
+            continue;
+          }
+          
+          const value = parseFloat(row[parseInt(mapping.valueColumn)]?.trim());
           if (isNaN(value)) continue;
           
           records.push({
             athlete_id: athlete.id,
-            metric_id: metricId,
+            metric_id: metric.id,
             value: value,
             recorded_date: recordDate,
             notes: `Imported from CSV: ${file.name}`
           });
+        } else {
+          // Standard mode: Process each metric column
+          for (const [columnIndex, metricId] of Object.entries(mapping.metricColumns)) {
+            const value = parseFloat(row[parseInt(columnIndex)]?.trim());
+            if (isNaN(value)) continue;
+            
+            records.push({
+              athlete_id: athlete.id,
+              metric_id: metricId,
+              value: value,
+              recorded_date: recordDate,
+              notes: `Imported from CSV: ${file.name}`
+            });
+          }
         }
       }
       
@@ -229,18 +258,41 @@ export default function Upload() {
           continue;
         }
         
-        // Process each metric column
-        for (const [columnIndex, metricId] of Object.entries(pendingMapping.metricColumns)) {
-          const value = parseFloat(row[parseInt(columnIndex)]?.trim());
+        // Multi-metric mode
+        if (multiMetricMode && pendingMapping.metricNameColumn !== undefined) {
+          const metricName = row[parseInt(pendingMapping.metricNameColumn)]?.trim();
+          if (!metricName) continue;
+          
+          const metric = metrics.find(m => 
+            m.name?.toLowerCase() === metricName.toLowerCase()
+          );
+          
+          if (!metric) continue;
+          
+          const value = parseFloat(row[parseInt(pendingMapping.valueColumn)]?.trim());
           if (isNaN(value)) continue;
           
           additionalRecords.push({
             athlete_id: athlete.id,
-            metric_id: metricId,
+            metric_id: metric.id,
             value: value,
             recorded_date: recordDate,
             notes: `Imported from CSV: ${file.name}`
           });
+        } else {
+          // Standard mode: Process each metric column
+          for (const [columnIndex, metricId] of Object.entries(pendingMapping.metricColumns)) {
+            const value = parseFloat(row[parseInt(columnIndex)]?.trim());
+            if (isNaN(value)) continue;
+            
+            additionalRecords.push({
+              athlete_id: athlete.id,
+              metric_id: metricId,
+              value: value,
+              recorded_date: recordDate,
+              notes: `Imported from CSV: ${file.name}`
+            });
+          }
         }
       }
       
@@ -336,7 +388,27 @@ export default function Upload() {
 
         <div className="space-y-8">
           {!file && (
-            <FileUploadZone onFileSelect={handleFileSelect} />
+            <>
+              <Card className="bg-gradient-to-br from-gray-950 to-gray-900 border border-gray-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="multi-metric-mode"
+                      checked={multiMetricMode}
+                      onCheckedChange={setMultiMetricMode}
+                      className="border-gray-600 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                    />
+                    <label htmlFor="multi-metric-mode" className="text-white font-semibold cursor-pointer">
+                      Multi-Metric Upload Mode
+                    </label>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-2 ml-7">
+                    Enable this when your CSV has a "Metric" column that specifies which metric each row belongs to
+                  </p>
+                </CardContent>
+              </Card>
+              <FileUploadZone onFileSelect={handleFileSelect} />
+            </>
           )}
 
           {file && !processedData && isProcessing && (
@@ -438,6 +510,7 @@ export default function Upload() {
           metrics={metrics}
           athletes={athletes}
           onMappingComplete={handleMappingComplete}
+          multiMetricMode={multiMetricMode}
         />
 
         <MissingAthletesModal
