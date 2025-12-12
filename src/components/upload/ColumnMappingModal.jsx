@@ -12,7 +12,8 @@ export default function ColumnMappingModal({
   csvData, 
   metrics, 
   athletes,
-  onMappingComplete 
+  onMappingComplete,
+  multiMetricMode = false
 }) {
   const [headers, setHeaders] = useState([]);
   const [sampleData, setSampleData] = useState([]);
@@ -20,7 +21,9 @@ export default function ColumnMappingModal({
     firstName: '',
     lastName: '',
     date: '',
-    metricColumns: {}
+    metricColumns: {},
+    metricNameColumn: '',
+    valueColumn: ''
   });
   const [error, setError] = useState('');
 
@@ -38,7 +41,9 @@ export default function ColumnMappingModal({
         firstName: '',
         lastName: '',
         date: '',
-        metricColumns: {}
+        metricColumns: {},
+        metricNameColumn: '',
+        valueColumn: ''
       };
       
       csvHeaders.forEach((header, index) => {
@@ -63,13 +68,23 @@ export default function ColumnMappingModal({
           autoMapping.date = index.toString();
         }
         
-        // Auto-detect metric columns by matching metric names
-        metrics.forEach(metric => {
-          if (lowerHeader.includes(metric.name.toLowerCase()) || 
-              lowerHeader.includes(metric.unit.toLowerCase())) {
-            autoMapping.metricColumns[index.toString()] = metric.id;
+        // Multi-metric mode: Auto-detect metric name and value columns
+        if (multiMetricMode) {
+          if (lowerHeader === 'metric' || lowerHeader === 'metric name' || lowerHeader === 'test') {
+            autoMapping.metricNameColumn = index.toString();
           }
-        });
+          if (lowerHeader === 'value' || lowerHeader === 'result' || lowerHeader === 'score') {
+            autoMapping.valueColumn = index.toString();
+          }
+        } else {
+          // Auto-detect metric columns by matching metric names
+          metrics.forEach(metric => {
+            if (lowerHeader.includes(metric.name.toLowerCase()) || 
+                lowerHeader.includes(metric.unit.toLowerCase())) {
+              autoMapping.metricColumns[index.toString()] = metric.id;
+            }
+          });
+        }
       });
       
       setMapping(autoMapping);
@@ -110,10 +125,23 @@ export default function ColumnMappingModal({
       setError('Please select the Date column');
       return false;
     }
-    if (Object.keys(mapping.metricColumns).length === 0) {
-      setError('Please map at least one metric column');
-      return false;
+    
+    if (multiMetricMode) {
+      if (!mapping.metricNameColumn) {
+        setError('Please select the Metric Name column');
+        return false;
+      }
+      if (!mapping.valueColumn) {
+        setError('Please select the Value column');
+        return false;
+      }
+    } else {
+      if (Object.keys(mapping.metricColumns).length === 0) {
+        setError('Please map at least one metric column');
+        return false;
+      }
     }
+    
     setError('');
     return true;
   };
@@ -279,10 +307,99 @@ export default function ColumnMappingModal({
             </Card>
           </div>
 
-          {/* Metric Columns */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Metric Columns</h3>
+          {/* Multi-Metric Mode Fields */}
+          {multiMetricMode ? (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-white">Multi-Metric Mode</h3>
+              <p className="text-sm text-gray-400">
+                Map the column that contains metric names and the column that contains values
+              </p>
+              
+              <Card className="bg-gray-900 border-gray-800">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-3 gap-4 items-center">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-300 block mb-2">
+                        Metric Name Column
+                      </label>
+                      <Select value={mapping.metricNameColumn} onValueChange={(value) => setMapping(prev => ({ ...prev, metricNameColumn: value }))}>
+                        <SelectTrigger className="bg-black/50 border-gray-700 text-white">
+                          <SelectValue placeholder="Select column..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-950 border-gray-700">
+                          <SelectItem value={null} className="text-gray-400">None</SelectItem>
+                          {headers.map((header, idx) => (
+                            <SelectItem key={idx} value={idx.toString()} className="text-white">
+                              Column {idx + 1}: {header}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <ArrowRight className="w-6 h-6 text-gray-600" />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-semibold text-gray-300 block mb-2">
+                        Sample Data
+                      </label>
+                      <div className="bg-black/30 border border-gray-700 rounded-md p-3 space-y-1">
+                        {mapping.metricNameColumn ? getColumnPreview(parseInt(mapping.metricNameColumn)) : (
+                          <div className="text-xs text-gray-500">Select a column to preview</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-900 border-gray-800">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-3 gap-4 items-center">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-300 block mb-2">
+                        Value Column
+                      </label>
+                      <Select value={mapping.valueColumn} onValueChange={(value) => setMapping(prev => ({ ...prev, valueColumn: value }))}>
+                        <SelectTrigger className="bg-black/50 border-gray-700 text-white">
+                          <SelectValue placeholder="Select column..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-950 border-gray-700">
+                          <SelectItem value={null} className="text-gray-400">None</SelectItem>
+                          {headers.map((header, idx) => (
+                            <SelectItem key={idx} value={idx.toString()} className="text-white">
+                              Column {idx + 1}: {header}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <ArrowRight className="w-6 h-6 text-gray-600" />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-semibold text-gray-300 block mb-2">
+                        Sample Data
+                      </label>
+                      <div className="bg-black/30 border border-gray-700 rounded-md p-3 space-y-1">
+                        {mapping.valueColumn ? getColumnPreview(parseInt(mapping.valueColumn)) : (
+                          <div className="text-xs text-gray-500">Select a column to preview</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            /* Standard Metric Columns */
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white">Metric Columns</h3>
               <Button
                 onClick={() => {
                   const nextUnmapped = headers.findIndex((_, idx) => 
@@ -377,7 +494,8 @@ export default function ColumnMappingModal({
                 No metric columns mapped yet. Click "Add Metric Column" to start.
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Summary */}
           <Card className="bg-gradient-to-r from-amber-950/20 to-amber-900/20 border-amber-800/50">
@@ -390,7 +508,14 @@ export default function ColumnMappingModal({
                     <li>✓ First name from column: {mapping.firstName ? headers[parseInt(mapping.firstName)] : 'Not selected'}</li>
                     <li>✓ Last name from column: {mapping.lastName ? headers[parseInt(mapping.lastName)] : 'Not selected'}</li>
                     <li>✓ Dates from column: {mapping.date ? headers[parseInt(mapping.date)] : 'Not selected'}</li>
-                    <li>✓ {Object.keys(mapping.metricColumns).length} metric column(s) mapped</li>
+                    {multiMetricMode ? (
+                      <>
+                        <li>✓ Metric names from column: {mapping.metricNameColumn ? headers[parseInt(mapping.metricNameColumn)] : 'Not selected'}</li>
+                        <li>✓ Values from column: {mapping.valueColumn ? headers[parseInt(mapping.valueColumn)] : 'Not selected'}</li>
+                      </>
+                    ) : (
+                      <li>✓ {Object.keys(mapping.metricColumns).length} metric column(s) mapped</li>
+                    )}
                     <li className="text-amber-400 mt-2">
                       Will process {sampleData.length} sample rows + remaining data
                     </li>
