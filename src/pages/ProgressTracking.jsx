@@ -36,7 +36,7 @@ export default function ProgressTracking() {
       const [athletesData, metricsData, recordsData, classPeriodsData, teamsData] = await Promise.all([
         Athlete.list('-created_date', 10000),
         Metric.list('-created_date', 1000),
-        MetricRecord.list('recorded_date', 100000),
+        MetricRecord.list('-created_date', 100000),
         ClassPeriod.list('-created_date', 100),
         Team.list('-created_date', 100)
       ]);
