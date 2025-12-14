@@ -509,11 +509,11 @@ export default function SnapshotView({
       {/* Data Grid */}
       <Card className="bg-gray-950 border border-gray-800">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-300px)]">
             <table className="w-full border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-30">
                 <tr className="border-b-2 border-gray-700">
-                  <th className="sticky left-0 z-20 bg-gray-900 p-3 text-left text-white font-bold border-r-2 border-gray-700">
+                  <th className="sticky left-0 z-40 bg-gray-900 p-3 text-left text-white font-bold border-r-2 border-gray-700">
                     Athlete
                   </th>
                   {snapshotData.map(({ metric, dates }) => (
@@ -528,7 +528,7 @@ export default function SnapshotView({
                   ))}
                 </tr>
                 <tr className="border-b-2 border-gray-700">
-                  <th className="sticky left-0 z-20 bg-gray-900 p-3 border-r-2 border-gray-700"></th>
+                  <th className="sticky left-0 z-40 bg-gray-900 p-3 border-r-2 border-gray-700"></th>
                   {snapshotData.map(({ dates }) => (
                     <React.Fragment key={dates.join('-')}>
                       {dates.map(date => (
@@ -549,7 +549,7 @@ export default function SnapshotView({
                     key={athlete.id} 
                     className={`border-b border-gray-800 ${athleteIndex % 2 === 0 ? 'bg-gray-950' : 'bg-gray-900/50'}`}
                   >
-                    <td className="sticky left-0 z-10 bg-gray-900 p-3 font-semibold text-white border-r-2 border-gray-700">
+                    <td className={`sticky left-0 z-20 p-3 font-semibold text-white border-r-2 border-gray-700 ${athleteIndex % 2 === 0 ? 'bg-gray-950' : 'bg-gray-900/50'}`}>
                       {athlete.first_name} {athlete.last_name}
                     </td>
                     {snapshotData.map(({ metric, dates, dataByAthlete, prByAthlete }) => {
