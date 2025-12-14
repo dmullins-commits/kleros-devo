@@ -91,7 +91,12 @@ export default function ProgressTracking() {
         ...m,
         name: m.data?.name || m.name,
         unit: m.data?.unit || m.unit,
-        category: m.data?.category || m.category
+        category: m.data?.category || m.category,
+        is_active: m.data?.is_active ?? m.is_active ?? true,
+        is_auto_calculated: m.data?.is_auto_calculated ?? m.is_auto_calculated ?? false,
+        is_hidden: m.data?.is_hidden ?? m.is_hidden ?? false,
+        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2,
+        target_higher: m.data?.target_higher ?? m.target_higher ?? true
       }));
       setMetrics(normalizedMetrics);
       
