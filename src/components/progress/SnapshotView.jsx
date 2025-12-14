@@ -51,8 +51,10 @@ export default function SnapshotView({
     
     const dates = new Set();
     records.forEach(r => {
-      if (selectedMetricIds.includes(r.metric_id)) {
-        dates.add(r.recorded_date);
+      const metricId = r.metric_id || r.data?.metric_id;
+      const recordedDate = r.recorded_date || r.data?.recorded_date;
+      if (selectedMetricIds.includes(metricId)) {
+        dates.add(recordedDate);
       }
     });
     return dates;
@@ -69,19 +71,22 @@ export default function SnapshotView({
       const metric = metrics.find(m => m.id === metricId);
       if (!metric) return null;
 
-      let metricRecords = records.filter(r => 
-        r.metric_id === metricId && athleteIds.has(r.athlete_id)
-      );
+      let metricRecords = records.filter(r => {
+        const rMetricId = r.metric_id || r.data?.metric_id;
+        const rAthleteId = r.athlete_id || r.data?.athlete_id;
+        return rMetricId === metricId && athleteIds.has(rAthleteId);
+      });
 
       // Filter by start date if set
       if (startDate) {
-        metricRecords = metricRecords.filter(r => 
-          new Date(r.recorded_date) >= new Date(startDate)
-        );
+        metricRecords = metricRecords.filter(r => {
+          const recordedDate = r.recorded_date || r.data?.recorded_date;
+          return new Date(recordedDate) >= new Date(startDate);
+        });
       }
 
       // Get unique dates and sort them
-      const dates = [...new Set(metricRecords.map(r => r.recorded_date))].sort();
+      const dates = [...new Set(metricRecords.map(r => r.recorded_date || r.data?.recorded_date))].sort();
 
       // Build data structure: athlete -> date -> value
       const dataByAthlete = {};
@@ -90,18 +95,24 @@ export default function SnapshotView({
       filteredAthletes.forEach(athlete => {
         dataByAthlete[athlete.id] = {};
         
-        const athleteRecords = metricRecords.filter(r => r.athlete_id === athlete.id);
+        const athleteRecords = metricRecords.filter(r => {
+          const rAthleteId = r.athlete_id || r.data?.athlete_id;
+          return rAthleteId === athlete.id;
+        });
         
         // Calculate PR for this athlete
         if (athleteRecords.length > 0) {
+          const values = athleteRecords.map(r => r.value || r.data?.value);
           prByAthlete[athlete.id] = metric.target_higher
-            ? Math.max(...athleteRecords.map(r => r.value))
-            : Math.min(...athleteRecords.map(r => r.value));
+            ? Math.max(...values)
+            : Math.min(...values);
         }
 
         // Map records by date
         athleteRecords.forEach(record => {
-          dataByAthlete[athlete.id][record.recorded_date] = record.value;
+          const recordedDate = record.recorded_date || record.data?.recorded_date;
+          const value = record.value || record.data?.value;
+          dataByAthlete[athlete.id][recordedDate] = value;
         });
       });
 
