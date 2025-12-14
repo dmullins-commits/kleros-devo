@@ -37,12 +37,12 @@ export default function ProgressTracking() {
       const metricsData = await Metric.list('-created_date', 1000, { organization_id: selectedOrganization.id });
 
       // Get metric IDs for this organization
-      const orgMetricIds = metricsData.map(m => m.id);
+      const orgMetricIds = new Set(metricsData.map(m => m.id));
 
-      // Now fetch other data in parallel, including records filtered by metric IDs
+      // Now fetch ALL data in parallel - we'll filter records client-side
       const [athletesData, recordsData, classPeriodsData, teamsData] = await Promise.all([
         Athlete.list('-created_date', 1000000),
-        MetricRecord.list('-created_date', 1000000, { metric_id: { "$in": orgMetricIds } }),
+        MetricRecord.list('-created_date', 1000000), // Fetch ALL records, filter client-side
         ClassPeriod.list('-created_date', 1000),
         Team.list('-created_date', 1000)
       ]);
@@ -100,10 +100,14 @@ export default function ProgressTracking() {
       }));
       setMetrics(normalizedMetrics);
       
-      // Records are already filtered by org metrics in the fetch query
-      // No need to filter by athletes again since metrics are org-specific
+      // Filter records by org metrics client-side to ensure we get all data
+      const orgRecords = recordsData.filter(r => {
+        const metricId = r.data?.metric_id || r.metric_id;
+        return orgMetricIds.has(metricId);
+      });
+      
       // Normalize records - all imported records store data in nested 'data' object
-      const normalizedRecords = recordsData.map(r => {
+      const normalizedRecords = orgRecords.map(r => {
         // Extract values from nested data object if present, otherwise use flat properties
         const athleteId = r.data?.athlete_id || r.athlete_id;
         const metricId = r.data?.metric_id || r.metric_id;
