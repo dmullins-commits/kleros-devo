@@ -51,10 +51,8 @@ export default function SnapshotView({
     
     const dates = new Set();
     records.forEach(r => {
-      const metricId = r.metric_id || r.data?.metric_id;
-      const recordedDate = r.recorded_date || r.data?.recorded_date;
-      if (selectedMetricIds.includes(metricId)) {
-        dates.add(recordedDate);
+      if (selectedMetricIds.includes(r.metric_id)) {
+        dates.add(r.recorded_date);
       }
     });
     return dates;
@@ -71,22 +69,19 @@ export default function SnapshotView({
       const metric = metrics.find(m => m.id === metricId);
       if (!metric) return null;
 
-      let metricRecords = records.filter(r => {
-        const rMetricId = r.metric_id || r.data?.metric_id;
-        const rAthleteId = r.athlete_id || r.data?.athlete_id;
-        return rMetricId === metricId && athleteIds.has(rAthleteId);
-      });
+      let metricRecords = records.filter(r => 
+        r.metric_id === metricId && athleteIds.has(r.athlete_id)
+      );
 
       // Filter by start date if set
       if (startDate) {
-        metricRecords = metricRecords.filter(r => {
-          const recordedDate = r.recorded_date || r.data?.recorded_date;
-          return new Date(recordedDate) >= new Date(startDate);
-        });
+        metricRecords = metricRecords.filter(r => 
+          new Date(r.recorded_date) >= new Date(startDate)
+        );
       }
 
       // Get unique dates and sort them
-      const dates = [...new Set(metricRecords.map(r => r.recorded_date || r.data?.recorded_date))].sort();
+      const dates = [...new Set(metricRecords.map(r => r.recorded_date))].sort();
 
       // Build data structure: athlete -> date -> value
       const dataByAthlete = {};
@@ -95,24 +90,18 @@ export default function SnapshotView({
       filteredAthletes.forEach(athlete => {
         dataByAthlete[athlete.id] = {};
         
-        const athleteRecords = metricRecords.filter(r => {
-          const rAthleteId = r.athlete_id || r.data?.athlete_id;
-          return rAthleteId === athlete.id;
-        });
+        const athleteRecords = metricRecords.filter(r => r.athlete_id === athlete.id);
         
         // Calculate PR for this athlete
         if (athleteRecords.length > 0) {
-          const values = athleteRecords.map(r => r.value || r.data?.value);
           prByAthlete[athlete.id] = metric.target_higher
-            ? Math.max(...values)
-            : Math.min(...values);
+            ? Math.max(...athleteRecords.map(r => r.value))
+            : Math.min(...athleteRecords.map(r => r.value));
         }
 
         // Map records by date
         athleteRecords.forEach(record => {
-          const recordedDate = record.recorded_date || record.data?.recorded_date;
-          const value = record.value || record.data?.value;
-          dataByAthlete[athlete.id][recordedDate] = value;
+          dataByAthlete[athlete.id][record.recorded_date] = record.value;
         });
       });
 
@@ -217,16 +206,12 @@ export default function SnapshotView({
         
         if (isNaN(numValue)) continue;
 
-        // Find existing record - check both flat and nested structures
-        const existingRecord = records.find(r => {
-          const rAthleteId = r.athlete_id || r.data?.athlete_id;
-          const rMetricId = r.metric_id || r.data?.metric_id;
-          const rDate = r.recorded_date || r.data?.recorded_date;
-          
-          return rAthleteId === athleteId && 
-                 rMetricId === metricId && 
-                 rDate === date;
-        });
+        // Find existing record
+        const existingRecord = records.find(r => 
+          r.athlete_id === athleteId && 
+          r.metric_id === metricId && 
+          r.recorded_date === date
+        );
 
         if (existingRecord) {
           // Update existing record
