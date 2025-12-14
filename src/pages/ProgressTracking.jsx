@@ -100,17 +100,10 @@ export default function ProgressTracking() {
       }));
       setMetrics(normalizedMetrics);
       
-      // Get org athlete IDs for filtering records
-      const orgAthleteIds = new Set(normalizedAthletes.map(a => a.id));
-
-      // Filter records by org athletes (records already filtered by org metrics in fetch)
-      const orgRecords = recordsData.filter(r => {
-        const athleteId = r.data?.athlete_id || r.athlete_id;
-        return orgAthleteIds.has(athleteId);
-      });
-      
+      // Records are already filtered by org metrics in the fetch query
+      // No need to filter by athletes again since metrics are org-specific
       // Normalize records - all imported records store data in nested 'data' object
-      const normalizedRecords = orgRecords.map(r => {
+      const normalizedRecords = recordsData.map(r => {
         // Extract values from nested data object if present, otherwise use flat properties
         const athleteId = r.data?.athlete_id || r.athlete_id;
         const metricId = r.data?.metric_id || r.metric_id;
