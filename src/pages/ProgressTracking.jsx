@@ -41,10 +41,10 @@ export default function ProgressTracking() {
 
       // Now fetch other data in parallel, including records filtered by metric IDs
       const [athletesData, recordsData, classPeriodsData, teamsData] = await Promise.all([
-        Athlete.list('-created_date', 10000),
+        Athlete.list('-created_date', 1000000),
         MetricRecord.list('-created_date', 1000000, { metric_id: { "$in": orgMetricIds } }),
-        ClassPeriod.list('-created_date', 100),
-        Team.list('-created_date', 100)
+        ClassPeriod.list('-created_date', 1000),
+        Team.list('-created_date', 1000)
       ]);
       
       // Filter teams by org
