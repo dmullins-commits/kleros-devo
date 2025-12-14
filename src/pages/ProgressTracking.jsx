@@ -100,13 +100,15 @@ export default function ProgressTracking() {
       }));
       setMetrics(normalizedMetrics);
       
-      // Get org athlete IDs for filtering records
+      // Get org athlete IDs and metric IDs for filtering records
       const orgAthleteIds = new Set(normalizedAthletes.map(a => a.id));
+      const orgMetricIds = new Set(normalizedMetrics.map(m => m.id));
       
-      // Filter records by org athletes
+      // Filter records by BOTH org athletes AND org metrics
       const orgRecords = recordsData.filter(r => {
         const athleteId = r.data?.athlete_id || r.athlete_id;
-        return orgAthleteIds.has(athleteId);
+        const metricId = r.data?.metric_id || r.metric_id;
+        return orgAthleteIds.has(athleteId) && orgMetricIds.has(metricId);
       });
       
       // Normalize records - all imported records store data in nested 'data' object
