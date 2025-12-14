@@ -33,10 +33,16 @@ export default function ProgressTracking() {
     
     setIsLoading(true);
     try {
-      const [athletesData, metricsData, recordsData, classPeriodsData, teamsData] = await Promise.all([
+      // First fetch metrics filtered by organization
+      const metricsData = await Metric.list('-created_date', 1000, { organization_id: selectedOrganization.id });
+
+      // Get metric IDs for this organization
+      const orgMetricIds = metricsData.map(m => m.id);
+
+      // Now fetch other data in parallel, including records filtered by metric IDs
+      const [athletesData, recordsData, classPeriodsData, teamsData] = await Promise.all([
         Athlete.list('-created_date', 10000),
-        Metric.list('-created_date', 1000),
-        MetricRecord.list('-created_date', 1000000),
+        MetricRecord.list('-created_date', 1000000, { metric_id: { "$in": orgMetricIds } }),
         ClassPeriod.list('-created_date', 100),
         Team.list('-created_date', 100)
       ]);
@@ -78,14 +84,8 @@ export default function ProgressTracking() {
       }));
       setAthletes(normalizedAthletes);
       
-      // Filter metrics by org - ONLY show metrics belonging to this organization
-      const orgMetrics = metricsData.filter(m => {
-        const metricOrgId = m.data?.organization_id || m.organization_id;
-        return metricOrgId === selectedOrganization.id;
-      });
-      
-      // Normalize metrics - data is in nested 'data' object  
-      const normalizedMetrics = orgMetrics.map(m => ({
+      // Normalize metrics (already filtered by org in fetch)
+      const normalizedMetrics = metricsData.map(m => ({
         id: m.id,
         ...m.data,
         ...m,
@@ -100,15 +100,13 @@ export default function ProgressTracking() {
       }));
       setMetrics(normalizedMetrics);
       
-      // Get org athlete IDs and metric IDs for filtering records
+      // Get org athlete IDs for filtering records
       const orgAthleteIds = new Set(normalizedAthletes.map(a => a.id));
-      const orgMetricIds = new Set(normalizedMetrics.map(m => m.id));
-      
-      // Filter records by BOTH org athletes AND org metrics
+
+      // Filter records by org athletes (records already filtered by org metrics in fetch)
       const orgRecords = recordsData.filter(r => {
         const athleteId = r.data?.athlete_id || r.athlete_id;
-        const metricId = r.data?.metric_id || r.metric_id;
-        return orgAthleteIds.has(athleteId) && orgMetricIds.has(metricId);
+        return orgAthleteIds.has(athleteId);
       });
       
       // Normalize records - all imported records store data in nested 'data' object
