@@ -160,7 +160,103 @@ export default function DataMigration() {
 
   return (
     <div className="min-h-screen bg-black p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card className="bg-gray-950 border border-gray-800">
+          <CardHeader className="border-b border-gray-800">
+            <CardTitle className="flex items-center gap-3 text-white">
+              <Users className="w-6 h-6 text-yellow-400" />
+              Unassigned Athletes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {isLoadingUnassigned ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 text-yellow-400 animate-spin" />
+              </div>
+            ) : unassignedAthletes.length === 0 ? (
+              <Alert className="bg-green-950/20 border-green-800">
+                <CheckCircle className="h-4 w-4 text-green-400" />
+                <AlertDescription className="text-green-300">
+                  All athletes are assigned to organizations!
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div className="space-y-4">
+                <Alert className="bg-blue-950/20 border-blue-800">
+                  <AlertCircle className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-300">
+                    {unassignedAthletes.length} athlete(s) need to be assigned to an organization
+                  </AlertDescription>
+                </Alert>
+
+                {saveSuccess && (
+                  <Alert className="bg-green-950/20 border-green-800">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <AlertDescription className="text-green-300">
+                      Successfully assigned athletes to organizations!
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-3">
+                  {unassignedAthletes.map(athlete => {
+                    const athleteData = athlete.data || athlete;
+                    return (
+                      <div key={athlete.id} className="flex items-center justify-between p-4 bg-gray-900 rounded-lg border border-gray-800">
+                        <div className="flex-1">
+                          <p className="text-white font-semibold">
+                            {athleteData.first_name} {athleteData.last_name}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {athleteData.class_grade && `Grade ${athleteData.class_grade}`}
+                            {athleteData.class_period && ` • Period ${athleteData.class_period}`}
+                          </p>
+                        </div>
+                        <Select 
+                          value={selectedOrgs[athlete.id] || ""} 
+                          onValueChange={(value) => handleOrgSelect(athlete.id, value)}
+                        >
+                          <SelectTrigger className="w-64 bg-gray-800 border-gray-700 text-white">
+                            <SelectValue placeholder="Select organization" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-900 border-gray-700">
+                            {organizations.map(org => {
+                              const orgData = org.data || org;
+                              return (
+                                <SelectItem key={org.id} value={org.id} className="text-white">
+                                  {orgData.name}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  onClick={handleSaveAssignments}
+                  disabled={Object.keys(selectedOrgs).length === 0 || isSaving}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-black py-6 text-lg"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Save Assignments ({Object.keys(selectedOrgs).length})
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="bg-gray-950 border border-gray-800">
           <CardHeader className="border-b border-gray-800">
             <CardTitle className="flex items-center gap-3 text-white">
