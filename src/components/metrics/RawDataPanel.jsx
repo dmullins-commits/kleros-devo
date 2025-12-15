@@ -18,7 +18,10 @@ const formatDateShort = (dateStr) => {
   return `${month}/${day}/${year}`;
 };
 
+import { useTeam } from "@/components/TeamContext";
+
 export default function RawDataPanel({ onClose }) {
+  const { selectedOrganization } = useTeam();
   const [records, setRecords] = useState([]);
   const [athletes, setAthletes] = useState([]);
   const [metrics, setMetrics] = useState([]);
@@ -41,15 +44,18 @@ export default function RawDataPanel({ onClose }) {
   }, []);
 
   const loadInitialData = async () => {
+    if (!selectedOrganization?.id) return;
+    
     setIsLoading(true);
     try {
+      // Filter by organization_id at database level
       const [recordsData, athletesData, metricsData] = await Promise.all([
-        MetricRecord.list('-recorded_date', 1000000),
-        Athlete.list(),
-        Metric.list()
+        MetricRecord.filter({ organization_id: selectedOrganization.id }),
+        Athlete.filter({ organization_id: selectedOrganization.id }),
+        Metric.filter({ organization_id: selectedOrganization.id })
       ]);
       
-      const dates = [...new Set(recordsData.map(r => r.recorded_date))].sort((a, b) => 
+      const dates = [...new Set(recordsData.map(r => r.recorded_date || r.data?.recorded_date))].sort((a, b) => 
         new Date(b) - new Date(a)
       );
       
@@ -63,16 +69,18 @@ export default function RawDataPanel({ onClose }) {
   };
 
   const loadData = async (date) => {
+    if (!selectedOrganization?.id) return;
+    
     setIsLoading(true);
     try {
       const [recordsData, athletesData, metricsData, categoriesData] = await Promise.all([
-        MetricRecord.list('-recorded_date', 1000000),
-        Athlete.list(),
-        Metric.list(),
+        MetricRecord.filter({ organization_id: selectedOrganization.id }),
+        Athlete.filter({ organization_id: selectedOrganization.id }),
+        Metric.filter({ organization_id: selectedOrganization.id }),
         MetricCategory.list()
       ]);
       
-      const filteredRecords = recordsData.filter(r => r.recorded_date === date);
+      const filteredRecords = recordsData.filter(r => (r.recorded_date || r.data?.recorded_date) === date);
       
       setRecords(recordsData);
       setAthletes(athletesData);
@@ -100,12 +108,14 @@ export default function RawDataPanel({ onClose }) {
   };
 
   const loadAllData = async () => {
+    if (!selectedOrganization?.id) return;
+    
     setIsLoading(true);
     try {
       const [recordsData, athletesData, metricsData, categoriesData] = await Promise.all([
-        MetricRecord.list('-recorded_date', 1000000),
-        Athlete.list(),
-        Metric.list(),
+        MetricRecord.filter({ organization_id: selectedOrganization.id }),
+        Athlete.filter({ organization_id: selectedOrganization.id }),
+        Metric.filter({ organization_id: selectedOrganization.id }),
         MetricCategory.list()
       ]);
       
@@ -154,11 +164,11 @@ export default function RawDataPanel({ onClose }) {
   };
 
   const handleExportCSV = async () => {
-    if (!exportDate || !exportMetricId) return;
+    if (!exportDate || !exportMetricId || !selectedOrganization?.id) return;
 
-    // Reload records to ensure we have the latest data
-    const allRecords = await MetricRecord.list();
-    const allAthletes = athletes.length > 0 ? athletes : await Athlete.list();
+    // Reload records filtered by organization
+    const allRecords = await MetricRecord.filter({ organization_id: selectedOrganization.id });
+    const allAthletes = athletes.length > 0 ? athletes : await Athlete.filter({ organization_id: selectedOrganization.id });
     
     const metric = metrics.find(m => m.id === exportMetricId);
     if (!metric) return;
@@ -287,7 +297,8 @@ export default function RawDataPanel({ onClose }) {
               athlete_id: athleteId,
               metric_id: metricId,
               value: numValue,
-              recorded_date: date
+              recorded_date: date,
+              organization_id: selectedOrganization.id
             });
           }
         }

@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MetricRecord } from "@/entities/all";
 
+import { useTeam } from "@/components/TeamContext";
+
 export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
+  const { selectedOrganization } = useTeam();
   const [records, setRecords] = useState([]);
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
@@ -26,12 +29,15 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   }, []);
 
   const loadRecords = async () => {
+    if (!selectedOrganization?.id) return;
+    
     setIsLoading(true);
     try {
-      const recordsData = await MetricRecord.list('-recorded_date');
+      // Filter by organization_id at database level
+      const recordsData = await MetricRecord.filter({ organization_id: selectedOrganization.id });
       setRecords(recordsData);
       
-      const dates = [...new Set(recordsData.map(r => r.recorded_date))].sort((a, b) => 
+      const dates = [...new Set(recordsData.map(r => r.recorded_date || r.data?.recorded_date))].sort((a, b) => 
         new Date(b) - new Date(a)
       );
       

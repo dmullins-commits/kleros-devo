@@ -30,29 +30,20 @@ export default function TestingCenter() {
   };
 
   const loadData = async () => {
-    if (!selectedOrganization) return;
+    if (!selectedOrganization?.id) return;
     
     setIsLoading(true);
     try {
+      // Filter by organization_id FIRST at the database level
       const [metricsData, athletesData, categoriesData] = await Promise.all([
-        Metric.list(),
-        Athlete.list('-created_date', 10000),
+        Metric.filter({ organization_id: selectedOrganization.id }),
+        Athlete.filter({ organization_id: selectedOrganization.id }),
         MetricCategory.list()
       ]);
       
-      // Get team IDs for this org
-      const teamIds = filteredTeams.map(t => t.id);
-      
-      // Filter athletes by org teams
-      const orgAthletes = athletesData.filter(a => 
-        (a.data?.team_ids || a.team_ids || []).some(tid => teamIds.includes(tid))
-      );
-      
-      // Filter metrics: ONLY show metrics belonging to this organization
-      const orgMetrics = metricsData.filter(m => {
-        const metricOrgId = m.data?.organization_id || m.organization_id;
-        return metricOrgId === selectedOrganization.id;
-      });
+      // No need to filter again - data is already org-specific
+      const orgAthletes = athletesData;
+      const orgMetrics = metricsData;
       
       // Normalize metrics
       const normalizedMetrics = orgMetrics.map(m => ({
