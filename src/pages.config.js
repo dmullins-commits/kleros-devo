@@ -9,6 +9,7 @@ import TestingCenter from './pages/TestingCenter';
 import Reports from './pages/Reports';
 import ManageUsers from './pages/ManageUsers';
 import DataMigrationOrg from './pages/DataMigrationOrg';
+import CleanupClinton from './pages/CleanupClinton';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "Reports": Reports,
     "ManageUsers": ManageUsers,
     "DataMigrationOrg": DataMigrationOrg,
+    "CleanupClinton": CleanupClinton,
 }
 
 export const pagesConfig = {
