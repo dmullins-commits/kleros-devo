@@ -121,7 +121,10 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
     );
   };
 
-  const beginTesting = () => {
+  const beginTesting = async () => {
+    // Ensure we have fresh records loaded before testing begins
+    await loadAllRecords();
+    
     // Filter to only active athletes
     let teamAthletes = athletes.filter(a => a.status === 'active' || !a.status);
     
@@ -133,8 +136,6 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
     if (selectedClassPeriod !== "all") {
       teamAthletes = teamAthletes.filter(a => a.class_period === selectedClassPeriod);
     }
-    
-    console.log('Athletes for testing:', teamAthletes.length, teamAthletes);
 
     teamAthletes.sort((a, b) => {
       const periodA = a.class_period || 'ZZZ';
