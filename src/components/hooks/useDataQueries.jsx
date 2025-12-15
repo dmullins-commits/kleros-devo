@@ -3,12 +3,12 @@ import { Athlete, Team, Metric, MetricRecord, MetricCategory, ClassPeriod, Worko
 
 // Query key factory for consistent key management
 export const queryKeys = {
-  athletes: (filters) => ['athletes', filters],
+  athletes: (orgId) => ['athletes', orgId],
   teams: (orgId) => ['teams', orgId],
-  metrics: () => ['metrics'],
-  metricRecords: (filters) => ['metricRecords', filters],
+  metrics: (orgId) => ['metrics', orgId],
+  metricRecords: (orgId) => ['metricRecords', orgId],
   metricCategories: () => ['metricCategories'],
-  classPeriods: () => ['classPeriods'],
+  classPeriods: (orgId) => ['classPeriods', orgId],
   workouts: () => ['workouts'],
   reportTemplates: (orgId) => ['reportTemplates', orgId],
 };
@@ -23,127 +23,77 @@ const normalizeEntity = (entity, fields) => {
 };
 
 // Athletes query hook
-export function useAthletes(teamIds = [], options = {}) {
+export function useAthletes(organizationId, options = {}) {
   return useQuery({
-    queryKey: queryKeys.athletes({ teamIds }),
+    queryKey: queryKeys.athletes(organizationId),
     queryFn: async () => {
-      const data = await Athlete.list('-created_date', 10000);
-      const normalized = data.map(a => normalizeEntity(a, [
+      if (!organizationId) return [];
+      const data = await Athlete.filter({ organization_id: organizationId });
+      return data.map(a => normalizeEntity(a, [
         'first_name', 'last_name', 'email', 'position', 'jersey_number',
         'team_ids', 'class_period', 'class_grade', 'gender', 'rack_assignment',
         'height', 'weight', 'date_of_birth', 'status', 'profile_image', 'calculated_metrics', 'pin'
       ]));
-      
-      // CRITICAL: Filter by team IDs to enforce organization boundaries
-      // Only show athletes whose teams match the provided team IDs
-      if (teamIds.length > 0) {
-        return normalized.filter(a => 
-          a.team_ids?.some(tid => teamIds.includes(tid))
-        );
-      }
-      
-      // If no team IDs provided, return empty array to prevent cross-org data leakage
-      return [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
     ...options,
   });
 }
 
 // Teams query hook
-export function useTeams(orgId, options = {}) {
+export function useTeams(organizationId, options = {}) {
   return useQuery({
-    queryKey: queryKeys.teams(orgId),
+    queryKey: queryKeys.teams(organizationId),
     queryFn: async () => {
-      const data = await Team.list();
-      const normalized = data.map(t => normalizeEntity(t, [
+      if (!organizationId) return [];
+      const data = await Team.filter({ organization_id: organizationId });
+      return data.map(t => normalizeEntity(t, [
         'name', 'sport', 'logo', 'season', 'coach_name', 'coach_email',
         'max_athletes', 'description', 'organization_id'
       ]));
-      
-      // CRITICAL: Always filter by organization to enforce data isolation
-      if (orgId && orgId !== 'all') {
-        return normalized.filter(t => t.organization_id === orgId);
-      }
-      
-      // If no org specified, return empty to prevent cross-org data leakage
-      return [];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!organizationId,
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000,
     ...options,
   });
 }
 
 // Metrics query hook
-export function useMetrics(orgId = null, options = {}) {
+export function useMetrics(organizationId, options = {}) {
   return useQuery({
-    queryKey: queryKeys.metrics(),
+    queryKey: queryKeys.metrics(organizationId),
     queryFn: async () => {
-      const data = await Metric.list('-created_date', 1000);
-      const normalized = data.map(m => normalizeEntity(m, [
+      if (!organizationId) return [];
+      const data = await Metric.filter({ organization_id: organizationId });
+      return data.map(m => normalizeEntity(m, [
         'name', 'unit', 'category', 'description', 'target_higher',
         'decimal_places', 'is_active', 'is_hidden', 'is_mandatory', 'is_auto_calculated', 'organization_id'
       ]));
-      
-      // Show system metrics (no org_id) + org-specific metrics
-      if (orgId && orgId !== 'all') {
-        return normalized.filter(m => !m.organization_id || m.organization_id === orgId);
-      }
-      
-      return normalized;
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
     ...options,
   });
 }
 
-// Metric Records query hook with pagination support
-export function useMetricRecords(filters = {}, options = {}) {
-  const { athleteIds, metricIds, startDate, endDate, limit = 10000 } = filters;
-  
+// Metric Records query hook
+export function useMetricRecords(organizationId, options = {}) {
   return useQuery({
-    queryKey: queryKeys.metricRecords(filters),
+    queryKey: queryKeys.metricRecords(organizationId),
     queryFn: async () => {
-      // Build query filter
-      const query = {};
-      
-      if (athleteIds?.length === 1) {
-        query.athlete_id = athleteIds[0];
-      }
-      
-      if (metricIds?.length === 1) {
-        query.metric_id = metricIds[0];
-      }
-      
-      // Fetch records
-      const data = Object.keys(query).length > 0 
-        ? await MetricRecord.filter(query, '-recorded_date', limit)
-        : await MetricRecord.list('-recorded_date', limit);
-      
-      let normalized = data.map(r => normalizeEntity(r, [
-        'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id'
+      if (!organizationId) return [];
+      const data = await MetricRecord.filter({ organization_id: organizationId });
+      return data.map(r => normalizeEntity(r, [
+        'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
-      
-      // CRITICAL: Filter by athleteIds to enforce org boundaries
-      if (athleteIds && athleteIds.length > 0) {
-        normalized = normalized.filter(r => athleteIds.includes(r.athlete_id));
-      }
-      
-      if (metricIds && metricIds.length > 0) {
-        normalized = normalized.filter(r => metricIds.includes(r.metric_id));
-      }
-      
-      if (startDate) {
-        normalized = normalized.filter(r => new Date(r.recorded_date) >= new Date(startDate));
-      }
-      
-      if (endDate) {
-        normalized = normalized.filter(r => new Date(r.recorded_date) <= new Date(endDate));
-      }
-      
-      return normalized;
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    enabled: !!organizationId,
+    staleTime: 2 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
     ...options,
   });
 }
@@ -187,22 +137,18 @@ export function useMetricCategories(orgId = null, options = {}) {
 }
 
 // Class Periods query hook
-export function useClassPeriods(orgId = null, options = {}) {
+export function useClassPeriods(organizationId, options = {}) {
   return useQuery({
-    queryKey: queryKeys.classPeriods(),
+    queryKey: queryKeys.classPeriods(organizationId),
     queryFn: async () => {
-      const data = await ClassPeriod.list();
-      const normalized = data.map(cp => normalizeEntity(cp, ['name', 'order', 'is_active', 'organization_id']));
-      
-      // CRITICAL: Filter by organization to enforce data isolation
-      let filtered = normalized;
-      if (orgId && orgId !== 'all') {
-        filtered = normalized.filter(cp => cp.organization_id === orgId);
-      }
-      
-      return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
+      if (!organizationId) return [];
+      const data = await ClassPeriod.filter({ organization_id: organizationId });
+      return data.map(cp => normalizeEntity(cp, ['name', 'order', 'is_active', 'organization_id']))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!organizationId,
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000,
     ...options,
   });
 }
