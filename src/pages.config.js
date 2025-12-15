@@ -9,7 +9,6 @@ import TestingCenter from './pages/TestingCenter';
 import Reports from './pages/Reports';
 import ManageUsers from './pages/ManageUsers';
 import DataMigrationOrg from './pages/DataMigrationOrg';
-import MigrateAthletesToOrg from './pages/MigrateAthletesToOrg';
 import __Layout from './Layout.jsx';
 
 
@@ -25,7 +24,6 @@ export const PAGES = {
     "Reports": Reports,
     "ManageUsers": ManageUsers,
     "DataMigrationOrg": DataMigrationOrg,
-    "MigrateAthletesToOrg": MigrateAthletesToOrg,
 }
 
 export const pagesConfig = {
