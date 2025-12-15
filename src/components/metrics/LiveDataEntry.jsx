@@ -234,12 +234,24 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       if (recordsToCreate.length > 0) {
         await MetricRecord.bulkCreate(recordsToCreate);
         
-        // Immediately refresh all records to update PRs
-        await loadAllRecords();
+        // Wait a moment for database consistency
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Fetch fresh records from database
+        const freshRecords = await MetricRecord.list('-created_date', 1000000);
+        const normalizedFreshRecords = freshRecords.map(r => ({
+          id: r.id,
+          athlete_id: r.data?.athlete_id || r.athlete_id,
+          metric_id: r.data?.metric_id || r.metric_id,
+          value: r.data?.value ?? r.value,
+          recorded_date: r.data?.recorded_date || r.recorded_date
+        }));
+        
+        // Update allRecords state immediately
+        setAllRecords(normalizedFreshRecords);
         
         // Update height and weight from metrics
         const athleteIds = [...new Set(recordsToCreate.map(r => r.athlete_id))];
-        const freshRecords = await MetricRecord.list();
         
         for (const athleteId of athleteIds) {
           const athleteUpdate = {};
@@ -247,7 +259,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           // Find Height metric
           const heightMetric = metrics.find(m => m.name === 'Height');
           if (heightMetric) {
-            const heightRecords = freshRecords.filter(r => r.athlete_id === athleteId && r.metric_id === heightMetric.id)
+            const heightRecords = normalizedFreshRecords.filter(r => r.athlete_id === athleteId && r.metric_id === heightMetric.id)
               .sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
             if (heightRecords.length > 0) {
               athleteUpdate.height = heightRecords[0].value;
@@ -257,7 +269,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           // Find Bodyweight metric
           const bodyweightMetric = metrics.find(m => m.name === 'Bodyweight');
           if (bodyweightMetric) {
-            const bodyweightRecords = freshRecords.filter(r => r.athlete_id === athleteId && r.metric_id === bodyweightMetric.id)
+            const bodyweightRecords = normalizedFreshRecords.filter(r => r.athlete_id === athleteId && r.metric_id === bodyweightMetric.id)
               .sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
             if (bodyweightRecords.length > 0) {
               athleteUpdate.weight = bodyweightRecords[0].value;
@@ -268,7 +280,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           if (selectedOrganization?.auto_calc_settings) {
             const calculatedMetrics = await calculateAllAutoMetrics(
               athleteId,
-              freshRecords,
+              normalizedFreshRecords,
               metrics,
               selectedOrganization.auto_calc_settings
             );
