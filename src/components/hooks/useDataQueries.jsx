@@ -187,8 +187,8 @@ export function useInvalidateQueries() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAthletes: () => queryClient.invalidateQueries({ queryKey: ['athletes'] }),
-    invalidateTeams: () => queryClient.invalidateQueries({ queryKey: ['teams'] }),
+    invalidateAthletes: (orgId) => queryClient.invalidateQueries({ queryKey: queryKeys.athletes(orgId) }),
+    invalidateTeams: (orgId) => queryClient.invalidateQueries({ queryKey: queryKeys.teams(orgId) }),
     invalidateMetrics: () => queryClient.invalidateQueries({ queryKey: ['metrics'] }),
     invalidateMetricRecords: () => queryClient.invalidateQueries({ queryKey: ['metricRecords'] }),
     invalidateAll: () => queryClient.invalidateQueries(),

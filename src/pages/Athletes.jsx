@@ -21,14 +21,11 @@ import { useAthletes, useClassPeriods, useInvalidateQueries } from "@/components
 
 export default function Athletes() {
   const { selectedTeamId, selectedOrganization, filteredTeams, refreshTeams } = useTeam();
-  const { invalidateAthletes } = useInvalidateQueries();
+  const { invalidateAthletes, invalidateTeams } = useInvalidateQueries();
   
-  // Get team IDs for filtering - CRITICAL for org data isolation
-  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
-  
-  // Use React Query hooks - pass team IDs to enforce org boundaries
+  // Use React Query hooks - fetch all athletes for the selected organization
   const { data: allAthletes = [], isLoading: athletesLoading, refetch: refetchAthletes } = useAthletes(
-    teamIds.length > 0 ? teamIds : []
+    selectedOrganization?.id
   );
   const { data: classPeriods = [] } = useClassPeriods(selectedOrganization?.id);
   
@@ -48,9 +45,12 @@ export default function Athletes() {
 
   // Filter and sort athletes
   const athletes = useMemo(() => {
-    let filtered = selectedTeamId === 'all'
-      ? allAthletes
-      : allAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
+    let filtered = allAthletes; // Start with all athletes from the organization
+
+    // Apply team filter if a specific team is selected
+    if (filters.team !== "all") {
+      filtered = filtered.filter(a => a.team_ids?.includes(filters.team));
+    }
     
     // Sort alphabetically by last name, then first name
     return [...filtered].sort((a, b) => {
@@ -58,7 +58,7 @@ export default function Athletes() {
       if (lastNameCompare !== 0) return lastNameCompare;
       return (a.first_name || '').localeCompare(b.first_name || '');
     });
-  }, [allAthletes, selectedTeamId]);
+  }, [allAthletes, filters.team]);
 
   // Calculate duplicates
   const duplicateCount = useMemo(() => {
@@ -99,8 +99,8 @@ export default function Athletes() {
   }, [athletes]);
 
   const loadData = async () => {
-    invalidateAthletes();
-    await refreshTeams(); // Refresh teams to include newly created teams
+    invalidateAthletes(selectedOrganization?.id);
+    invalidateTeams(selectedOrganization?.id);
     await refetchAthletes();
   };
 
