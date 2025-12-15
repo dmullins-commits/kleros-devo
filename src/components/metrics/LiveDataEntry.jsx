@@ -234,9 +234,12 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       if (recordsToCreate.length > 0) {
         await MetricRecord.bulkCreate(recordsToCreate);
         
+        // Immediately refresh all records to update PRs
+        await loadAllRecords();
+        
         // Update height and weight from metrics
         const athleteIds = [...new Set(recordsToCreate.map(r => r.athlete_id))];
-        const allRecords = await MetricRecord.list();
+        const freshRecords = await MetricRecord.list();
         
         for (const athleteId of athleteIds) {
           const athleteUpdate = {};
@@ -244,7 +247,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           // Find Height metric
           const heightMetric = metrics.find(m => m.name === 'Height');
           if (heightMetric) {
-            const heightRecords = allRecords.filter(r => r.athlete_id === athleteId && r.metric_id === heightMetric.id)
+            const heightRecords = freshRecords.filter(r => r.athlete_id === athleteId && r.metric_id === heightMetric.id)
               .sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
             if (heightRecords.length > 0) {
               athleteUpdate.height = heightRecords[0].value;
@@ -254,7 +257,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           // Find Bodyweight metric
           const bodyweightMetric = metrics.find(m => m.name === 'Bodyweight');
           if (bodyweightMetric) {
-            const bodyweightRecords = allRecords.filter(r => r.athlete_id === athleteId && r.metric_id === bodyweightMetric.id)
+            const bodyweightRecords = freshRecords.filter(r => r.athlete_id === athleteId && r.metric_id === bodyweightMetric.id)
               .sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));
             if (bodyweightRecords.length > 0) {
               athleteUpdate.weight = bodyweightRecords[0].value;
@@ -265,7 +268,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
           if (selectedOrganization?.auto_calc_settings) {
             const calculatedMetrics = await calculateAllAutoMetrics(
               athleteId,
-              allRecords,
+              freshRecords,
               metrics,
               selectedOrganization.auto_calc_settings
             );
@@ -278,9 +281,6 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
         }
         
         setSaveSuccess(true);
-
-        // Load records in background without triggering parent reload during testing
-        loadAllRecords();
 
         setTimeout(() => {
           setShowPrintableLeaderboard(true);
