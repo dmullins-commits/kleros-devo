@@ -101,7 +101,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
   };
 
   const loadAllRecords = async () => {
-    const recordsData = await MetricRecord.list();
+    const recordsData = await MetricRecord.list('-created_date', 1000000);
     // Normalize records to handle nested data structures
     const normalizedRecords = recordsData.map(r => ({
       id: r.id,
