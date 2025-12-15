@@ -101,20 +101,27 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
   const loadAllRecords = async () => {
     try {
       if (!selectedOrganization?.id) {
+        console.log('LiveDataEntry: No organization selected, skipping record load');
         setAllRecords([]);
         return;
       }
       
+      console.log('LiveDataEntry: Fetching records for organization:', selectedOrganization.id);
       const recordsData = await MetricRecord.filter({ organization_id: selectedOrganization.id });
+      console.log('LiveDataEntry: Raw records fetched:', recordsData.length);
+      
       // Normalize records to handle nested data structures
       const normalizedRecords = recordsData.map(r => ({
         id: r.id,
         athlete_id: r.data?.athlete_id || r.athlete_id,
         metric_id: r.data?.metric_id || r.metric_id,
         value: r.data?.value ?? r.value,
-        recorded_date: r.data?.recorded_date || r.recorded_date
+        recorded_date: r.data?.recorded_date || r.recorded_date,
+        organization_id: r.data?.organization_id || r.organization_id
       }));
-      console.log('Loaded records for PR calculation:', normalizedRecords.length);
+      
+      console.log('LiveDataEntry: Normalized records:', normalizedRecords.length);
+      console.log('LiveDataEntry: Sample records:', normalizedRecords.slice(0, 3));
       setAllRecords(normalizedRecords);
     } catch (error) {
       console.error('Error loading records:', error);
@@ -330,9 +337,14 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
   const getAthletePR = (athleteId, metricId) => {
     const metric = metrics.find(m => m.id === metricId);
-    if (!metric) return null;
+    if (!metric) {
+      console.log(`LiveDataEntry: Metric not found for id ${metricId}`);
+      return null;
+    }
 
     const athleteRecords = allRecords.filter(r => r.athlete_id === athleteId && r.metric_id === metricId);
+    console.log(`LiveDataEntry: PR lookup for athlete ${athleteId}, metric ${metricId}: found ${athleteRecords.length} records`);
+    
     if (athleteRecords.length === 0) return null;
 
     if (metric.target_higher) {
