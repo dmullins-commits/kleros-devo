@@ -84,12 +84,7 @@ const allNavigationItems = [
     icon: Upload,
     featureKey: "upload"
   },
-  {
-    title: "Data Migration",
-    url: createPageUrl("DataMigration"),
-    icon: Database,
-    featureKey: "migration"
-  },
+
   {
     title: "Manage Users",
     url: createPageUrl("ManageUsers"),
