@@ -44,7 +44,7 @@ export default function RawDataPanel({ onClose }) {
     setIsLoading(true);
     try {
       const [recordsData, athletesData, metricsData] = await Promise.all([
-        MetricRecord.list('-recorded_date'),
+        MetricRecord.list('-recorded_date', 1000000),
         Athlete.list(),
         Metric.list()
       ]);
@@ -66,7 +66,7 @@ export default function RawDataPanel({ onClose }) {
     setIsLoading(true);
     try {
       const [recordsData, athletesData, metricsData, categoriesData] = await Promise.all([
-        MetricRecord.list('-recorded_date'),
+        MetricRecord.list('-recorded_date', 1000000),
         Athlete.list(),
         Metric.list(),
         MetricCategory.list()
@@ -103,7 +103,7 @@ export default function RawDataPanel({ onClose }) {
     setIsLoading(true);
     try {
       const [recordsData, athletesData, metricsData, categoriesData] = await Promise.all([
-        MetricRecord.list('-recorded_date'),
+        MetricRecord.list('-recorded_date', 1000000),
         Athlete.list(),
         Metric.list(),
         MetricCategory.list()
