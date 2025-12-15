@@ -102,7 +102,12 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
 
   const loadAllRecords = async () => {
     try {
-      const recordsData = await MetricRecord.list('-created_date', 1000000);
+      if (!selectedOrganization?.id) {
+        setAllRecords([]);
+        return;
+      }
+      
+      const recordsData = await MetricRecord.filter({ organization_id: selectedOrganization.id });
       // Normalize records to handle nested data structures
       const normalizedRecords = recordsData.map(r => ({
         id: r.id,
@@ -239,7 +244,12 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       });
 
       if (recordsToCreate.length > 0) {
-        await MetricRecord.bulkCreate(recordsToCreate);
+        // Add organization_id to all records
+        const recordsWithOrg = recordsToCreate.map(r => ({
+          ...r,
+          organization_id: selectedOrganization.id
+        }));
+        await MetricRecord.bulkCreate(recordsWithOrg);
         
         // Wait a moment for database consistency
         await new Promise(resolve => setTimeout(resolve, 500));

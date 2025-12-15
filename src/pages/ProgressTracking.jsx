@@ -33,30 +33,20 @@ export default function ProgressTracking() {
     
     setIsLoading(true);
     try {
-      // Fetch ALL data in parallel first
+      // Fetch data filtered by organization
       const [allMetricsData, athletesData, recordsData, classPeriodsData, teamsData] = await Promise.all([
-        Metric.list('-created_date', 1000000),
-        Athlete.list('-created_date', 1000000),
-        MetricRecord.list('-created_date', 1000000),
-        ClassPeriod.list('-created_date', 1000),
-        Team.list('-created_date', 1000)
+        Metric.filter({ organization_id: selectedOrganization.id }),
+        Athlete.filter({ organization_id: selectedOrganization.id }),
+        MetricRecord.filter({ organization_id: selectedOrganization.id }),
+        ClassPeriod.filter({ organization_id: selectedOrganization.id }),
+        Team.filter({ organization_id: selectedOrganization.id })
       ]);
 
-      // Filter metrics by organization - handle both flat and nested data structures
-      const metricsData = allMetricsData.filter(m => {
-        const orgId = m.data?.organization_id || m.organization_id;
-        return orgId === selectedOrganization.id;
-      });
-
-      // Get metric IDs for this organization
+      // Data is already filtered by organization from the query
+      const metricsData = allMetricsData;
       const orgMetricIds = new Set(metricsData.map(m => m.id));
-      
-      // Filter teams by org
-      const orgTeams = teamsData.filter(t => 
-        t.organization_id === selectedOrganization.id || 
-        t.data?.organization_id === selectedOrganization.id
-      );
-      
+      const orgTeams = teamsData;
+
       // Normalize teams
       const normalizedTeams = orgTeams.map(t => ({
         id: t.id,
@@ -67,15 +57,9 @@ export default function ProgressTracking() {
       }));
       setTeams(normalizedTeams);
       
-      // Get org team IDs for filtering
-      const orgTeamIds = normalizedTeams.map(t => t.id);
-      
-      // Filter athletes by org teams
-      const orgAthletes = athletesData.filter(a => {
-        const teamIds = a.data?.team_ids || a.team_ids || [];
-        return teamIds.some(tid => orgTeamIds.includes(tid));
-      });
-      
+      // Athletes are already filtered by organization
+      const orgAthletes = athletesData;
+
       // Normalize athletes - data may be nested or flat
       const normalizedAthletes = orgAthletes.map(a => ({
         id: a.id,
@@ -103,13 +87,10 @@ export default function ProgressTracking() {
         target_higher: m.data?.target_higher ?? m.target_higher ?? true
       }));
       setMetrics(normalizedMetrics);
-      
-      // Filter records by org metrics client-side to ensure we get all data
-      const orgRecords = recordsData.filter(r => {
-        const metricId = r.data?.metric_id || r.metric_id;
-        return orgMetricIds.has(metricId);
-      });
-      
+
+      // Records are already filtered by organization
+      const orgRecords = recordsData;
+
       // Normalize records - all imported records store data in nested 'data' object
       const normalizedRecords = orgRecords.map(r => {
         // Extract values from nested data object if present, otherwise use flat properties

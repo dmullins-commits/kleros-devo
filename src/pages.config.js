@@ -8,6 +8,7 @@ import DataMigration from './pages/DataMigration';
 import TestingCenter from './pages/TestingCenter';
 import Reports from './pages/Reports';
 import ManageUsers from './pages/ManageUsers';
+import DataMigrationOrg from './pages/DataMigrationOrg';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "TestingCenter": TestingCenter,
     "Reports": Reports,
     "ManageUsers": ManageUsers,
+    "DataMigrationOrg": DataMigrationOrg,
 }
 
 export const pagesConfig = {
