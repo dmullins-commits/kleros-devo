@@ -259,13 +259,18 @@ export default function RawDataPanel({ onClose }) {
 
     try {
       for (const [key, value] of Object.entries(editedValues)) {
-        const [rowKey, metricId] = key.split('_').slice(0, 2);
-        const metricIdFull = key.substring(rowKey.length + 1);
+        // Key format is: ${date}_${athleteId}_${metricId}
+        // Date format is YYYY-MM-DD (contains hyphens, not underscores)
+        const parts = key.split('_');
+        const date = parts[0]; // YYYY-MM-DD
+        const athleteId = parts[1];
+        const metricId = parts.slice(2).join('_'); // Join in case metric ID has underscores
+        const rowKey = `${date}_${athleteId}`;
         
         const row = organizedData.find(r => `${r.date}_${r.athlete_id}` === rowKey);
         if (!row) continue;
 
-        const existingRecord = row.metrics[metricIdFull];
+        const existingRecord = row.metrics[metricId];
         
         if (value === '' || value === null) {
           if (existingRecord?.record_id) {
@@ -279,10 +284,10 @@ export default function RawDataPanel({ onClose }) {
             await MetricRecord.update(existingRecord.record_id, { value: numValue });
           } else {
             await MetricRecord.create({
-              athlete_id: row.athlete_id,
-              metric_id: metricIdFull,
+              athlete_id: athleteId,
+              metric_id: metricId,
               value: numValue,
-              recorded_date: row.date
+              recorded_date: date
             });
           }
         }
