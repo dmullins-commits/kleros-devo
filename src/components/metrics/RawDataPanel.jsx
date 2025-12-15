@@ -55,14 +55,42 @@ export default function RawDataPanel({ onClose }) {
         Metric.filter({ organization_id: selectedOrganization.id })
       ]);
       
-      const dates = [...new Set(recordsData.map(r => r.recorded_date || r.data?.recorded_date))].sort((a, b) => 
+      // Normalize athletes to handle nested data structures
+      const normalizedAthletes = athletesData.map(a => ({
+        id: a.id,
+        first_name: a.data?.first_name || a.first_name,
+        last_name: a.data?.last_name || a.last_name,
+        gender: a.data?.gender || a.gender,
+        class_period: a.data?.class_period || a.class_period
+      }));
+      
+      // Normalize records
+      const normalizedRecords = recordsData.map(r => ({
+        id: r.id,
+        athlete_id: r.data?.athlete_id || r.athlete_id,
+        metric_id: r.data?.metric_id || r.metric_id,
+        value: r.data?.value ?? r.value,
+        recorded_date: r.data?.recorded_date || r.recorded_date
+      }));
+      
+      // Normalize metrics
+      const normalizedMetrics = metricsData.map(m => ({
+        id: m.id,
+        name: m.data?.name || m.name,
+        unit: m.data?.unit || m.unit,
+        category: m.data?.category || m.category,
+        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2,
+        is_auto_calculated: m.data?.is_auto_calculated ?? m.is_auto_calculated ?? false
+      }));
+      
+      const dates = [...new Set(normalizedRecords.map(r => r.recorded_date))].sort((a, b) => 
         new Date(b) - new Date(a)
       );
       
       setAvailableDates(dates);
-      setRecords(recordsData);
-      setAthletes(athletesData);
-      setMetrics(metricsData);
+      setRecords(normalizedRecords);
+      setAthletes(normalizedAthletes);
+      setMetrics(normalizedMetrics);
     } finally {
       setIsLoading(false);
     }
@@ -80,14 +108,47 @@ export default function RawDataPanel({ onClose }) {
         MetricCategory.list()
       ]);
       
-      const filteredRecords = recordsData.filter(r => (r.recorded_date || r.data?.recorded_date) === date);
+      // Normalize data
+      const normalizedAthletes = athletesData.map(a => ({
+        id: a.id,
+        first_name: a.data?.first_name || a.first_name,
+        last_name: a.data?.last_name || a.last_name,
+        gender: a.data?.gender || a.gender,
+        class_period: a.data?.class_period || a.class_period
+      }));
       
-      setRecords(recordsData);
-      setAthletes(athletesData);
-      setMetrics(metricsData);
-      setCategories(categoriesData);
+      const normalizedRecords = recordsData.map(r => ({
+        id: r.id,
+        athlete_id: r.data?.athlete_id || r.athlete_id,
+        metric_id: r.data?.metric_id || r.metric_id,
+        value: r.data?.value ?? r.value,
+        recorded_date: r.data?.recorded_date || r.recorded_date
+      }));
       
-      organizeData(filteredRecords, athletesData, metricsData);
+      const normalizedMetrics = metricsData.map(m => ({
+        id: m.id,
+        name: m.data?.name || m.name,
+        unit: m.data?.unit || m.unit,
+        category: m.data?.category || m.category,
+        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2,
+        is_auto_calculated: m.data?.is_auto_calculated ?? m.is_auto_calculated ?? false
+      }));
+      
+      const normalizedCategories = categoriesData.map(c => ({
+        id: c.id,
+        name: c.data?.name || c.name,
+        order: c.data?.order ?? c.order ?? 0,
+        is_hidden: c.data?.is_hidden ?? c.is_hidden ?? false
+      }));
+      
+      const filteredRecords = normalizedRecords.filter(r => r.recorded_date === date);
+      
+      setRecords(normalizedRecords);
+      setAthletes(normalizedAthletes);
+      setMetrics(normalizedMetrics);
+      setCategories(normalizedCategories);
+      
+      organizeData(filteredRecords, normalizedAthletes, normalizedMetrics);
     } finally {
       setIsLoading(false);
     }
@@ -119,12 +180,45 @@ export default function RawDataPanel({ onClose }) {
         MetricCategory.list()
       ]);
       
-      setRecords(recordsData);
-      setAthletes(athletesData);
-      setMetrics(metricsData);
-      setCategories(categoriesData);
+      // Normalize data
+      const normalizedAthletes = athletesData.map(a => ({
+        id: a.id,
+        first_name: a.data?.first_name || a.first_name,
+        last_name: a.data?.last_name || a.last_name,
+        gender: a.data?.gender || a.gender,
+        class_period: a.data?.class_period || a.class_period
+      }));
       
-      organizeAllData(recordsData, athletesData, metricsData);
+      const normalizedRecords = recordsData.map(r => ({
+        id: r.id,
+        athlete_id: r.data?.athlete_id || r.athlete_id,
+        metric_id: r.data?.metric_id || r.metric_id,
+        value: r.data?.value ?? r.value,
+        recorded_date: r.data?.recorded_date || r.recorded_date
+      }));
+      
+      const normalizedMetrics = metricsData.map(m => ({
+        id: m.id,
+        name: m.data?.name || m.name,
+        unit: m.data?.unit || m.unit,
+        category: m.data?.category || m.category,
+        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2,
+        is_auto_calculated: m.data?.is_auto_calculated ?? m.is_auto_calculated ?? false
+      }));
+      
+      const normalizedCategories = categoriesData.map(c => ({
+        id: c.id,
+        name: c.data?.name || c.name,
+        order: c.data?.order ?? c.order ?? 0,
+        is_hidden: c.data?.is_hidden ?? c.is_hidden ?? false
+      }));
+      
+      setRecords(normalizedRecords);
+      setAthletes(normalizedAthletes);
+      setMetrics(normalizedMetrics);
+      setCategories(normalizedCategories);
+      
+      organizeAllData(normalizedRecords, normalizedAthletes, normalizedMetrics);
     } finally {
       setIsLoading(false);
     }
@@ -167,8 +261,25 @@ export default function RawDataPanel({ onClose }) {
     if (!exportDate || !exportMetricId || !selectedOrganization?.id) return;
 
     // Reload records filtered by organization
-    const allRecords = await MetricRecord.filter({ organization_id: selectedOrganization.id });
-    const allAthletes = athletes.length > 0 ? athletes : await Athlete.filter({ organization_id: selectedOrganization.id });
+    const recordsData = await MetricRecord.filter({ organization_id: selectedOrganization.id });
+    const athletesData = athletes.length > 0 ? athletes : await Athlete.filter({ organization_id: selectedOrganization.id });
+    
+    // Normalize if needed
+    const allRecords = recordsData.map(r => ({
+      id: r.id,
+      athlete_id: r.data?.athlete_id || r.athlete_id,
+      metric_id: r.data?.metric_id || r.metric_id,
+      value: r.data?.value ?? r.value,
+      recorded_date: r.data?.recorded_date || r.recorded_date
+    }));
+    
+    const allAthletes = athletesData.map(a => ({
+      id: a.id,
+      first_name: a.data?.first_name || a.first_name,
+      last_name: a.data?.last_name || a.last_name,
+      gender: a.data?.gender || a.gender,
+      class_period: a.data?.class_period || a.class_period
+    }));
     
     const metric = metrics.find(m => m.id === exportMetricId);
     if (!metric) return;
