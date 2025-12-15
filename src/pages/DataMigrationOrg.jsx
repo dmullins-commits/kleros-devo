@@ -36,7 +36,7 @@ export default function DataMigrationOrg() {
 
       // Step 3: Migrate Athletes
       setProgress('Migrating athletes...');
-      const athletes = await Athlete.list();
+      const athletes = await Athlete.list('-created_date', 100000);
       let athletesUpdated = 0;
       let athletesSkipped = 0;
       const athleteToOrg = new Map();
@@ -60,6 +60,7 @@ export default function DataMigrationOrg() {
             await Athlete.update(athlete.id, { organization_id: orgId });
             athleteToOrg.set(athlete.id, orgId);
             athletesUpdated++;
+            setProgress(`Migrating athletes... ${athletesUpdated} updated`);
           }
         }
       }
@@ -88,8 +89,8 @@ export default function DataMigrationOrg() {
         if (orgId) {
           recordsBatched.push({ id: record.id, organization_id: orgId });
           
-          // Update in batches of 100
-          if (recordsBatched.length >= 100) {
+          // Update in batches of 50
+          if (recordsBatched.length >= 50) {
             await Promise.all(
               recordsBatched.map(r => MetricRecord.update(r.id, { organization_id: r.organization_id }))
             );
@@ -106,6 +107,7 @@ export default function DataMigrationOrg() {
           recordsBatched.map(r => MetricRecord.update(r.id, { organization_id: r.organization_id }))
         );
         recordsUpdated += recordsBatched.length;
+        setProgress(`Migrating metric records... ${recordsUpdated} updated (final batch)`);
       }
 
       setResults({
