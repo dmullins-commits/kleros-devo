@@ -33,28 +33,25 @@ export default function ProgressTracking() {
     
     setIsLoading(true);
     try {
-      // First fetch metrics filtered by organization
-      const metricsData = await Metric.list('-created_date', 1000, { organization_id: selectedOrganization.id });
+      // Fetch organization-specific data in parallel
+      const [metricsData, teamsData, classPeriodsData] = await Promise.all([
+        Metric.filter({ organization_id: selectedOrganization.id }),
+        Team.filter({ organization_id: selectedOrganization.id }),
+        ClassPeriod.list('-created_date', 1000)
+      ]);
 
       // Get metric IDs for this organization
       const orgMetricIds = new Set(metricsData.map(m => m.id));
+      const orgTeamIds = new Set(teamsData.map(t => t.id));
 
-      // Now fetch ALL data in parallel - we'll filter records client-side
-      const [athletesData, recordsData, classPeriodsData, teamsData] = await Promise.all([
+      // Now fetch athletes and records based on org teams and metrics
+      const [athletesData, recordsData] = await Promise.all([
         Athlete.list('-created_date', 1000000),
-        MetricRecord.list('-created_date', 1000000), // Fetch ALL records, filter client-side
-        ClassPeriod.list('-created_date', 1000),
-        Team.list('-created_date', 1000)
+        MetricRecord.list('-created_date', 1000000)
       ]);
       
-      // Filter teams by org
-      const orgTeams = teamsData.filter(t => 
-        t.organization_id === selectedOrganization.id || 
-        t.data?.organization_id === selectedOrganization.id
-      );
-      
-      // Normalize teams
-      const normalizedTeams = orgTeams.map(t => ({
+      // Normalize teams (already filtered by org in fetch)
+      const normalizedTeams = teamsData.map(t => ({
         id: t.id,
         ...t.data,
         ...t,
@@ -62,9 +59,6 @@ export default function ProgressTracking() {
         sport: t.data?.sport || t.sport
       }));
       setTeams(normalizedTeams);
-      
-      // Get org team IDs for filtering
-      const orgTeamIds = normalizedTeams.map(t => t.id);
       
       // Filter athletes by org teams
       const orgAthletes = athletesData.filter(a => {
