@@ -11,6 +11,61 @@ export default function DataMigration() {
   const [progress, setProgress] = useState('');
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const [unassignedAthletes, setUnassignedAthletes] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
+  const [selectedOrgs, setSelectedOrgs] = useState({});
+  const [isLoadingUnassigned, setIsLoadingUnassigned] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    loadUnassignedAthletes();
+  }, []);
+
+  const loadUnassignedAthletes = async () => {
+    try {
+      setIsLoadingUnassigned(true);
+      const [athletes, orgs] = await Promise.all([
+        Athlete.filter({ organization_id: null }),
+        Organization.list()
+      ]);
+      setUnassignedAthletes(athletes);
+      setOrganizations(orgs);
+    } catch (err) {
+      console.error('Error loading unassigned athletes:', err);
+    } finally {
+      setIsLoadingUnassigned(false);
+    }
+  };
+
+  const handleOrgSelect = (athleteId, orgId) => {
+    setSelectedOrgs(prev => ({
+      ...prev,
+      [athleteId]: orgId
+    }));
+  };
+
+  const handleSaveAssignments = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      const updates = Object.entries(selectedOrgs).map(([athleteId, orgId]) => 
+        Athlete.update(athleteId, { organization_id: orgId })
+      );
+      await Promise.all(updates);
+      setSaveSuccess(true);
+      setTimeout(() => {
+        loadUnassignedAthletes();
+        setSelectedOrgs({});
+        setSaveSuccess(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Error saving assignments:', err);
+      setError('Failed to save assignments');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const runMigration = async () => {
     setIsRunning(true);
