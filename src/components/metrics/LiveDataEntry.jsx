@@ -93,7 +93,9 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       name: p.data?.name || p.name,
       order: p.data?.order ?? p.order ?? 0
     }));
-    setClassPeriods(normalizedPeriods.sort((a, b) => a.order - b.order));
+    const sorted = normalizedPeriods.sort((a, b) => a.order - b.order);
+    console.log('Loaded class periods:', sorted);
+    setClassPeriods(sorted);
   };
 
   const loadAllRecords = async () => {
@@ -132,16 +134,24 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
     // Ensure we have fresh records loaded before testing begins
     await loadAllRecords();
     
+    console.log('Begin Testing - Total athletes:', athletes.length);
+    console.log('Selected class period:', selectedClassPeriod);
+    console.log('Selected team:', selectedTeamId);
+    
     // Filter to only active athletes
     let teamAthletes = athletes.filter(a => a.status === 'active' || !a.status);
+    console.log('Active athletes:', teamAthletes.length);
     
     // Filter by team if selected
     if (selectedTeamId && selectedTeamId !== "" && selectedTeamId !== "null") {
       teamAthletes = teamAthletes.filter(a => a.team_ids?.includes(selectedTeamId));
+      console.log('After team filter:', teamAthletes.length);
     }
 
     if (selectedClassPeriod !== "all") {
+      console.log('Filtering by class period. Athletes before filter:', teamAthletes.map(a => ({name: `${a.first_name} ${a.last_name}`, period: a.class_period})));
       teamAthletes = teamAthletes.filter(a => a.class_period === selectedClassPeriod);
+      console.log('After class period filter:', teamAthletes.length);
     }
 
     teamAthletes.sort((a, b) => {
