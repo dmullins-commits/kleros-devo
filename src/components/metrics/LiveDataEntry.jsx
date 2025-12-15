@@ -101,16 +101,22 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
   };
 
   const loadAllRecords = async () => {
-    const recordsData = await MetricRecord.list('-created_date', 1000000);
-    // Normalize records to handle nested data structures
-    const normalizedRecords = recordsData.map(r => ({
-      id: r.id,
-      athlete_id: r.data?.athlete_id || r.athlete_id,
-      metric_id: r.data?.metric_id || r.metric_id,
-      value: r.data?.value ?? r.value,
-      recorded_date: r.data?.recorded_date || r.recorded_date
-    }));
-    setAllRecords(normalizedRecords);
+    try {
+      const recordsData = await MetricRecord.list('-created_date', 1000000);
+      // Normalize records to handle nested data structures
+      const normalizedRecords = recordsData.map(r => ({
+        id: r.id,
+        athlete_id: r.data?.athlete_id || r.athlete_id,
+        metric_id: r.data?.metric_id || r.metric_id,
+        value: r.data?.value ?? r.value,
+        recorded_date: r.data?.recorded_date || r.recorded_date
+      }));
+      console.log('Loaded records for PR calculation:', normalizedRecords.length);
+      setAllRecords(normalizedRecords);
+    } catch (error) {
+      console.error('Error loading records:', error);
+      setAllRecords([]);
+    }
   };
 
   const handleMetricToggle = (metricId) => {
