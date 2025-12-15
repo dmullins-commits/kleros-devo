@@ -183,7 +183,8 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
             athlete_id: athlete.id,
             metric_id: metric.id,
             value: value,
-            recorded_date: recordData.date
+            recorded_date: recordData.date,
+            organization_id: organizationId
           });
         }
       }

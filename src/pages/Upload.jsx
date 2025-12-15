@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload as UploadIcon, FileSpreadsheet, Users, Target, Zap, CheckCircle, Activity } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTeam } from "@/components/TeamContext";
 
 import FileUploadZone from "../components/upload/FileUploadZone";
 import ColumnMappingModal from "../components/upload/ColumnMappingModal";
@@ -13,6 +14,7 @@ import DataPreview from "../components/upload/DataPreview";
 import MissingAthletesModal from "../components/upload/MissingAthletesModal";
 
 export default function Upload() {
+  const { selectedOrganization } = useTeam();
   const [file, setFile] = useState(null);
   const [csvData, setCsvData] = useState(null);
   const [showMappingModal, setShowMappingModal] = useState(false);
@@ -181,7 +183,8 @@ export default function Upload() {
             metric_id: metric.id,
             value: value,
             recorded_date: recordDate,
-            notes: `Imported from CSV: ${file.name}`
+            notes: `Imported from CSV: ${file.name}`,
+            organization_id: selectedOrganization?.id
           });
         } else {
           // Standard mode: Process each metric column
@@ -194,7 +197,8 @@ export default function Upload() {
               metric_id: metricId,
               value: value,
               recorded_date: recordDate,
-              notes: `Imported from CSV: ${file.name}`
+              notes: `Imported from CSV: ${file.name}`,
+              organization_id: selectedOrganization?.id
             });
           }
         }
@@ -277,7 +281,8 @@ export default function Upload() {
             metric_id: metric.id,
             value: value,
             recorded_date: recordDate,
-            notes: `Imported from CSV: ${file.name}`
+            notes: `Imported from CSV: ${file.name}`,
+            organization_id: selectedOrganization?.id
           });
         } else {
           // Standard mode: Process each metric column
@@ -290,7 +295,8 @@ export default function Upload() {
               metric_id: metricId,
               value: value,
               recorded_date: recordDate,
-              notes: `Imported from CSV: ${file.name}`
+              notes: `Imported from CSV: ${file.name}`,
+              organization_id: selectedOrganization?.id
             });
           }
         }

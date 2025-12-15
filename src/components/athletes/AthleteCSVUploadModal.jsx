@@ -218,7 +218,8 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
               class_period: athleteData.class_period || '',
               gender: athleteData.gender || '',
               team_ids: teamIds,
-              status: 'active'
+              status: 'active',
+              organization_id: selectedOrganization.id
             });
           }
         }
