@@ -107,6 +107,11 @@ export default function Athletes() {
   const handleSubmit = async (athleteData) => {
     setErrorMessage(null);
     
+    // Automatically add organization_id if creating new athlete
+    const dataToSubmit = editingAthlete 
+      ? athleteData 
+      : { ...athleteData, organization_id: selectedOrganization?.id };
+    
     // Retry logic with exponential backoff
     const maxRetries = 3;
     let retryCount = 0;
@@ -115,9 +120,9 @@ export default function Athletes() {
     while (retryCount < maxRetries) {
       try {
         if (editingAthlete) {
-          await Athlete.update(editingAthlete.id, athleteData);
+          await Athlete.update(editingAthlete.id, dataToSubmit);
         } else {
-          await Athlete.create(athleteData);
+          await Athlete.create(dataToSubmit);
         }
         
         setShowForm(false);
