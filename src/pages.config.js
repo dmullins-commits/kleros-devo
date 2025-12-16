@@ -10,6 +10,7 @@ import Reports from './pages/Reports';
 import ManageUsers from './pages/ManageUsers';
 import DataMigrationOrg from './pages/DataMigrationOrg';
 import CleanupClinton from './pages/CleanupClinton';
+import CleanupUnknownTeams from './pages/CleanupUnknownTeams';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "ManageUsers": ManageUsers,
     "DataMigrationOrg": DataMigrationOrg,
     "CleanupClinton": CleanupClinton,
+    "CleanupUnknownTeams": CleanupUnknownTeams,
 }
 
 export const pagesConfig = {
