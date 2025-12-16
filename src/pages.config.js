@@ -11,6 +11,7 @@ import ManageUsers from './pages/ManageUsers';
 import DataMigrationOrg from './pages/DataMigrationOrg';
 import CleanupClinton from './pages/CleanupClinton';
 import CleanupUnknownTeams from './pages/CleanupUnknownTeams';
+import MigrateTeamsClassPeriods from './pages/MigrateTeamsClassPeriods';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +29,7 @@ export const PAGES = {
     "DataMigrationOrg": DataMigrationOrg,
     "CleanupClinton": CleanupClinton,
     "CleanupUnknownTeams": CleanupUnknownTeams,
+    "MigrateTeamsClassPeriods": MigrateTeamsClassPeriods,
 }
 
 export const pagesConfig = {
