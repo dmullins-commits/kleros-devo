@@ -226,12 +226,14 @@ export default function SnapshotView({
           // Update existing record
           updates.push(MetricRecord.update(existingRecord.id, { value: numValue }));
         } else {
-          // Create new record
+          // Create new record with organization_id
+          const athlete = athletes.find(a => a.id === athleteId);
           updates.push(MetricRecord.create({
             athlete_id: athleteId,
             metric_id: metricId,
             value: numValue,
-            recorded_date: date
+            recorded_date: date,
+            organization_id: athlete?.organization_id
           }));
         }
       }
