@@ -90,12 +90,31 @@ export default function AthleteForm({ athlete, teams, onSubmit, onCancel }) {
   };
 
   const handleTeamToggle = (teamId) => {
-    setFormData(prev => ({
-      ...prev,
-      team_ids: prev.team_ids?.includes(teamId)
-        ? prev.team_ids.filter(id => id !== teamId)
-        : [...(prev.team_ids || []), teamId]
-    }));
+    setFormData(prev => {
+      const currentTeamIds = prev.team_ids || [];
+      const isCurrentlySelected = currentTeamIds.includes(teamId);
+      
+      // Find the "Unassigned" team
+      const unassignedTeam = teams.find(t => t.name === 'Unassigned');
+      
+      if (isCurrentlySelected) {
+        // Removing a team
+        return {
+          ...prev,
+          team_ids: currentTeamIds.filter(id => id !== teamId)
+        };
+      } else {
+        // Adding a team - remove "Unassigned" if present
+        let newTeamIds = [...currentTeamIds, teamId];
+        if (unassignedTeam && newTeamIds.includes(unassignedTeam.id)) {
+          newTeamIds = newTeamIds.filter(id => id !== unassignedTeam.id);
+        }
+        return {
+          ...prev,
+          team_ids: newTeamIds
+        };
+      }
+    });
   };
 
   return (
