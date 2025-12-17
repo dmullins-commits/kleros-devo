@@ -569,30 +569,27 @@ export default function SnapshotView({
                     Athlete
                   </th>
                   {snapshotData.map(({ metric, dates }) => (
-                    <React.Fragment key={metric.id}>
-                      <th 
-                        colSpan={dates.length} 
-                        className="bg-gray-800 p-3 text-center text-white font-bold border-r-2 border-gray-700"
-                      >
-                        {metric.name} ({metric.unit})
-                      </th>
-                    </React.Fragment>
+                    <th 
+                      key={metric.id}
+                      colSpan={dates.length} 
+                      className="bg-gray-800 p-3 text-center text-white font-bold border-r-2 border-gray-700"
+                    >
+                      {metric.name} ({metric.unit})
+                    </th>
                   ))}
                 </tr>
                 <tr className="border-b-2 border-gray-700">
                   <th className="sticky left-0 z-40 bg-gray-900 p-3 border-r-2 border-gray-700"></th>
-                  {snapshotData.map(({ dates }) => (
-                    <React.Fragment key={dates.join('-')}>
-                      {dates.map(date => (
-                        <th key={date} className="bg-gray-900 p-2 text-center text-white font-semibold text-xs min-w-[100px] border-r border-gray-800">
-                          {(() => {
-                            const [year, month, day] = date.split('-');
-                            return new Date(year, month - 1, day).toLocaleDateString();
-                          })()}
-                        </th>
-                      ))}
-                    </React.Fragment>
-                  ))}
+                  {snapshotData.map(({ metric, dates }) => 
+                    dates.map(date => (
+                      <th key={`${metric.id}-${date}`} className="bg-gray-900 p-2 text-center text-white font-semibold text-xs min-w-[100px] border-r border-gray-800">
+                        {(() => {
+                          const [year, month, day] = date.split('-');
+                          return new Date(year, month - 1, day).toLocaleDateString();
+                        })()}
+                      </th>
+                    ))
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -607,9 +604,7 @@ export default function SnapshotView({
                     {snapshotData.map(({ metric, dates, dataByAthlete, prByAthlete }) => {
                       const pr = prByAthlete[athlete.id];
                       
-                      return (
-                        <React.Fragment key={`${athlete.id}-${metric.id}`}>
-                          {dates.map(date => {
+                      return dates.map(date => {
                             const value = dataByAthlete[athlete.id][date];
                             const isPR = value !== undefined && pr !== undefined && value === pr;
                             const key = `${athlete.id}|||${metric.id}|||${date}`;
@@ -657,9 +652,7 @@ export default function SnapshotView({
                                 )}
                               </td>
                             );
-                          })}
-                        </React.Fragment>
-                      );
+                      });
                     })}
                   </tr>
                 ))}
