@@ -31,16 +31,10 @@ export default function Dashboard() {
   const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
   
   // Use React Query hooks for data fetching
-  const { data: allAthletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
+  const { data: allAthletes = [], isLoading: athletesLoading } = useAthletes(selectedOrganization?.id);
   const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
   const { data: metricsData = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
-  
-  // Filter metric records by current org's athlete IDs only
-  const athleteIds = useMemo(() => allAthletes.map(a => a.id), [allAthletes]);
-  const { data: recordsData = [], isLoading: recordsLoading } = useMetricRecords(
-    { athleteIds }, 
-    { staleTime: 2 * 60 * 1000 }
-  );
+  const { data: recordsData = [], isLoading: recordsLoading } = useMetricRecords(selectedOrganization?.id);
   const { data: categoriesData = [], isLoading: categoriesLoading } = useMetricCategories();
   const { data: workoutsData = [], isLoading: workoutsLoading } = useWorkouts();
 
