@@ -63,6 +63,26 @@ export default function ProgressTracking() {
   // Use locally loaded teams as primary source
   const availableTeams = teams.length > 0 ? teams : contextFilteredTeams;
 
+  // DEBUG: Log data state
+  React.useEffect(() => {
+    console.log('=== ProgressTracking Data Debug ===', {
+      selectedOrganization,
+      athletesCount: athletes.length,
+      metricsCount: metrics.length,
+      recordsCount: records.length,
+      teamsCount: teams.length,
+      classPeriodsCount: classPeriods.length,
+      isLoading,
+      sampleMetrics: metrics.slice(0, 3).map(m => ({ id: m.id, name: m.name, unit: m.unit })),
+      sampleRecords: records.slice(0, 3).map(r => ({ 
+        id: r.id, 
+        athlete_id: r.athlete_id, 
+        metric_id: r.metric_id, 
+        value: r.value 
+      }))
+    });
+  }, [selectedOrganization, athletes, metrics, records, teams, classPeriods, isLoading]);
+
   const handleBack = () => {
     if (selectedAthleteId) {
       setSelectedAthleteId("");

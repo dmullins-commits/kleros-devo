@@ -28,6 +28,18 @@ export default function SnapshotView({
   const [startDate, setStartDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // DEBUG: Log received props
+  React.useEffect(() => {
+    console.log('=== SnapshotView Props Debug ===', {
+      athletesCount: athletes.length,
+      metricsCount: metrics.length,
+      recordsCount: records.length,
+      sampleAthletes: athletes.slice(0, 2).map(a => ({ id: a.id, name: `${a.first_name} ${a.last_name}` })),
+      sampleMetrics: metrics.slice(0, 3).map(m => ({ id: m.id, name: m.name, unit: m.unit, decimal_places: m.decimal_places })),
+      sampleRecords: records.slice(0, 3).map(r => ({ id: r.id, athlete_id: r.athlete_id, metric_id: r.metric_id, value: r.value, recorded_date: r.recorded_date }))
+    });
+  }, [athletes, metrics, records]);
+
   // Filter athletes based on selected filter
   const filteredAthletes = useMemo(() => {
     let filtered = athletes;
@@ -66,16 +78,37 @@ export default function SnapshotView({
 
     const athleteIds = new Set(filteredAthletes.map(a => a.id));
     
+    console.log('=== SnapshotView Data Processing Debug ===', {
+      selectedMetricIds,
+      filteredAthletesCount: filteredAthletes.length,
+      athleteIdsCount: athleteIds.size,
+      totalRecordsCount: records.length
+    });
+    
     // Build data for each metric
     const metricsData = selectedMetricIds.map(metricId => {
       const metric = metrics.find(m => m.id === metricId);
-      if (!metric) return null;
+      if (!metric) {
+        console.warn('Metric not found:', metricId);
+        return null;
+      }
 
       // Handle both nested and flat data structures for metric_id and athlete_id
       let metricRecords = records.filter(r => {
         const rMetricId = r.data?.metric_id || r.metric_id;
         const rAthleteId = r.data?.athlete_id || r.athlete_id;
         return rMetricId === metricId && athleteIds.has(rAthleteId);
+      });
+      
+      console.log(`Metric "${metric.name}" (${metricId}):`, {
+        metricRecordsFound: metricRecords.length,
+        sampleRecord: metricRecords[0] ? {
+          id: metricRecords[0].id,
+          athlete_id: metricRecords[0].data?.athlete_id || metricRecords[0].athlete_id,
+          metric_id: metricRecords[0].data?.metric_id || metricRecords[0].metric_id,
+          value: metricRecords[0].data?.value ?? metricRecords[0].value,
+          recorded_date: metricRecords[0].data?.recorded_date || metricRecords[0].recorded_date
+        } : 'No records'
       });
 
       // Filter by start date if set
@@ -113,6 +146,11 @@ export default function SnapshotView({
         athleteRecords.forEach(record => {
           const recordedDate = record.data?.recorded_date || record.recorded_date;
           const value = record.data?.value ?? record.value;
+
+          if (value === undefined || value === null) {
+            console.warn(`Invalid value for athlete ${athlete.id}, metric ${metric.name}, date ${recordedDate}:`, value);
+          }
+
           dataByAthlete[athlete.id][recordedDate] = value;
         });
       });
@@ -577,7 +615,21 @@ export default function SnapshotView({
                             const key = `${athlete.id}|||${metric.id}|||${date}`;
                             const editedValue = editedValues[key];
                             const displayValue = editedValue !== undefined ? editedValue : value;
-                            
+
+                            // DEBUG: Log value processing for first few cells
+                            if (Math.random() < 0.05) { // Only log 5% to avoid console spam
+                              console.log('Cell value debug:', {
+                                athleteName: `${athlete.first_name} ${athlete.last_name}`,
+                                metricName: metric.name,
+                                date,
+                                rawValue: value,
+                                displayValue,
+                                decimalPlaces: metric.decimal_places,
+                                isNumber: typeof displayValue === 'number',
+                                isPR
+                              });
+                            }
+
                             return (
                               <td 
                                 key={`${athlete.id}-${metric.id}-${date}`} 
@@ -599,7 +651,9 @@ export default function SnapshotView({
                                     placeholder="-"
                                   />
                                 ) : (
-                                  displayValue !== undefined ? displayValue.toFixed(metric.decimal_places ?? 2) : '-'
+                                  displayValue !== undefined && displayValue !== null 
+                                    ? Number(displayValue).toFixed(metric.decimal_places ?? 2) 
+                                    : '-'
                                 )}
                               </td>
                             );
