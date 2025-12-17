@@ -337,6 +337,11 @@ export default function Dashboard() {
 
     athletesData.forEach(athlete => {
       metricsData.forEach(metric => {
+        // Skip bodyweight metric
+        if (metric.name && metric.name.toLowerCase().includes('bodyweight')) {
+          return;
+        }
+
         const athleteRecords = validRecords
           .filter(r => r.athlete_id === athlete.id && r.metric_id === metric.id)
           .sort((a, b) => new Date(b.recorded_date) - new Date(a.recorded_date));

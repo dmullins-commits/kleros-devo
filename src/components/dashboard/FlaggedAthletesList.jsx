@@ -19,7 +19,7 @@ export default function FlaggedAthletesList({ flaggedData, isLoading }) {
       <CardHeader className="border-b border-gray-800">
         <CardTitle className="flex items-center gap-3 text-white">
           <Flag className="w-6 h-6 text-red-400" />
-          Flagged Athletes - Performance Below 90%
+          Flagged Athletes - Consecutive Poor Performance
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
@@ -43,7 +43,7 @@ export default function FlaggedAthletesList({ flaggedData, isLoading }) {
                     </div>
                   </div>
                   <Badge className="bg-red-500/20 text-red-400 border border-red-500/50">
-                    Under 90%
+                    {athlete.targetHigher ? 'Under 90%' : 'Over 110%'}
                   </Badge>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
