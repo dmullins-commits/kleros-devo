@@ -86,16 +86,25 @@ export function useMetricRecords(organizationId, options = {}) {
     queryKey: queryKeys.metricRecords(organizationId),
     queryFn: async () => {
       if (!organizationId) return [];
-      // Fetch ALL records with high limit - filter accepts (query, sort, limit)
-      const data = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date', 500000);
-      console.log(`useMetricRecords: Fetched ${data.length} records for org ${organizationId}`);
-      console.log('Sample records:', data.slice(0, 3).map(r => ({
+      // Fetch ALL records - using list with very high limit and then filter by org
+      const data = await MetricRecord.list('-recorded_date', 1000000);
+      console.log(`useMetricRecords: Fetched ${data.length} total records`);
+      
+      // Filter by organization on frontend
+      const filtered = data.filter(r => {
+        const orgId = r.data?.organization_id || r.organization_id;
+        return orgId === organizationId;
+      });
+      
+      console.log(`useMetricRecords: Filtered to ${filtered.length} records for org ${organizationId}`);
+      console.log('Sample records:', filtered.slice(0, 5).map(r => ({
         id: r.id,
         recorded_date: r.data?.recorded_date || r.recorded_date,
         value: r.data?.value || r.value,
         athlete_id: r.data?.athlete_id || r.athlete_id
       })));
-      return data.map(r => normalizeEntity(r, [
+      
+      return filtered.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
     },
