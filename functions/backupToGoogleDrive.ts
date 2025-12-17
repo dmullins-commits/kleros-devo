@@ -4,96 +4,115 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Get Google Drive access token
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    // Get Google Sheets access token
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlesheets');
     
     // Fetch all data using service role
-    const [athletes, metrics, metricRecords, teams, metricCategories, classPeriods, organizations] = await Promise.all([
+    const [athletes, metrics, metricRecords, organizations] = await Promise.all([
       base44.asServiceRole.entities.Athlete.list('-created_date', 50000),
       base44.asServiceRole.entities.Metric.list('-created_date', 10000),
       base44.asServiceRole.entities.MetricRecord.list('-recorded_date', 500000),
-      base44.asServiceRole.entities.Team.list('-created_date', 5000),
-      base44.asServiceRole.entities.MetricCategory.list('-created_date', 1000),
-      base44.asServiceRole.entities.ClassPeriod.list('-created_date', 1000),
       base44.asServiceRole.entities.Organization.list('-created_date', 1000),
     ]);
 
-    // Create backup data object
-    const backupData = {
-      backup_date: new Date().toISOString(),
-      data: {
-        athletes,
-        metrics,
-        metricRecords,
-        teams,
-        metricCategories,
-        classPeriods,
-        organizations
-      },
-      stats: {
-        total_athletes: athletes.length,
-        total_metrics: metrics.length,
-        total_records: metricRecords.length,
-        total_teams: teams.length,
-        total_organizations: organizations.length
-      }
-    };
+    // Create lookup maps for faster access
+    const athleteMap = new Map(athletes.map(a => [a.id, a]));
+    const metricMap = new Map(metrics.map(m => [m.id, m]));
 
-    // Convert to JSON string
-    const jsonContent = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonContent], { type: 'application/json' });
-    
+    // Build rows: Organization ID, Athlete First Name, Athlete Last Name, Date, Metric Name, Value
+    const rows = [
+      ['Organization ID', 'Athlete First Name', 'Athlete Last Name', 'Date', 'Metric Name', 'Value']
+    ];
+
+    metricRecords.forEach(record => {
+      const athlete = athleteMap.get(record.athlete_id);
+      const metric = metricMap.get(record.metric_id);
+      
+      if (!athlete || !metric) return;
+
+      const athleteOrgId = athlete.organization_id || athlete.data?.organization_id || '';
+      const firstName = athlete.first_name || athlete.data?.first_name || '';
+      const lastName = athlete.last_name || athlete.data?.last_name || '';
+      const date = record.recorded_date || record.data?.recorded_date || '';
+      const metricName = metric.name || metric.data?.name || '';
+      const value = record.value !== undefined ? record.value : (record.data?.value || '');
+
+      rows.push([
+        athleteOrgId,
+        firstName,
+        lastName,
+        date,
+        metricName,
+        value
+      ]);
+    });
+
     // Create filename with timestamp
     const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `performance_backup_${timestamp}.json`;
+    const sheetTitle = `Performance Backup ${timestamp}`;
 
-    // Create form data for Google Drive API
-    const boundary = '-------314159265358979323846';
-    const metadata = {
-      name: filename,
-      mimeType: 'application/json'
-    };
-
-    const multipartBody = [
-      `--${boundary}`,
-      'Content-Type: application/json; charset=UTF-8',
-      '',
-      JSON.stringify(metadata),
-      `--${boundary}`,
-      'Content-Type: application/json',
-      '',
-      jsonContent,
-      `--${boundary}--`
-    ].join('\r\n');
-
-    // Upload to Google Drive
-    const uploadResponse = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    // Create a new spreadsheet
+    const createResponse = await fetch(
+      'https://sheets.googleapis.com/v4/spreadsheets',
       {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': `multipart/related; boundary=${boundary}`
+          'Content-Type': 'application/json'
         },
-        body: multipartBody
+        body: JSON.stringify({
+          properties: {
+            title: sheetTitle
+          },
+          sheets: [{
+            properties: {
+              title: 'Performance Data'
+            }
+          }]
+        })
       }
     );
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      throw new Error(`Google Drive upload failed: ${errorText}`);
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text();
+      throw new Error(`Failed to create spreadsheet: ${errorText}`);
     }
 
-    const uploadResult = await uploadResponse.json();
+    const spreadsheet = await createResponse.json();
+    const spreadsheetId = spreadsheet.spreadsheetId;
+
+    // Write data to the spreadsheet
+    const updateResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Performance Data!A1:append?valueInputOption=RAW`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          values: rows
+        })
+      }
+    );
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      throw new Error(`Failed to write data: ${errorText}`);
+    }
 
     return Response.json({
       success: true,
       message: 'Backup completed successfully',
-      file: {
-        id: uploadResult.id,
-        name: uploadResult.name
+      spreadsheet: {
+        id: spreadsheetId,
+        url: spreadsheet.spreadsheetUrl,
+        title: sheetTitle
       },
-      stats: backupData.stats
+      stats: {
+        total_rows: rows.length - 1,
+        total_records: metricRecords.length
+      }
     });
 
   } catch (error) {
