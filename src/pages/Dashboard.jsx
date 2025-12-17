@@ -334,6 +334,8 @@ export default function Dashboard() {
 
     const flaggedMap = new Map();
     let flaggedCount = 0;
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
     athletesData.forEach(athlete => {
       metricsData.forEach(metric => {
@@ -348,6 +350,14 @@ export default function Dashboard() {
 
         if (athleteRecords.length >= 2) {
           const [latest, previous] = athleteRecords;
+          
+          // Only flag if both tests are within last 14 days
+          const latestDate = new Date(latest.recorded_date);
+          const previousDate = new Date(previous.recorded_date);
+          if (latestDate < fourteenDaysAgo || previousDate < fourteenDaysAgo) {
+            return;
+          }
+
           const targetHigher = metric.target_higher !== false;
           const pr = targetHigher
             ? Math.max(...athleteRecords.map(r => r.value))
