@@ -61,8 +61,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
         average: values.reduce((sum, val) => sum + val, 0) / values.length,
         count: values.length
       }))
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-10);
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return chartData;
   };
@@ -82,7 +81,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
       });
     });
 
-    const sortedDates = Array.from(allDates).sort().slice(-15);
+    const sortedDates = Array.from(allDates).sort();
     
     return sortedDates.map(date => {
       const dataPoint = { date };
