@@ -86,7 +86,9 @@ export function useMetricRecords(organizationId, options = {}) {
     queryKey: queryKeys.metricRecords(organizationId),
     queryFn: async () => {
       if (!organizationId) return [];
-      const data = await MetricRecord.filter({ organization_id: organizationId });
+      // Fetch ALL records without limit - filter accepts (query, sort, limit)
+      const data = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date', 50000);
+      console.log(`useMetricRecords: Fetched ${data.length} records for org ${organizationId}`);
       return data.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
