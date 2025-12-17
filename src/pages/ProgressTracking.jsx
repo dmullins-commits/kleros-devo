@@ -1,139 +1,34 @@
-import React, { useState, useEffect } from "react";
-import { Athlete, Metric, MetricRecord, ClassPeriod, Team } from "@/entities/all";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, User, FileDown, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTeam } from "@/components/TeamContext";
+import { useAthletes, useMetrics, useMetricRecords, useTeams, useClassPeriods } from "@/components/hooks/useDataQueries";
 
 import TeamProgressView from "../components/progress/TeamProgressView";
 import IndividualProgressView from "../components/progress/IndividualProgressView";
 import SnapshotView from "../components/progress/SnapshotView";
 
 export default function ProgressTracking() {
-  const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
-  const [athletes, setAthletes] = useState([]);
-  const [metrics, setMetrics] = useState([]);
-  const [records, setRecords] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [viewMode, setViewMode] = useState(""); // "", "team", "individual"
+  const { selectedOrganization, filteredTeams: contextFilteredTeams } = useTeam();
+  const [viewMode, setViewMode] = useState(""); // "", "team", "individual", "snapshot"
   const [filterType, setFilterType] = useState(""); // "team" or "class"
   const [selectedFilterId, setSelectedFilterId] = useState(""); // team id or class period name
   const [selectedAthleteId, setSelectedAthleteId] = useState("");
-  const [classPeriods, setClassPeriods] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [selectedOrganization?.id]);
+  // Use React Query hooks for data fetching
+  const { data: athletes = [], isLoading: isLoadingAthletes } = useAthletes(selectedOrganization?.id);
+  const { data: metrics = [], isLoading: isLoadingMetrics } = useMetrics(selectedOrganization?.id);
+  const { data: records = [], isLoading: isLoadingRecords } = useMetricRecords(selectedOrganization?.id);
+  const { data: teams = [], isLoading: isLoadingTeams } = useTeams(selectedOrganization?.id);
+  const { data: classPeriods = [], isLoading: isLoadingClassPeriods } = useClassPeriods(selectedOrganization?.id);
 
-  const loadData = async () => {
-    if (!selectedOrganization) return;
-    
-    setIsLoading(true);
-    try {
-      // Fetch data filtered by organization
-      const [allMetricsData, athletesData, recordsData, classPeriodsData, teamsData] = await Promise.all([
-        Metric.filter({ organization_id: selectedOrganization.id }),
-        Athlete.filter({ organization_id: selectedOrganization.id }),
-        MetricRecord.filter({ organization_id: selectedOrganization.id }),
-        ClassPeriod.filter({ organization_id: selectedOrganization.id }),
-        Team.filter({ organization_id: selectedOrganization.id })
-      ]);
-
-      // Data is already filtered by organization from the query
-      const metricsData = allMetricsData;
-      const orgMetricIds = new Set(metricsData.map(m => m.id));
-      const orgTeams = teamsData;
-
-      // Normalize teams
-      const normalizedTeams = orgTeams.map(t => ({
-        id: t.id,
-        ...t.data,
-        ...t,
-        name: t.data?.name || t.name,
-        sport: t.data?.sport || t.sport
-      }));
-      setTeams(normalizedTeams);
-      
-      // Athletes are already filtered by organization
-      const orgAthletes = athletesData;
-
-      // Normalize athletes - data may be nested or flat
-      const normalizedAthletes = orgAthletes.map(a => ({
-        id: a.id,
-        ...a.data,
-        ...a,
-        first_name: a.data?.first_name || a.first_name,
-        last_name: a.data?.last_name || a.last_name,
-        team_ids: a.data?.team_ids || a.team_ids || [],
-        class_period: a.data?.class_period || a.class_period
-      }));
-      setAthletes(normalizedAthletes);
-      
-      // Normalize metrics (already filtered by org in fetch)
-      const normalizedMetrics = metricsData.map(m => ({
-        id: m.id,
-        ...m.data,
-        ...m,
-        name: m.data?.name || m.name,
-        unit: m.data?.unit || m.unit,
-        category: m.data?.category || m.category,
-        is_active: m.data?.is_active ?? m.is_active ?? true,
-        is_auto_calculated: m.data?.is_auto_calculated ?? m.is_auto_calculated ?? false,
-        is_hidden: m.data?.is_hidden ?? m.is_hidden ?? false,
-        decimal_places: m.data?.decimal_places ?? m.decimal_places ?? 2,
-        target_higher: m.data?.target_higher ?? m.target_higher ?? true
-      }));
-      setMetrics(normalizedMetrics);
-
-      // Records are already filtered by organization
-      const orgRecords = recordsData;
-
-      // Normalize records - all imported records store data in nested 'data' object
-      const normalizedRecords = orgRecords.map(r => {
-        // Extract values from nested data object if present, otherwise use flat properties
-        const athleteId = r.data?.athlete_id || r.athlete_id;
-        const metricId = r.data?.metric_id || r.metric_id;
-        const value = r.data?.value ?? r.value;
-        const recordedDate = r.data?.recorded_date || r.recorded_date;
-        const notes = r.data?.notes || r.notes;
-        const workoutId = r.data?.workout_id || r.workout_id;
-        
-        return {
-          id: r.id,
-          athlete_id: athleteId,
-          metric_id: metricId,
-          value: value,
-          recorded_date: recordedDate,
-          notes: notes,
-          workout_id: workoutId
-        };
-      });
-      setRecords(normalizedRecords);
-      
-      // Filter and normalize class periods by org
-      const orgClassPeriods = classPeriodsData.filter(cp => {
-        const cpOrgId = cp.data?.organization_id || cp.organization_id;
-        return cpOrgId === selectedOrganization.id;
-      });
-      
-      const normalizedClassPeriods = orgClassPeriods.map(cp => ({
-        id: cp.id,
-        ...cp.data,
-        ...cp,
-        name: cp.data?.name || cp.name,
-        order: cp.data?.order ?? cp.order ?? 0
-      }));
-      setClassPeriods(normalizedClassPeriods.sort((a, b) => (a.order || 0) - (b.order || 0)));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = isLoadingAthletes || isLoadingMetrics || isLoadingRecords || isLoadingTeams || isLoadingClassPeriods;
 
   // Get filtered athletes based on filter type and selection
-  const filteredAthletes = athletes.filter(athlete => {
+  const filteredAthletes = useMemo(() => athletes.filter(athlete => {
     if (filterType === "team" && selectedFilterId) {
       return athlete.team_ids?.includes(selectedFilterId);
     }
@@ -147,18 +42,26 @@ export default function ProgressTracking() {
              selectedPeriod.replace('th', '').replace('st', '').replace('nd', '').replace('rd', '');
     }
     return false;
-  });
+  }), [athletes, filterType, selectedFilterId]);
 
   // Get filtered records based on filtered athletes
-  const filteredRecords = records.filter(r => 
-    filteredAthletes.map(a => a.id).includes(r.athlete_id)
-  );
+  const filteredRecords = useMemo(() => {
+    const athleteIds = new Set(filteredAthletes.map(a => a.id));
+    return records.filter(r => athleteIds.has(r.athlete_id));
+  }, [records, filteredAthletes]);
 
-  const selectedAthlete = athletes.find(a => a.id === selectedAthleteId);
-  const selectedTeam = teams.find(t => t.id === selectedFilterId);
+  const selectedAthlete = useMemo(() => 
+    athletes.find(a => a.id === selectedAthleteId), 
+    [athletes, selectedAthleteId]
+  );
+  
+  const selectedTeam = useMemo(() => 
+    teams.find(t => t.id === selectedFilterId), 
+    [teams, selectedFilterId]
+  );
   
   // Use locally loaded teams as primary source
-  const availableTeams = teams.length > 0 ? teams : filteredTeams;
+  const availableTeams = teams.length > 0 ? teams : contextFilteredTeams;
 
   const handleBack = () => {
     if (selectedAthleteId) {
