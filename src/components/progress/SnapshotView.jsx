@@ -51,8 +51,10 @@ export default function SnapshotView({
     
     const dates = new Set();
     records.forEach(r => {
-      if (selectedMetricIds.includes(r.metric_id)) {
-        dates.add(r.recorded_date);
+      const rMetricId = r.data?.metric_id || r.metric_id;
+      const rDate = r.data?.recorded_date || r.recorded_date;
+      if (selectedMetricIds.includes(rMetricId)) {
+        dates.add(rDate);
       }
     });
     return dates;
