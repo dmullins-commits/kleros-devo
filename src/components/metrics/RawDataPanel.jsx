@@ -366,7 +366,20 @@ export default function RawDataPanel({ onClose }) {
       };
     });
 
-    const organized = Object.values(grouped).sort((a, b) => {
+    // Filter out rows where athlete is "unknown" and all metrics are empty
+    const filtered = Object.values(grouped).filter(row => {
+      const athlete = athletesData.find(a => a.id === row.athlete_id);
+      const athleteName = athlete ? `${athlete.first_name} ${athlete.last_name}`.toLowerCase() : '';
+      const isUnknown = athleteName.includes('unknown');
+      
+      if (!isUnknown) return true;
+      
+      // Check if all metrics are empty
+      const hasAnyValue = Object.values(row.metrics).some(m => m.value !== null && m.value !== undefined && m.value !== '');
+      return hasAnyValue;
+    });
+
+    const organized = filtered.sort((a, b) => {
       const dateCompare = new Date(b.date) - new Date(a.date);
       if (dateCompare !== 0) return dateCompare;
       
