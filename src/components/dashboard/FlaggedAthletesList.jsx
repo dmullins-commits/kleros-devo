@@ -52,7 +52,7 @@ export default function FlaggedAthletesList({ flaggedData, isLoading }) {
                     <p className="text-white font-bold">{athlete.pr} {athlete.unit}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs">90% Threshold</p>
+                    <p className="text-gray-500 text-xs">{athlete.targetHigher ? '90%' : '110%'} Threshold</p>
                     <p className="text-amber-400 font-bold">{athlete.ninetyPercent} {athlete.unit}</p>
                   </div>
                   <div>
