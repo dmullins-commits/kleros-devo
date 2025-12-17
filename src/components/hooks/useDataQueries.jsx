@@ -80,31 +80,53 @@ export function useMetrics(organizationId, options = {}) {
   });
 }
 
-// Metric Records query hook
+// Metric Records query hook - fetches ALL records with pagination
 export function useMetricRecords(organizationId, options = {}) {
   return useQuery({
     queryKey: queryKeys.metricRecords(organizationId),
     queryFn: async () => {
       if (!organizationId) return [];
-      // Fetch ALL records - using list with very high limit and then filter by org
-      const data = await MetricRecord.list('-recorded_date', 1000000);
-      console.log(`useMetricRecords: Fetched ${data.length} total records`);
       
-      // Filter by organization on frontend
-      const filtered = data.filter(r => {
-        const orgId = r.data?.organization_id || r.organization_id;
-        return orgId === organizationId;
+      // Fetch all records in batches to overcome API limits
+      let allRecords = [];
+      let skip = 0;
+      const limit = 5000; // Backend limit per request
+      let hasMore = true;
+      
+      console.log(`useMetricRecords: Starting paginated fetch for org ${organizationId}...`);
+      
+      while (hasMore) {
+        const batch = await MetricRecord.list('-recorded_date', limit, skip);
+        console.log(`Fetched batch: skip=${skip}, got ${batch.length} records`);
+        
+        if (batch.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        // Filter for this org
+        const orgBatch = batch.filter(r => {
+          const orgId = r.data?.organization_id || r.organization_id;
+          return orgId === organizationId;
+        });
+        
+        allRecords = allRecords.concat(orgBatch);
+        
+        // If we got fewer than limit, we've reached the end
+        if (batch.length < limit) {
+          hasMore = false;
+        } else {
+          skip += limit;
+        }
+      }
+      
+      console.log(`useMetricRecords: Total records fetched: ${allRecords.length} for org ${organizationId}`);
+      console.log('Date range:', {
+        earliest: allRecords.length > 0 ? allRecords[allRecords.length - 1]?.recorded_date || allRecords[allRecords.length - 1]?.data?.recorded_date : null,
+        latest: allRecords.length > 0 ? allRecords[0]?.recorded_date || allRecords[0]?.data?.recorded_date : null
       });
       
-      console.log(`useMetricRecords: Filtered to ${filtered.length} records for org ${organizationId}`);
-      console.log('Sample records:', filtered.slice(0, 5).map(r => ({
-        id: r.id,
-        recorded_date: r.data?.recorded_date || r.recorded_date,
-        value: r.data?.value || r.value,
-        athlete_id: r.data?.athlete_id || r.athlete_id
-      })));
-      
-      return filtered.map(r => normalizeEntity(r, [
+      return allRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
     },
