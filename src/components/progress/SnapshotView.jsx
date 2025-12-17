@@ -71,21 +71,22 @@ export default function SnapshotView({
 
       // Handle both nested and flat data structures for metric_id and athlete_id
       let metricRecords = records.filter(r => {
-        const rMetricId = r.metric_id || r.data?.metric_id;
-        const rAthleteId = r.athlete_id || r.data?.athlete_id;
+        const rMetricId = r.data?.metric_id || r.metric_id;
+        const rAthleteId = r.data?.athlete_id || r.athlete_id;
         return rMetricId === metricId && athleteIds.has(rAthleteId);
       });
 
       // Filter by start date if set
       if (startDate) {
-        metricRecords = metricRecords.filter(r => 
-          new Date(r.recorded_date) >= new Date(startDate)
-        );
+        metricRecords = metricRecords.filter(r => {
+          const recordDate = r.data?.recorded_date || r.recorded_date;
+          return new Date(recordDate) >= new Date(startDate);
+        });
       }
 
       // Get unique dates and sort them
       // Handle both nested and flat data structures for recorded_date
-      const dates = [...new Set(metricRecords.map(r => r.recorded_date || r.data?.recorded_date))].sort();
+      const dates = [...new Set(metricRecords.map(r => r.data?.recorded_date || r.recorded_date))].sort();
 
       // Build data structure: athlete -> date -> value
       const dataByAthlete = {};
@@ -95,21 +96,21 @@ export default function SnapshotView({
         dataByAthlete[athlete.id] = {};
         
         const athleteRecords = metricRecords.filter(r => {
-          const rAthleteId = r.athlete_id || r.data?.athlete_id;
+          const rAthleteId = r.data?.athlete_id || r.athlete_id;
           return rAthleteId === athlete.id;
         });
         
         // Calculate PR for this athlete
         if (athleteRecords.length > 0) {
           prByAthlete[athlete.id] = metric.target_higher
-            ? Math.max(...athleteRecords.map(r => r.value ?? r.data?.value))
-            : Math.min(...athleteRecords.map(r => r.value ?? r.data?.value));
+            ? Math.max(...athleteRecords.map(r => r.data?.value ?? r.value))
+            : Math.min(...athleteRecords.map(r => r.data?.value ?? r.value));
         }
 
         // Map records by date
         athleteRecords.forEach(record => {
-          const recordedDate = record.recorded_date || record.data?.recorded_date;
-          const value = record.value ?? record.data?.value;
+          const recordedDate = record.data?.recorded_date || record.recorded_date;
+          const value = record.data?.value ?? record.value;
           dataByAthlete[athlete.id][recordedDate] = value;
         });
       });
