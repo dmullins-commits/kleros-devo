@@ -299,13 +299,20 @@ export default function RawDataPanel({ onClose }) {
     const athletesData = athletes.length > 0 ? athletes : await Athlete.filter({ organization_id: selectedOrganization.id });
     
     // Normalize if needed
-    const allRecords = recordsData.map(r => ({
-      id: r.id,
-      athlete_id: r.data?.athlete_id || r.athlete_id,
-      metric_id: r.data?.metric_id || r.metric_id,
-      value: r.data?.value ?? r.value,
-      recorded_date: r.data?.recorded_date || r.recorded_date
-    }));
+    const allRecords = recordsData.map(r => {
+      let athleteId = r.athlete_id;
+      if (!athleteId && r.data) {
+        athleteId = r.data.athlete_id;
+      }
+      
+      return {
+        id: r.id,
+        athlete_id: athleteId,
+        metric_id: r.data?.metric_id || r.metric_id,
+        value: r.data?.value ?? r.value,
+        recorded_date: r.data?.recorded_date || r.recorded_date
+      };
+    });
     
     const allAthletes = athletesData.map(a => ({
       id: a.id,
