@@ -64,14 +64,21 @@ export default function RawDataPanel({ onClose }) {
         class_period: a.data?.class_period || a.class_period
       }));
       
-      // Normalize records
-      const normalizedRecords = recordsData.map(r => ({
-        id: r.id,
-        athlete_id: r.data?.athlete_id || r.athlete_id,
-        metric_id: r.data?.metric_id || r.metric_id,
-        value: r.data?.value ?? r.value,
-        recorded_date: r.data?.recorded_date || r.recorded_date
-      }));
+      // Normalize records - handle all possible data structures
+      const normalizedRecords = recordsData.map(r => {
+        let athleteId = r.athlete_id;
+        if (!athleteId && r.data) {
+          athleteId = r.data.athlete_id;
+        }
+        
+        return {
+          id: r.id,
+          athlete_id: athleteId,
+          metric_id: r.data?.metric_id || r.metric_id,
+          value: r.data?.value ?? r.value,
+          recorded_date: r.data?.recorded_date || r.recorded_date
+        };
+      });
       
       // Normalize metrics
       const normalizedMetrics = metricsData.map(m => ({
