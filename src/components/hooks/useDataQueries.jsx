@@ -89,6 +89,12 @@ export function useMetricRecords(organizationId, options = {}) {
       // Fetch ALL records with high limit - filter accepts (query, sort, limit)
       const data = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date', 500000);
       console.log(`useMetricRecords: Fetched ${data.length} records for org ${organizationId}`);
+      console.log('Sample records:', data.slice(0, 3).map(r => ({
+        id: r.id,
+        recorded_date: r.data?.recorded_date || r.recorded_date,
+        value: r.data?.value || r.value,
+        athlete_id: r.data?.athlete_id || r.athlete_id
+      })));
       return data.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
