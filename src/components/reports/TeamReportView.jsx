@@ -333,14 +333,39 @@ export default function TeamReportView({ filterType, teamId, team, classPeriod, 
               size: 8.5in 11in;
               margin: 0.4in;
             }
+            
+            /* Hide EVERYTHING except report content */
+            body * {
+              visibility: hidden !important;
+            }
+            
+            #report-content,
+            #report-content * {
+              visibility: visible !important;
+            }
+            
+            #report-content {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+            }
+            
             html, body {
               width: 100%;
               height: auto;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+              background: white !important;
             }
-            .print-hide {
+            
+            /* Hide specific elements */
+            aside, nav, header, footer,
+            [role="navigation"],
+            .sidebar, .print-hide,
+            button:not(.recharts-legend-item) {
               display: none !important;
+              visibility: hidden !important;
             }
             .print-chart {
               height: 250px !important;

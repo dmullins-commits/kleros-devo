@@ -351,16 +351,30 @@ export default function IndividualReportView({ athlete, team, metrics, categorie
               margin: 0.5in;
             }
             
-            /* Hide all non-report elements */
-            body > *:not(#root) {
-              display: none !important;
+            /* Hide EVERYTHING except report content */
+            body * {
+              visibility: hidden !important;
             }
             
+            #report-content,
+            #report-content * {
+              visibility: visible !important;
+            }
+            
+            #report-content {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+            }
+            
+            /* Hide specific elements */
             aside, nav, header, footer, 
-            [role="navigation"], 
-            button:not(.recharts-legend-item),
-            .sidebar, .print-hide {
+            [role="navigation"],
+            .sidebar, .print-hide,
+            button:not(.recharts-legend-item) {
               display: none !important;
+              visibility: hidden !important;
             }
             
             html, body, #root {
