@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserPlus, AlertTriangle } from "lucide-react";
 import { Team, ClassPeriod, Athlete } from "@/entities/all";
+import { useTeam } from "@/components/TeamContext";
 
 const CLASS_GRADES = [
   "2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034"
@@ -18,6 +19,7 @@ export default function MissingAthletesModal({
   onCreateAthletes, 
   onSkip 
 }) {
+  const { selectedOrganization } = useTeam();
   const [teams, setTeams] = useState([]);
   const [classPeriods, setClassPeriods] = useState([]);
   const [athleteData, setAthleteData] = useState({});
@@ -32,21 +34,27 @@ export default function MissingAthletesModal({
   }, [open, missingAthletes]);
 
   const loadData = async () => {
+    if (!selectedOrganization?.id) return;
+    
     setIsLoading(true);
     try {
       const [teamsData, classPeriodsData] = await Promise.all([
-        Team.list(),
-        ClassPeriod.list()
+        Team.filter({ organization_id: selectedOrganization.id }),
+        ClassPeriod.filter({ organization_id: selectedOrganization.id })
       ]);
       
       const normalizedTeams = teamsData.map(t => ({
         id: t.id,
-        ...t.data
+        name: t.data?.name || t.name,
+        sport: t.data?.sport || t.sport,
+        organization_id: t.data?.organization_id || t.organization_id
       }));
       
       const normalizedClassPeriods = classPeriodsData.map(cp => ({
         id: cp.id,
-        ...cp.data
+        name: cp.data?.name || cp.name,
+        order: cp.data?.order || cp.order,
+        organization_id: cp.data?.organization_id || cp.organization_id
       })).sort((a, b) => (a.order || 0) - (b.order || 0));
       
       setTeams(normalizedTeams);
@@ -89,7 +97,7 @@ export default function MissingAthletesModal({
   };
 
   const handleSave = async () => {
-    if (!allFieldsFilled()) return;
+    if (!allFieldsFilled() || !selectedOrganization?.id) return;
     
     setIsSaving(true);
     try {
@@ -102,7 +110,8 @@ export default function MissingAthletesModal({
           team_ids: [data.team_id],
           class_grade: data.class_grade,
           class_period: data.class_period,
-          status: "active"
+          status: "active",
+          organization_id: selectedOrganization.id
         });
         
         newAthletes.push({
