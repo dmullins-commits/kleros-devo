@@ -1,17 +1,23 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
-import { TrendingUp, BarChart3, User, FileDown, Crown } from "lucide-react";
+import { TrendingUp, BarChart3, User, FileDown, Crown, Calendar as CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function IndividualProgressView({ athlete, metrics, records, isLoading }) {
   const reportRef = useRef(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
 
   const categoryColors = {
     strength: "#EF4444",
@@ -22,6 +28,33 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     skill: "#F97316",
     other: "#6B7280"
   };
+
+  // Get all dates with data
+  const datesWithData = useMemo(() => {
+    if (!athlete) return new Set();
+    const dates = new Set();
+    records.filter(r => {
+      const athleteId = r.athlete_id || r.data?.athlete_id;
+      return athleteId === athlete.id;
+    }).forEach(r => {
+      const date = r.recorded_date || r.data?.recorded_date;
+      if (date) dates.add(date);
+    });
+    return dates;
+  }, [records, athlete]);
+
+  // Filter records by date range
+  const filteredRecords = useMemo(() => {
+    if (!startDate && !endDate) return records;
+    return records.filter(r => {
+      const date = r.recorded_date || r.data?.recorded_date;
+      if (!date) return false;
+      const recordDate = new Date(date);
+      if (startDate && recordDate < new Date(startDate)) return false;
+      if (endDate && recordDate > new Date(endDate)) return false;
+      return true;
+    });
+  }, [records, startDate, endDate]);
 
   const exportToPDF = () => {
     if (!athlete) return;
@@ -136,7 +169,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
   const getMetricsByCategory = () => {
     if (!athlete) return {};
 
-    const athleteRecords = records.filter(r => {
+    const athleteRecords = filteredRecords.filter(r => {
       const athleteId = r.athlete_id || r.data?.athlete_id;
       return athleteId === athlete.id;
     });
@@ -269,16 +302,95 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
         </Alert>
       )}
 
-      {/* Export Button */}
-      <div className="flex justify-end no-print">
-        <Button 
-          onClick={exportToPDF}
-          className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black shadow-lg shadow-amber-500/50"
-        >
-          <FileDown className="w-4 h-4 mr-2" />
-          EXPORT TO PDF
-        </Button>
-      </div>
+      {/* Date Range Filter & Export */}
+      <Card className="bg-gray-950 border border-gray-800 no-print">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex flex-wrap gap-3 items-center">
+              <span className="text-gray-400 font-semibold">View data:</span>
+
+              <Popover open={showStartPicker} onOpenChange={setShowStartPicker}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="bg-gray-900 border-gray-700 text-white">
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {startDate ? `From ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Start date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
+                  <Calendar
+                    mode="single"
+                    selected={startDate ? new Date(startDate) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setStartDate(format(date, 'yyyy-MM-dd'));
+                        setShowStartPicker(false);
+                      }
+                    }}
+                    modifiers={{
+                      hasData: (date) => datesWithData.has(format(date, 'yyyy-MM-dd'))
+                    }}
+                    modifiersStyles={{
+                      hasData: { border: '2px solid #60a5fa', borderRadius: '4px' }
+                    }}
+                    className="bg-gray-950 text-white"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover open={showEndPicker} onOpenChange={setShowEndPicker}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="bg-gray-900 border-gray-700 text-white">
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {endDate ? `To ${format(new Date(endDate), 'MMM d, yyyy')}` : 'End date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
+                  <Calendar
+                    mode="single"
+                    selected={endDate ? new Date(endDate) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setEndDate(format(date, 'yyyy-MM-dd'));
+                        setShowEndPicker(false);
+                      }
+                    }}
+                    modifiers={{
+                      hasData: (date) => datesWithData.has(format(date, 'yyyy-MM-dd'))
+                    }}
+                    modifiersStyles={{
+                      hasData: { border: '2px solid #60a5fa', borderRadius: '4px' }
+                    }}
+                    className="bg-gray-950 text-white"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {(startDate || endDate) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setStartDate(null);
+                    setEndDate(null);
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            <Button 
+              onClick={exportToPDF}
+              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black shadow-lg shadow-amber-500/50"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              EXPORT TO PDF
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Report Content */}
       <div ref={reportRef}>
@@ -308,29 +420,43 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
 
         {/* Metrics by Category - COMBINED GRAPHS */}
         {Object.entries(metricsByCategory).map(([category, categoryMetrics]) => {
-          const combinedChartData = getCombinedChartData(categoryMetrics);
           const categoryColor = categoryColors[category] || categoryColors.other;
 
+          // Split into chunks of max 4 metrics
+          const metricChunks = [];
+          for (let i = 0; i < categoryMetrics.length; i += 4) {
+            metricChunks.push(categoryMetrics.slice(i, i + 4));
+          }
+
           return (
-            <div key={category} className="category-section">
-              <Card className="bg-gradient-to-br from-gray-950 via-black to-gray-950 border-2 border-amber-400/30">
-                <CardHeader className="border-b-2 border-amber-400/30 bg-gradient-to-r from-amber-400/10 to-yellow-500/10">
-                  <CardTitle className="flex items-center gap-3">
-                    <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center border-2 border-amber-400/50"
-                      style={{ backgroundColor: `${categoryColor}30` }}
-                    >
-                      <BarChart3 className="w-4 h-4" style={{ color: categoryColor }} />
-                    </div>
-                    <span className="capitalize text-amber-200 font-black" style={{ background: 'transparent', padding: 0 }}>
-                      {category.replace(/_/g, ' ')}
-                    </span>
-                    <Badge className="bg-gray-800 text-gray-300 font-bold">
-                      {categoryMetrics.length} metrics
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
+            <div key={category} className="category-section space-y-6">
+              {metricChunks.map((chunkMetrics, chunkIdx) => {
+                const combinedChartData = getCombinedChartData(chunkMetrics);
+
+                return (
+                  <Card key={`${category}-${chunkIdx}`} className="bg-gradient-to-br from-gray-950 via-black to-gray-950 border-2 border-amber-400/30">
+                    <CardHeader className="border-b-2 border-amber-400/30 bg-gradient-to-r from-amber-400/10 to-yellow-500/10">
+                      <CardTitle className="flex items-center gap-3">
+                        <div 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center border-2 border-amber-400/50"
+                          style={{ backgroundColor: `${categoryColor}30` }}
+                        >
+                          <BarChart3 className="w-4 h-4" style={{ color: categoryColor }} />
+                        </div>
+                        <span className="capitalize text-amber-200 font-black" style={{ background: 'transparent', padding: 0 }}>
+                          {category.replace(/_/g, ' ')}
+                        </span>
+                        {metricChunks.length > 1 && (
+                          <Badge className="bg-gray-800 text-gray-300 font-bold">
+                            Part {chunkIdx + 1} of {metricChunks.length}
+                          </Badge>
+                        )}
+                        <Badge className="bg-gray-800 text-gray-300 font-bold">
+                          {chunkMetrics.length} metrics
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
                   {/* Combined Chart for All Metrics in Category */}
                   <div className="h-72 mb-4 print-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
@@ -346,7 +472,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                           }}
                         />
                         <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
-                        {categoryMetrics.length > 1 && (
+                        {chunkMetrics.length > 1 && (
                           <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
                         )}
                         <Tooltip content={<CustomTooltip />} />
@@ -357,7 +483,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                             return metric ? `${metric.name} (${metric.unit})` : value;
                           }}
                         />
-                        {categoryMetrics.map(({ metric }, idx) => {
+                        {chunkMetrics.map(({ metric }, idx) => {
                           const colors = ['#EF4444', '#3B82F6', '#FCD34D', '#A855F7', '#10B981', '#F97316'];
                           const color = colors[idx % colors.length];
                           const yAxisId = idx === 0 ? 'left' : 'right';
@@ -382,7 +508,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
 
                   {/* Individual Metric Details */}
                   <div className="space-y-6 mt-4">
-                    {categoryMetrics.map(({ metric, records: metricRecords }) => {
+                    {chunkMetrics.map(({ metric, records: metricRecords }) => {
                       const latestRecord = metricRecords[metricRecords.length - 1];
                       const firstRecord = metricRecords[0];
                       const latestValue = latestRecord.value ?? latestRecord.data?.value;
@@ -449,15 +575,17 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                           </div>
 
 
-                        </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </CardContent>
+                        </Card>
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          );
-        })}
+                );
+              })}
       </div>
     </div>
   );
