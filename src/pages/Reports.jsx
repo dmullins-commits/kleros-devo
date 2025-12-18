@@ -24,22 +24,15 @@ import {
 export default function Reports() {
   const { filteredTeams, selectedOrganization } = useTeam();
   
-  // Get team IDs for org-specific filtering
-  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
+
   
   // Use React Query hooks with org filtering
-  const { data: athletes = [], isLoading: athletesLoading } = useAthletes(teamIds);
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes(selectedOrganization?.id);
   const { data: teamsData = [], isLoading: teamsLoading } = useTeams(selectedOrganization?.id);
   const { data: metrics = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
-  
-  // Filter records by org athletes only
-  const athleteIds = useMemo(() => athletes.map(a => a.id), [athletes]);
-  const { data: records = [], isLoading: recordsLoading } = useMetricRecords(
-    { athleteIds }, 
-    { staleTime: 2 * 60 * 1000 }
-  );
+  const { data: records = [], isLoading: recordsLoading } = useMetricRecords(selectedOrganization?.id);
   const { data: categories = [], isLoading: categoriesLoading } = useMetricCategories();
-  const { data: classPeriods = [] } = useClassPeriods();
+  const { data: classPeriods = [] } = useClassPeriods(selectedOrganization?.id);
   const { data: templates = [], refetch: refetchTemplates } = useReportTemplates(selectedOrganization?.id);
 
   const isLoading = athletesLoading || teamsLoading || metricsLoading || recordsLoading || categoriesLoading;
