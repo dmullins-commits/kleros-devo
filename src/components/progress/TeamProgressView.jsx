@@ -14,6 +14,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
   const [endDate, setEndDate] = useState(null);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [hiddenMetrics, setHiddenMetrics] = useState({});
   const categoryColors = {
     strength: "#EF4444",
     endurance: "#3B82F6",
@@ -135,6 +136,13 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
   const formatValue = (value, metric) => {
     const decimals = getDecimalPlaces(metric);
     return value?.toFixed(decimals);
+  };
+
+  const handleLegendClick = (metricId) => {
+    setHiddenMetrics(prev => ({
+      ...prev,
+      [metricId]: !prev[metricId]
+    }));
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -335,12 +343,16 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                             )}
                             <Tooltip content={<CustomTooltip />} />
                             <Legend 
-                              wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
+                              wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold', cursor: 'pointer' }}
+                              onClick={(e) => {
+                                if (e.dataKey) handleLegendClick(e.dataKey);
+                              }}
                             />
                             {chunkMetrics.map((metric, idx) => {
                               const metricName = metric.name || metric.data?.name || 'Unknown';
                               const metricUnit = metric.unit || metric.data?.unit || '';
                               const yAxisId = idx === 0 ? 'left' : 'right';
+                              const isHidden = hiddenMetrics[metric.id];
                               return (
                                 <Line 
                                   key={metric.id}
@@ -353,6 +365,8 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                                   activeDot={{ r: 6 }}
                                   connectNulls
                                   yAxisId={yAxisId}
+                                  hide={isHidden}
+                                  strokeOpacity={isHidden ? 0.2 : 1}
                                 />
                               );
                             })}

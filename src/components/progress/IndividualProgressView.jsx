@@ -18,6 +18,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
   const [endDate, setEndDate] = useState(null);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [hiddenMetrics, setHiddenMetrics] = useState({});
 
   const categoryColors = {
     strength: "#EF4444",
@@ -242,6 +243,13 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     if (values.length === 0) return null;
     const targetHigher = metric.target_higher !== false; // default true
     return targetHigher ? Math.max(...values) : Math.min(...values);
+  };
+
+  const handleLegendClick = (metricId) => {
+    setHiddenMetrics(prev => ({
+      ...prev,
+      [metricId]: !prev[metricId]
+    }));
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -477,7 +485,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                         )}
                         <Tooltip content={<CustomTooltip />} />
                         <Legend 
-                          wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
+                          wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold', cursor: 'pointer' }}
+                          onClick={(e) => {
+                            if (e.dataKey) handleLegendClick(e.dataKey);
+                          }}
                           formatter={(value) => {
                             const metric = metrics.find(m => m.id === value);
                             return metric ? `${metric.name} (${metric.unit})` : value;
@@ -487,6 +498,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                           const colors = ['#EF4444', '#3B82F6', '#FCD34D', '#A855F7', '#10B981', '#F97316'];
                           const color = colors[idx % colors.length];
                           const yAxisId = idx === 0 ? 'left' : 'right';
+                          const isHidden = hiddenMetrics[metric.id];
                           return (
                             <Line 
                               key={metric.id}
@@ -499,6 +511,8 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               activeDot={{ r: 7 }}
                               connectNulls
                               yAxisId={yAxisId}
+                              hide={isHidden}
+                              strokeOpacity={isHidden ? 0.2 : 1}
                             />
                           );
                         })}
