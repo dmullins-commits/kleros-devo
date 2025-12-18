@@ -202,6 +202,9 @@ export default function ReportEditor({
 
   // Get chart data for a graph element
   const getChartData = (metricIds) => {
+    console.log('getChartData called with metricIds:', metricIds);
+    console.log('relevantRecords count:', relevantRecords.length);
+    
     const allDates = new Set();
     metricIds.forEach(metricId => {
       relevantRecords.filter(r => {
@@ -213,9 +216,11 @@ export default function ReportEditor({
       });
     });
 
+    console.log('allDates:', Array.from(allDates));
+
     const sortedDates = Array.from(allDates).sort();
     
-    return sortedDates.map(date => {
+    const chartData = sortedDates.map(date => {
       const dataPoint = { date };
       metricIds.forEach(metricId => {
         if (reportType === 'individual') {
@@ -235,12 +240,16 @@ export default function ReportEditor({
             return recDate === date && mId === metricId;
           });
           if (dayRecords.length > 0) {
-            dataPoint[metricId] = dayRecords.reduce((sum, r) => sum + (r.value ?? r.data?.value ?? 0), 0) / dayRecords.length;
+            const avg = dayRecords.reduce((sum, r) => sum + (r.value ?? r.data?.value ?? 0), 0) / dayRecords.length;
+            dataPoint[metricId] = avg;
           }
         }
       });
       return dataPoint;
     });
+    
+    console.log('chartData:', chartData);
+    return chartData;
   };
 
   // Get summary data
