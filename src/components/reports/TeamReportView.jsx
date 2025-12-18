@@ -4,13 +4,50 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileDown, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { format } from "date-fns";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 export default function TeamReportView({ filterType, teamId, team, classPeriod, metrics, categories, records, athletes, onBack }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [showReport, setShowReport] = useState(false);
 
-  const handleExportPDF = () => {
-    window.print();
+  const handleExportPDF = async () => {
+    const reportElement = document.getElementById('report-content');
+    if (!reportElement) return;
+
+    const canvas = await html2canvas(reportElement, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    const fileName = filterType === "team" 
+      ? `${team?.name || 'Team'}_Performance_Report.pdf`
+      : `${classPeriod}_Performance_Report.pdf`;
+    
+    pdf.save(fileName);
   };
 
   const toggleCategory = (categoryName) => {
