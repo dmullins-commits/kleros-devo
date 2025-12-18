@@ -189,7 +189,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
               {combinedChartData.length > 0 ? (
                 <div className="h-72 mb-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={combinedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart data={combinedChartData} margin={{ top: 20, right: 60, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis 
                         dataKey="date" 
@@ -200,7 +200,10 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                           return format(new Date(year, month - 1, day), "MMM d");
                         }}
                       />
-                      <YAxis stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                      <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                      {categoryMetrics.length > 1 && (
+                        <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                      )}
                       <Tooltip content={<CustomTooltip />} />
                       <Legend 
                         wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
@@ -208,6 +211,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                       {categoryMetrics.map((metric, idx) => {
                         const metricName = metric.name || metric.data?.name || 'Unknown';
                         const metricUnit = metric.unit || metric.data?.unit || '';
+                        const yAxisId = idx === 0 ? 'left' : 'right';
                         return (
                           <Line 
                             key={metric.id}
@@ -219,6 +223,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                             dot={{ fill: lineColors[idx % lineColors.length], strokeWidth: 2, r: 4 }}
                             activeDot={{ r: 6 }}
                             connectNulls
+                            yAxisId={yAxisId}
                           />
                         );
                       })}

@@ -334,7 +334,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                   {/* Combined Chart for All Metrics in Category */}
                   <div className="h-72 mb-4 print-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={combinedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <LineChart data={combinedChartData} margin={{ top: 20, right: 60, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis 
                           dataKey="date" 
@@ -345,7 +345,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                             return format(new Date(year, month - 1, day), "MMM d");
                           }}
                         />
-                        <YAxis stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                        <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                        {categoryMetrics.length > 1 && (
+                          <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                        )}
                         <Tooltip content={<CustomTooltip />} />
                         <Legend 
                           wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
@@ -357,6 +360,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                         {categoryMetrics.map(({ metric }, idx) => {
                           const colors = ['#EF4444', '#3B82F6', '#FCD34D', '#A855F7', '#10B981', '#F97316'];
                           const color = colors[idx % colors.length];
+                          const yAxisId = idx === 0 ? 'left' : 'right';
                           return (
                             <Line 
                               key={metric.id}
@@ -368,6 +372,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               dot={{ fill: color, strokeWidth: 2, r: 5 }}
                               activeDot={{ r: 7 }}
                               connectNulls
+                              yAxisId={yAxisId}
                             />
                           );
                         })}
