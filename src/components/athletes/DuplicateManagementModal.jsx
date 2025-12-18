@@ -4,23 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Trash2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Users, GitMerge, CheckCircle, AlertTriangle } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Athlete } from "@/entities/all";
+import { Athlete, MetricRecord } from "@/entities/all";
 
 export default function DuplicateManagementModal({ open, onOpenChange, athletes, onDuplicatesDeleted }) {
   const [duplicateGroups, setDuplicateGroups] = useState([]);
-  const [selectedForDeletion, setSelectedForDeletion] = useState(new Set());
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [selectedForMerge, setSelectedForMerge] = useState(new Set());
+  const [isMerging, setIsMerging] = useState(false);
+  const [mergeSuccess, setMergeSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     if (open && athletes && Array.isArray(athletes)) {
       findDuplicates();
-      setSelectedForDeletion(new Set());
-      setDeleteSuccess(false);
+      setSelectedForMerge(new Set());
+      setMergeSuccess(false);
       setErrorMessage(null);
     }
   }, [open, athletes]);
@@ -66,7 +66,7 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
   };
 
   const toggleSelection = (athleteId) => {
-    setSelectedForDeletion(prev => {
+    setSelectedForMerge(prev => {
       const newSet = new Set(prev);
       if (newSet.has(athleteId)) {
         newSet.delete(athleteId);
@@ -78,59 +78,96 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
   };
 
   const selectAllInGroup = (group) => {
-    setSelectedForDeletion(prev => {
+    setSelectedForMerge(prev => {
       const newSet = new Set(prev);
       group.slice(1).forEach(athlete => athlete && newSet.add(athlete.id));
       return newSet;
     });
   };
 
-  const handleDelete = async () => {
-    if (selectedForDeletion.size === 0) return;
+  const handleMerge = async () => {
+    if (selectedForMerge.size === 0) return;
 
-    setIsDeleting(true);
-    setDeleteSuccess(false);
+    setIsMerging(true);
+    setMergeSuccess(false);
     setErrorMessage(null);
 
     try {
-      const athleteIds = Array.from(selectedForDeletion);
-      const results = { deleted: 0, alreadyDeleted: 0, errors: [] };
-
-      for (const athleteId of athleteIds) {
-        try {
-          await Athlete.delete(athleteId);
-          results.deleted++;
-        } catch (error) {
-          if (error.response?.status === 404 || error.message?.includes('not found')) {
-            results.alreadyDeleted++;
-          } else {
-            results.errors.push(athleteId);
-            console.error(`Error deleting athlete ${athleteId}:`, error);
-          }
+      // Group selected athletes by their duplicate group
+      const mergeOperations = [];
+      
+      for (const group of duplicateGroups) {
+        const primaryAthlete = group[0];
+        const duplicatesToMerge = group.slice(1).filter(a => selectedForMerge.has(a.id));
+        
+        if (duplicatesToMerge.length > 0) {
+          mergeOperations.push({ primary: primaryAthlete, duplicates: duplicatesToMerge });
         }
       }
 
-      if (results.deleted > 0 || results.alreadyDeleted > 0) {
-        setDeleteSuccess(true);
-        setSelectedForDeletion(new Set());
+      let mergedCount = 0;
+      
+      for (const { primary, duplicates } of mergeOperations) {
+        try {
+          // Merge data from duplicates into primary
+          const mergedData = { ...primary };
+          
+          // Merge non-null fields from duplicates
+          for (const duplicate of duplicates) {
+            Object.keys(duplicate).forEach(key => {
+              if (duplicate[key] && !mergedData[key] && key !== 'id' && key !== 'created_date') {
+                mergedData[key] = duplicate[key];
+              }
+            });
+            
+            // Merge team_ids
+            if (duplicate.team_ids && Array.isArray(duplicate.team_ids)) {
+              const existingTeams = new Set(mergedData.team_ids || []);
+              duplicate.team_ids.forEach(teamId => existingTeams.add(teamId));
+              mergedData.team_ids = Array.from(existingTeams);
+            }
+          }
+          
+          // Update primary athlete with merged data
+          await Athlete.update(primary.id, mergedData);
+          
+          // Transfer metric records from duplicates to primary
+          for (const duplicate of duplicates) {
+            const records = await MetricRecord.filter({ athlete_id: duplicate.id });
+            
+            for (const record of records) {
+              await MetricRecord.update(record.id, { athlete_id: primary.id });
+            }
+            
+            // Delete the duplicate athlete
+            await Athlete.delete(duplicate.id);
+            mergedCount++;
+          }
+        } catch (error) {
+          console.error(`Error merging athlete group:`, error);
+          setErrorMessage(`Failed to merge some athletes. Please try again.`);
+        }
+      }
+
+      if (mergedCount > 0) {
+        setMergeSuccess(true);
+        setSelectedForMerge(new Set());
         
         if (onDuplicatesDeleted) {
-          await onDuplicatesDeleted(Array.from(selectedForDeletion));
+          await onDuplicatesDeleted(Array.from(selectedForMerge));
         }
         
         setTimeout(() => {
           findDuplicates();
-          setDeleteSuccess(false);
+          setMergeSuccess(false);
         }, 2000);
-      } else if (results.errors.length > 0) {
-        setErrorMessage(`Failed to delete ${results.errors.length} athlete${results.errors.length !== 1 ? 's' : ''}. Please try again.`);
       }
       
     } catch (error) {
-      console.error('Error deleting duplicates:', error);
-      setErrorMessage('An unexpected error occurred while deleting athletes.');
+      console.error('Error merging duplicates:', error);
+      setErrorMessage('An unexpected error occurred while merging athletes.');
     } finally {
-      setIsDeleting(false);
+      setIsMerging(false);
     }
   };
 
@@ -170,11 +207,11 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
           </DialogTitle>
         </DialogHeader>
 
-        {deleteSuccess && (
+        {mergeSuccess && (
           <Alert className="bg-green-950/20 border-green-800 mb-4">
             <CheckCircle className="h-4 w-4 text-green-400" />
             <AlertDescription className="text-green-300 font-semibold">
-              Successfully deleted selected athletes!
+              Successfully merged selected athletes!
             </AlertDescription>
           </Alert>
         )}
@@ -200,7 +237,7 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
               <AlertTriangle className="h-4 w-4 text-amber-400" />
               <AlertDescription className="text-amber-300 font-semibold">
                 Found {duplicateGroups.length} potential duplicate group{duplicateGroups.length !== 1 ? 's' : ''}.
-                Review carefully and select which athletes to delete.
+                Select duplicates to merge into the primary (first) athlete. Data and records from all selected profiles will be combined.
               </AlertDescription>
             </Alert>
 
@@ -233,7 +270,7 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
                       <table className="w-full">
                         <thead className="bg-gray-900/50 border-b border-gray-700">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Delete</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Merge</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Athlete</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">PIN</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Email</th>
@@ -251,11 +288,11 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
                               <tr 
                                 key={athlete.id}
                                 className={`border-b border-gray-800 transition-colors ${
-                                  index === 0 
-                                    ? 'bg-green-950/20' 
-                                    : selectedForDeletion.has(athlete.id)
-                                    ? 'bg-red-950/20'
-                                    : 'hover:bg-gray-900/50'
+                                 index === 0 
+                                   ? 'bg-green-950/20' 
+                                   : selectedForMerge.has(athlete.id)
+                                   ? 'bg-blue-950/20'
+                                   : 'hover:bg-gray-900/50'
                                 }`}
                               >
                                 <td className="px-4 py-3">
@@ -266,11 +303,11 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
                                       </div>
                                     </div>
                                   ) : (
-                                    <Checkbox
-                                      checked={selectedForDeletion.has(athlete.id)}
-                                      onCheckedChange={() => toggleSelection(athlete.id)}
-                                      className="border-2 border-amber-400/50 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
-                                    />
+                                   <Checkbox
+                                     checked={selectedForMerge.has(athlete.id)}
+                                     onCheckedChange={() => toggleSelection(athlete.id)}
+                                     className="border-2 border-amber-400/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                   />
                                   )}
                                 </td>
                                 <td className="px-4 py-3">
@@ -286,7 +323,7 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
                                         {athlete.first_name} {athlete.last_name}
                                         {index === 0 && (
                                           <Badge className="bg-green-500/20 text-green-400 border border-green-500/50 font-bold text-xs">
-                                            ORIGINAL
+                                            PRIMARY
                                           </Badge>
                                         )}
                                       </div>
@@ -367,7 +404,7 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
 
             <div className="flex items-center justify-between pt-6 border-t-2 border-amber-400/30 mt-6">
               <div className="text-gray-300 font-semibold">
-                {selectedForDeletion.size} athlete{selectedForDeletion.size !== 1 ? 's' : ''} selected for deletion
+                {selectedForMerge.size} athlete{selectedForMerge.size !== 1 ? 's' : ''} selected for merging
               </div>
               <div className="flex gap-3">
                 <Button
@@ -378,19 +415,19 @@ export default function DuplicateManagementModal({ open, onOpenChange, athletes,
                   Close
                 </Button>
                 <Button
-                  onClick={handleDelete}
-                  disabled={selectedForDeletion.size === 0 || isDeleting}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-black"
+                  onClick={handleMerge}
+                  disabled={selectedForMerge.size === 0 || isMerging}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-black"
                 >
-                  {isDeleting ? (
+                  {isMerging ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Deleting...
+                      Merging...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Selected ({selectedForDeletion.size})
+                      <GitMerge className="w-4 h-4 mr-2" />
+                      Merge Selected ({selectedForMerge.size})
                     </>
                   )}
                 </Button>
