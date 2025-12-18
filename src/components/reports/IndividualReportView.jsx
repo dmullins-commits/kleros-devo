@@ -14,6 +14,7 @@ export default function IndividualReportView({ athlete, team, metrics, categorie
   const [showReport, setShowReport] = useState(false);
   const [injuries, setInjuries] = useState([]);
   const [pageBreakAfterCategory, setPageBreakAfterCategory] = useState({});
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     loadInjuries();
@@ -30,37 +31,44 @@ export default function IndividualReportView({ athlete, team, metrics, categorie
   };
 
   const handleExportPDF = async () => {
-    const reportElement = document.getElementById('report-content');
-    if (!reportElement) return;
+    setIsGeneratingPDF(true);
+    try {
+      const reportElement = document.getElementById('report-content');
+      if (!reportElement) return;
 
-    const canvas = await html2canvas(reportElement, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff'
-    });
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-    
-    let heightLeft = imgHeight;
-    let position = 0;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
-    }
 
-    pdf.save(`${athlete.first_name}_${athlete.last_name}_Performance_Report.pdf`);
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save(`${athlete.first_name}_${athlete.last_name}_Performance_Report.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const toggleCategory = (categoryName) => {
@@ -889,10 +897,11 @@ export default function IndividualReportView({ athlete, team, metrics, categorie
         </Button>
         <Button
           onClick={handleExportPDF}
-          className="bg-white hover:bg-gray-100 text-black font-bold border-2 border-gray-800"
+          disabled={isGeneratingPDF}
+          className="bg-white hover:bg-gray-100 text-black font-bold border-2 border-gray-800 disabled:opacity-50"
         >
           <FileDown className="w-4 h-4 mr-2" />
-          Export as PDF
+          {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
         </Button>
       </div>
     </>
