@@ -4,7 +4,7 @@ import { Clipboard, Zap, Target, FileSpreadsheet, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTeam } from "@/components/TeamContext";
-import { useMetrics, useAthletes } from "@/components/hooks/useDataQueries";
+import { useMetrics, useAthletes, useTeams, useClassPeriods } from "@/components/hooks/useDataQueries";
 
 import LiveDataEntry from "../components/metrics/LiveDataEntry";
 import RawDataPanel from "../components/metrics/RawDataPanel";
@@ -21,6 +21,8 @@ export default function TestingCenter() {
   // Use React Query hooks for automatic caching and deduplication
   const { data: metrics = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes(selectedOrganization?.id);
+  const { data: teams = [] } = useTeams(selectedOrganization?.id);
+  const { data: classPeriods = [] } = useClassPeriods(selectedOrganization?.id);
   const isLoading = metricsLoading || athletesLoading;
   const handleMetricAdded = async () => {
     setShowQuickAddMetric(false);
@@ -113,6 +115,8 @@ export default function TestingCenter() {
             onClose={() => setShowLatestLeaderboard(false)}
             metrics={metrics}
             athletes={athletes}
+            teams={teams}
+            classPeriods={classPeriods}
           />
         )}
 
