@@ -90,7 +90,7 @@ export function useMetricRecords(organizationId, options = {}) {
       // Fetch all records in batches to overcome API limits
       let allRecords = [];
       let skip = 0;
-      const limit = 500000; // Backend limit per request - increased for large datasets
+      const limit = 5000; // Backend limit per request
       let hasMore = true;
       
       console.log(`useMetricRecords: Starting paginated fetch for org ${organizationId}...`);

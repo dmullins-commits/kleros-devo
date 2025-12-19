@@ -91,60 +91,33 @@ export default function LeaderboardBuilder() {
     const metric = metrics.find(m => m.id === selectedMetric);
     if (!metric) return;
 
-    console.log('=== LEADERBOARD DEBUG ===');
-    console.log('Total athletes loaded:', athletes.length);
-    console.log('Total records loaded:', records.length);
-    console.log('Total metrics loaded:', metrics.length);
-    console.log('Selected metric:', metric.name);
-    console.log('Selected date:', selectedDate);
-    console.log('Use All-Time PR:', useAllTimePR);
-    console.log('Filter type:', filterType);
-    console.log('Filter ID:', filterId);
+    console.log('Leaderboard:', athletes.length, 'athletes,', records.length, 'records');
 
     // Filter athletes
     let filteredAthletes = athletes.filter(a => a.status === 'active');
-    console.log('Active athletes:', filteredAthletes.length);
     
     if (filterType === 'team' && filterId) {
-      console.log('Filtering by team:', filterId);
-      console.log('Sample athlete structure:', filteredAthletes[0]);
       filteredAthletes = filteredAthletes.filter(a => {
         const teamIds = a.team_ids || [];
-        const hasTeam = Array.isArray(teamIds) && teamIds.includes(filterId);
-        if (hasTeam) {
-          console.log(`Athlete ${a.first_name} ${a.last_name} has team`, filterId);
-        }
-        return hasTeam;
+        return Array.isArray(teamIds) && teamIds.includes(filterId);
       });
-      console.log('Athletes after team filter:', filteredAthletes.length);
+      console.log('Team filter:', filteredAthletes.length, 'athletes');
     } else if (filterType === 'class_period' && filterId) {
       filteredAthletes = filteredAthletes.filter(a => a.class_period === filterId);
-      console.log('Athletes after class period filter:', filteredAthletes.length);
-    }
-
-    if (filteredAthletes.length === 0) {
-      console.log('No athletes match the filter criteria');
-      setLeaderboardData({ male: [], female: [] });
-      return;
     }
 
     // Get records for each athlete
-    console.log('Looking for records for', filteredAthletes.length, 'athletes');
     const athleteData = filteredAthletes.map(athlete => {
       let athleteRecords = records.filter(r => 
         (r.athlete_id || r.data?.athlete_id) === athlete.id &&
         (r.metric_id || r.data?.metric_id) === selectedMetric
       );
 
-      console.log(`Athlete ${athlete.first_name} ${athlete.last_name}: ${athleteRecords.length} records for metric`);
-
       if (!useAllTimePR && selectedDate) {
-        const beforeDateFilter = athleteRecords.length;
         athleteRecords = athleteRecords.filter(r => {
           const recordDate = r.recorded_date || r.data?.recorded_date;
           return recordDate === selectedDate;
         });
-        console.log(`  After date filter: ${athleteRecords.length} records (was ${beforeDateFilter})`);
       }
 
       if (athleteRecords.length === 0) return null;
@@ -161,8 +134,6 @@ export default function LeaderboardBuilder() {
       };
     }).filter(Boolean);
 
-    console.log('Athletes with data:', athleteData.length);
-
     // Sort by value
     const targetHigher = metric.target_higher !== false;
     athleteData.sort((a, b) => targetHigher ? b.value - a.value : a.value - b.value);
@@ -171,8 +142,7 @@ export default function LeaderboardBuilder() {
     const maleData = athleteData.filter(a => a.gender === 'Male');
     const femaleData = athleteData.filter(a => a.gender === 'Female');
 
-    console.log('Final data - Male:', maleData.length, 'Female:', femaleData.length);
-    console.log('=== END DEBUG ===');
+    console.log('Result:', maleData.length, 'male,', femaleData.length, 'female');
 
     setLeaderboardData({ male: maleData, female: femaleData });
   };
