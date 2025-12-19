@@ -61,6 +61,8 @@ export default function LeaderboardBuilder() {
   const [savedTemplates, setSavedTemplates] = useState([]);
   const [templateName, setTemplateName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pageBreakMode, setPageBreakMode] = useState(false);
+  const [pageBreakPositions, setPageBreakPositions] = useState([]);
 
   useEffect(() => {
     loadTemplates();
@@ -211,42 +213,85 @@ export default function LeaderboardBuilder() {
     const element = previewRef.current;
     
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        useCORS: true
-      });
+      // If there are page breaks, handle them
+      if (pageBreakPositions.length > 0) {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        // Get all page sections
+        const pageSections = element.querySelectorAll('.page-section');
+        
+        for (let i = 0; i < pageSections.length; i++) {
+          if (i > 0) pdf.addPage();
+          
+          const section = pageSections[i];
+          const canvas = await html2canvas(section, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true
+          });
 
-      let heightLeft = imgHeight;
-      let position = 0;
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pdfWidth;
+          const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
+        pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      } else {
+        // Standard export without page breaks
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false,
+          useCORS: true
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
-      }
 
-      pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+
+        pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to export PDF');
     }
   };
 
-  const renderAthleteBox = (item, index, provided) => {
+  const handleLeaderboardClick = (e, athleteIndex) => {
+    if (pageBreakMode) {
+      e.stopPropagation();
+      setPageBreakPositions(prev => {
+        if (prev.includes(athleteIndex)) {
+          return prev.filter(i => i !== athleteIndex);
+        }
+        return [...prev, athleteIndex].sort((a, b) => a - b);
+      });
+    }
+  };
+
+  const renderAthleteBox = (item, index, provided, globalIndex) => {
     const metric = metrics.find(m => m.id === selectedMetric);
     if (!metric) return null;
 
@@ -255,42 +300,72 @@ export default function LeaderboardBuilder() {
     const rankColors = ['text-yellow-500', 'text-gray-400', 'text-amber-600'];
     const rankColor = index < 3 ? rankColors[index] : 'text-black';
 
+    const hasPageBreakBefore = pageBreakPositions.includes(globalIndex);
+
     return (
-      <div
-        ref={provided?.innerRef}
-        {...(provided?.draggableProps || {})}
-        {...(provided?.dragHandleProps || {})}
-        style={{
-          padding: boxPadding,
-          marginBottom: '0.05rem',
-          background: 'white',
-          border: '1px solid #d1d5db',
-          borderRadius: '4px',
-          fontSize: fontSize,
-          color: 'black',
-          ...(provided?.draggableProps?.style || {})
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px' }}>
-            {Icon ? (
-              <Icon style={{ width: '12px', height: '12px' }} className={rankColor} />
-            ) : (
-              <span style={{ fontWeight: 'bold', fontSize: fontSize }} className={rankColor}>#{index + 1}</span>
-            )}
+      <>
+        {hasPageBreakBefore && (
+          <div style={{ 
+            width: '100%', 
+            height: '2px', 
+            background: 'linear-gradient(to right, #ef4444, #f97316, #ef4444)',
+            margin: '1rem 0',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{ 
+              background: 'white', 
+              padding: '0.25rem 0.5rem', 
+              fontSize: '10px', 
+              fontWeight: 'bold',
+              color: '#ef4444',
+              border: '2px solid #ef4444',
+              borderRadius: '4px'
+            }}>
+              PAGE BREAK
+            </span>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {item.athlete_name}
-            </p>
-          </div>
-          <div style={{ textAlign: 'right', minWidth: '60px' }}>
-            <p style={{ fontWeight: 'bold', fontSize: fontSize }}>
-              {item.value.toFixed(metric.decimal_places ?? 2)} {metric.unit}
-            </p>
+        )}
+        <div
+          ref={provided?.innerRef}
+          {...(provided?.draggableProps || {})}
+          {...(provided?.dragHandleProps || {})}
+          onClick={(e) => handleLeaderboardClick(e, globalIndex)}
+          style={{
+            padding: boxPadding,
+            marginBottom: '0.05rem',
+            background: 'white',
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            fontSize: fontSize,
+            color: 'black',
+            cursor: pageBreakMode ? 'crosshair' : 'default',
+            ...(provided?.draggableProps?.style || {})
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px' }}>
+              {Icon ? (
+                <Icon style={{ width: '12px', height: '12px' }} className={rankColor} />
+              ) : (
+                <span style={{ fontWeight: 'bold', fontSize: fontSize }} className={rankColor}>#{index + 1}</span>
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {item.athlete_name}
+              </p>
+            </div>
+            <div style={{ textAlign: 'right', minWidth: '60px' }}>
+              <p style={{ fontWeight: 'bold', fontSize: fontSize }}>
+                {item.value.toFixed(metric.decimal_places ?? 2)} {metric.unit}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   };
 
@@ -313,102 +388,127 @@ export default function LeaderboardBuilder() {
       );
     }
 
+    // Split content by page breaks for PDF export
+    const splitContentByPageBreaks = () => {
+      const allAthletes = genderSeparation === 'separate' 
+        ? [...leaderboardData.male, ...leaderboardData.female]
+        : [...leaderboardData.male, ...leaderboardData.female];
+      
+      if (pageBreakPositions.length === 0) {
+        return [allAthletes];
+      }
+
+      const sections = [];
+      let lastIndex = 0;
+      
+      [...pageBreakPositions, allAthletes.length].forEach(breakPoint => {
+        sections.push(allAthletes.slice(lastIndex, breakPoint));
+        lastIndex = breakPoint;
+      });
+
+      return sections.filter(s => s.length > 0);
+    };
+
+    const sections = splitContentByPageBreaks();
+
     return (
       <div style={{ background: 'white', padding: '1rem', color: 'black', minHeight: '100vh' }}>
-        {/* Watermark */}
-        <div style={{ position: 'relative', minHeight: '100vh' }}>
-          <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
-            alt="Watermark"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              opacity: 0.08,
-              width: '60%',
-              height: 'auto',
-              zIndex: 0,
-              pointerEvents: 'none'
-            }}
-          />
+        {sections.map((sectionData, sectionIndex) => (
+          <div key={sectionIndex} className="page-section" style={{ position: 'relative', minHeight: sectionIndex === 0 ? '100vh' : 'auto', paddingTop: sectionIndex > 0 ? '2rem' : 0 }}>
+            {/* Watermark */}
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
+              alt="Watermark"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                opacity: 0.08,
+                width: '60%',
+                height: 'auto',
+                zIndex: 0,
+                pointerEvents: 'none'
+              }}
+            />
 
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid #FCD34D' }}>
-              <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
-                {title}
-              </h1>
-              <p style={{ fontSize: '12px', color: '#666' }}>
-                {format(new Date(selectedDate), "MMMM d, yyyy")}
-              </p>
-            </div>
-
-            {/* Leaderboard Content */}
-            {genderSeparation === 'separate' ? (
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '1rem' }}>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  {/* Male Athletes */}
-                  {leaderboardData.male.length > 0 && (
-                    <div>
-                      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
-                        MALE ATHLETES
-                      </h2>
-                      <Droppable droppableId="male">
-                        {(provided) => (
-                          <div ref={provided.innerRef} {...provided.droppableProps}>
-                            {leaderboardData.male.map((item, index) => (
-                              <Draggable key={item.athlete_id} draggableId={item.athlete_id} index={index}>
-                                {(provided) => renderAthleteBox(item, index, provided)}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </div>
-                  )}
-
-                  {/* Female Athletes */}
-                  {leaderboardData.female.length > 0 && (
-                    <div>
-                      <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
-                        FEMALE ATHLETES
-                      </h2>
-                      <Droppable droppableId="female">
-                        {(provided) => (
-                          <div ref={provided.innerRef} {...provided.droppableProps}>
-                            {leaderboardData.female.map((item, index) => (
-                              <Draggable key={item.athlete_id} draggableId={item.athlete_id} index={index}>
-                                {(provided) => renderAthleteBox(item, index, provided)}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </div>
-                  )}
-                </DragDropContext>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              {/* Header */}
+              <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid #FCD34D' }}>
+                <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
+                  {title}
+                </h1>
+                <p style={{ fontSize: '12px', color: '#666' }}>
+                  {format(new Date(selectedDate), "MMMM d, yyyy")}
+                </p>
               </div>
-            ) : (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="all">
-                  {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {[...leaderboardData.male, ...leaderboardData.female].map((item, index) => (
-                        <Draggable key={item.athlete_id} draggableId={item.athlete_id} index={index}>
-                          {(provided) => renderAthleteBox(item, index, provided)}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            )}
+
+              {/* Leaderboard Content */}
+              {genderSeparation === 'separate' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '1rem' }}>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    {/* Male Athletes */}
+                    {leaderboardData.male.length > 0 && (
+                      <div>
+                        <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
+                          MALE ATHLETES
+                        </h2>
+                        <Droppable droppableId="male">
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.droppableProps}>
+                              {leaderboardData.male.map((item, index) => (
+                                <Draggable key={item.athlete_id} draggableId={item.athlete_id} index={index}>
+                                  {(provided) => renderAthleteBox(item, index, provided, index)}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      </div>
+                    )}
+
+                    {/* Female Athletes */}
+                    {leaderboardData.female.length > 0 && (
+                      <div>
+                        <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
+                          FEMALE ATHLETES
+                        </h2>
+                        <Droppable droppableId="female">
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.droppableProps}>
+                              {leaderboardData.female.map((item, index) => (
+                                <Draggable key={item.athlete_id} draggableId={item.athlete_id} index={index}>
+                                  {(provided) => renderAthleteBox(item, index, provided, leaderboardData.male.length + index)}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      </div>
+                    )}
+                  </DragDropContext>
+                </div>
+              ) : (
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="all">
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.droppableProps}>
+                        {[...leaderboardData.male, ...leaderboardData.female].map((item, index) => (
+                          <Draggable key={item.athlete_id} draggableId={item.athlete_id} index={index}>
+                            {(provided) => renderAthleteBox(item, index, provided, index)}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              )}
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     );
   };
@@ -443,6 +543,15 @@ export default function LeaderboardBuilder() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Control Panel */}
           <div className="lg:col-span-1 space-y-6">
+            {pageBreakMode && (
+              <Alert className="bg-red-950/20 border-2 border-red-500 animate-pulse">
+                <SeparatorHorizontal className="h-5 w-5 text-red-400" />
+                <AlertDescription className="text-red-300 font-bold">
+                  PAGE BREAK MODE ACTIVE - Click on any athlete box to insert a page break
+                </AlertDescription>
+              </Alert>
+            )}
+            
             {/* Data Selection */}
             <Card className="bg-gradient-to-br from-gray-950 via-black to-gray-950 border-2 border-amber-400/30">
               <CardHeader className="border-b border-amber-400/30">
@@ -677,6 +786,28 @@ export default function LeaderboardBuilder() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Page Break Controls */}
+            <div className="space-y-3">
+              <Button 
+                onClick={() => setPageBreakMode(!pageBreakMode)}
+                variant={pageBreakMode ? "default" : "outline"}
+                className={`w-full font-bold ${pageBreakMode ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-900 border-gray-700 text-white hover:bg-gray-800'}`}
+              >
+                <SeparatorHorizontal className="w-5 h-5 mr-2" />
+                {pageBreakMode ? 'Cancel Page Break Mode' : 'Insert Page Break'}
+              </Button>
+              
+              {pageBreakPositions.length > 0 && (
+                <Button 
+                  onClick={() => setPageBreakPositions([])}
+                  variant="outline"
+                  className="w-full bg-gray-900 border-gray-700 text-white hover:bg-gray-800 font-semibold"
+                >
+                  Clear All Page Breaks ({pageBreakPositions.length})
+                </Button>
+              )}
+            </div>
 
             {/* Export */}
             <Button 
