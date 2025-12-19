@@ -388,34 +388,116 @@ export default function LeaderboardBuilder() {
       );
     }
 
-    // Split content by page breaks for PDF export
-    const splitContentByPageBreaks = () => {
-      const allAthletes = genderSeparation === 'separate' 
-        ? [...leaderboardData.male, ...leaderboardData.female]
-        : [...leaderboardData.male, ...leaderboardData.female];
-      
+    // Get all athletes in display order
+    const getAllAthletes = () => {
+      if (genderSeparation === 'separate') {
+        return { male: leaderboardData.male, female: leaderboardData.female };
+      } else {
+        return { all: [...leaderboardData.male, ...leaderboardData.female] };
+      }
+    };
+
+    const athletesByGender = getAllAthletes();
+
+    // Split athletes by page breaks
+    const splitByPageBreaks = (athletes) => {
       if (pageBreakPositions.length === 0) {
-        return [allAthletes];
+        return [athletes];
       }
 
       const sections = [];
       let lastIndex = 0;
       
-      [...pageBreakPositions, allAthletes.length].forEach(breakPoint => {
-        sections.push(allAthletes.slice(lastIndex, breakPoint));
-        lastIndex = breakPoint;
+      const sortedBreaks = [...pageBreakPositions].sort((a, b) => a - b);
+      
+      sortedBreaks.forEach(breakPoint => {
+        if (breakPoint > lastIndex) {
+          sections.push(athletes.slice(lastIndex, breakPoint));
+          lastIndex = breakPoint;
+        }
       });
+      
+      if (lastIndex < athletes.length) {
+        sections.push(athletes.slice(lastIndex));
+      }
 
       return sections.filter(s => s.length > 0);
     };
 
-    const sections = splitContentByPageBreaks();
+    // Create page sections
+    const createPageSections = () => {
+      if (genderSeparation === 'separate') {
+        const maleSections = splitByPageBreaks(athletesByGender.male);
+        const femaleSections = splitByPageBreaks(athletesByGender.female);
+        const maxSections = Math.max(maleSections.length, femaleSections.length);
+        
+        const pageSections = [];
+        for (let i = 0; i < maxSections; i++) {
+          pageSections.push({
+            male: maleSections[i] || [],
+            female: femaleSections[i] || []
+          });
+        }
+        return pageSections;
+      } else {
+        return splitByPageBreaks(athletesByGender.all).map(athletes => ({ all: athletes }));
+      }
+    };
 
-    return (
-      <div style={{ background: 'white', padding: '1rem', color: 'black', minHeight: '100vh' }}>
-        {sections.map((sectionData, sectionIndex) => (
-          <div key={sectionIndex} className="page-section" style={{ position: 'relative', minHeight: sectionIndex === 0 ? '100vh' : 'auto', paddingTop: sectionIndex > 0 ? '2rem' : 0 }}>
-            {/* Watermark */}
+    const pageSections = createPageSections();
+
+    const renderPageContent = (section, sectionIndex, startIndex) => {
+      if (genderSeparation === 'separate') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '1rem' }}>
+            {/* Male Athletes */}
+            {section.male && section.male.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
+                  MALE ATHLETES
+                </h2>
+                <div>
+                  {section.male.map((item, index) => {
+                    const globalIndex = leaderboardData.male.indexOf(item);
+                    return renderAthleteBox(item, globalIndex, null, globalIndex);
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Female Athletes */}
+            {section.female && section.female.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
+                  FEMALE ATHLETES
+                </h2>
+                <div>
+                  {section.female.map((item, index) => {
+                    const globalIndex = leaderboardData.male.length + leaderboardData.female.indexOf(item);
+                    return renderAthleteBox(item, leaderboardData.female.indexOf(item), null, globalIndex);
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      } else {
+        return (
+          <div>
+            {section.all.map((item, index) => {
+              const globalIndex = [...leaderboardData.male, ...leaderboardData.female].indexOf(item);
+              return renderAthleteBox(item, globalIndex, null, globalIndex);
+            })}
+          </div>
+        );
+      }
+    };
+
+    // For display with drag and drop (single view)
+    if (pageBreakPositions.length === 0) {
+      return (
+        <div style={{ background: 'white', padding: '1rem', color: 'black', minHeight: '100vh' }}>
+          <div style={{ position: 'relative', minHeight: '100vh' }}>
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
               alt="Watermark"
@@ -431,9 +513,7 @@ export default function LeaderboardBuilder() {
                 pointerEvents: 'none'
               }}
             />
-
             <div style={{ position: 'relative', zIndex: 1 }}>
-              {/* Header */}
               <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid #FCD34D' }}>
                 <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
                   {title}
@@ -442,12 +522,9 @@ export default function LeaderboardBuilder() {
                   {format(new Date(selectedDate), "MMMM d, yyyy")}
                 </p>
               </div>
-
-              {/* Leaderboard Content */}
               {genderSeparation === 'separate' ? (
                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '1rem' }}>
                   <DragDropContext onDragEnd={handleDragEnd}>
-                    {/* Male Athletes */}
                     {leaderboardData.male.length > 0 && (
                       <div>
                         <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
@@ -467,8 +544,6 @@ export default function LeaderboardBuilder() {
                         </Droppable>
                       </div>
                     )}
-
-                    {/* Female Athletes */}
                     {leaderboardData.female.length > 0 && (
                       <div>
                         <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
@@ -506,6 +581,51 @@ export default function LeaderboardBuilder() {
                   </Droppable>
                 </DragDropContext>
               )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // With page breaks - render separate pages
+    return (
+      <div style={{ background: 'white', color: 'black' }}>
+        {pageSections.map((section, sectionIndex) => (
+          <div 
+            key={sectionIndex} 
+            className="page-section" 
+            style={{ 
+              position: 'relative',
+              minHeight: '100vh',
+              padding: '1rem',
+              pageBreakAfter: sectionIndex < pageSections.length - 1 ? 'always' : 'auto'
+            }}
+          >
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
+              alt="Watermark"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                opacity: 0.08,
+                width: '60%',
+                height: 'auto',
+                zIndex: 0,
+                pointerEvents: 'none'
+              }}
+            />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid #FCD34D' }}>
+                <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
+                  {title}
+                </h1>
+                <p style={{ fontSize: '12px', color: '#666' }}>
+                  {format(new Date(selectedDate), "MMMM d, yyyy")} - Page {sectionIndex + 1}
+                </p>
+              </div>
+              {renderPageContent(section, sectionIndex, 0)}
             </div>
           </div>
         ))}
