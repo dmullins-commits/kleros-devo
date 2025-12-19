@@ -1002,10 +1002,9 @@ export default function LeaderboardBuilder() {
                 </div>
               </CardContent>
             </Card>
-            </div>
           </div>
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
 }
