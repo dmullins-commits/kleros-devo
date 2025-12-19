@@ -282,7 +282,7 @@ export default function LeaderboardBuilder() {
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
+          position -= pdfHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
           heightLeft -= pdfHeight;
