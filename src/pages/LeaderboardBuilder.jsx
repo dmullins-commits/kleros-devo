@@ -363,24 +363,25 @@ export default function LeaderboardBuilder() {
             fontSize: fontSize,
             color: 'black',
             cursor: pageBreakMode ? 'crosshair' : 'default',
+            overflow: 'hidden',
             ...(provided?.draggableProps?.style || {})
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', lineHeight: '1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px', flexShrink: 0 }}>
               {Icon ? (
-                <Icon style={{ width: '12px', height: '12px' }} className={rankColor} />
+                <Icon style={{ width: '12px', height: '12px', flexShrink: 0 }} className={rankColor} />
               ) : (
-                <span style={{ fontWeight: 'bold', fontSize: fontSize }} className={rankColor}>#{index + 1}</span>
+                <span style={{ fontWeight: 'bold', fontSize: fontSize, lineHeight: '1' }} className={rankColor}>#{index + 1}</span>
               )}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+              <p style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0, lineHeight: '1.2' }}>
                 {item.athlete_name}
               </p>
             </div>
-            <div style={{ textAlign: 'right', minWidth: '60px' }}>
-              <p style={{ fontWeight: 'bold', fontSize: fontSize }}>
+            <div style={{ textAlign: 'right', minWidth: '60px', flexShrink: 0 }}>
+              <p style={{ fontWeight: 'bold', fontSize: fontSize, margin: 0, lineHeight: '1.2' }}>
                 {item.value.toFixed(metric.decimal_places ?? 2)} {metric.unit}
               </p>
             </div>
