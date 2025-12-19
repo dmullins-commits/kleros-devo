@@ -379,7 +379,7 @@ export default function LeaderboardBuilder() {
             ...(provided?.draggableProps?.style || {})
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', flexShrink: 0 }}>
               {Icon ? (
                 <Icon style={{ width: '12px', height: '12px', display: 'block' }} className={rankColor} />
@@ -690,19 +690,11 @@ export default function LeaderboardBuilder() {
           .pdf-exporting .athlete-box {
             height: auto !important;
             min-height: 0 !important;
-            padding: 2px 4px !important;
-          }
-          .pdf-exporting .athlete-box * {
-            vertical-align: middle !important;
-            line-height: 1.2 !important;
           }
           .pdf-exporting .athlete-box span {
             white-space: normal !important;
             overflow: visible !important;
             text-overflow: clip !important;
-          }
-          .pdf-exporting .athlete-box > div {
-            align-items: center !important;
           }
         `}
       </style>
