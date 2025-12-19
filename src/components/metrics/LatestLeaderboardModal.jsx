@@ -232,12 +232,19 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
         // Small delay to ensure DOM updates
         await new Promise(resolve => setTimeout(resolve, 100));
         
+        // Add PDF export mode class
+        element.classList.add('pdf-export-mode');
+        
         const canvas = await html2canvas(element, {
           scale: 2,
-          backgroundColor: '#0a0a0a',
+          backgroundColor: '#ffffff',
           logging: false,
-          useCORS: true
+          useCORS: true,
+          allowTaint: true
         });
+        
+        // Remove PDF export mode class
+        element.classList.remove('pdf-export-mode');
         
         const imgData = canvas.toDataURL('image/png');
         const imgWidth = 210; // A4 width in mm
@@ -540,6 +547,39 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
               break-after: page;
             }
           }
+          .pdf-export-mode {
+            background: white !important;
+            color: black !important;
+            padding: 1rem !important;
+          }
+          .pdf-export-mode * {
+            font-size: calc(1em - 3pt) !important;
+            color: black !important;
+          }
+          .pdf-export-mode .leaderboard-row {
+            padding: 0.25rem !important;
+            margin-bottom: 0.15rem !important;
+            background: white !important;
+            border: 1px solid #e5e7eb !important;
+          }
+          .pdf-export-mode h2, .pdf-export-mode h3 {
+            color: black !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .pdf-export-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.03;
+            width: 60%;
+            height: auto;
+            z-index: 0;
+            pointer-events: none;
+          }
+          .pdf-export-mode .grid {
+            gap: 0.5rem !important;
+          }
         `}
       </style>
       <Dialog open={true} onOpenChange={onClose}>
@@ -768,8 +808,13 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
 
               {((viewMode === 'latest' && selectedDate && selectedMetric) || (viewMode === 'alltime' && showAllTimeLeaderboard && allTimeMetricId)) && (
                 <>
-                  <div ref={printableRef} id="printable-content" className="print:block bg-black p-6 rounded-lg">
-                    <div className="text-center mb-6 print:mb-2">
+                  <div ref={printableRef} id="printable-content" className="print:block bg-black p-6 rounded-lg relative">
+                    <img 
+                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
+                      alt="Kleros Logo"
+                      className="pdf-export-watermark"
+                    />
+                    <div className="text-center mb-6 print:mb-2 relative z-10">
                       <h2 className="text-3xl font-black text-white mb-2 print:text-base print:mb-0.5">
                         {viewMode === 'alltime' 
                           ? metrics.find(m => m.id === allTimeMetricId)?.name 
@@ -783,7 +828,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
                     {groupByClassPeriod || groupByClassGrade ? (
                       renderGroupedLeaderboards()
                     ) : splitByGender ? (
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-4 relative z-10">
                         <div>
                           {renderLeaderboard(leaderboardData.male, "MALE ATHLETES")}
                         </div>
