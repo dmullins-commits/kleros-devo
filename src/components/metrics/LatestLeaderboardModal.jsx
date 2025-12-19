@@ -557,14 +557,17 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
             color: black !important;
           }
           .pdf-export-mode .leaderboard-row {
-            padding: 0.15rem 0.3rem !important;
-            margin-bottom: 0.1rem !important;
+            padding: 0.1rem 0.25rem !important;
+            margin-bottom: 0.05rem !important;
             background: white !important;
             border: 1px solid #d1d5db !important;
           }
+          .pdf-export-mode .leaderboard-row > div {
+            gap: 0.2rem !important;
+          }
           .pdf-export-mode h2, .pdf-export-mode h3 {
             color: black !important;
-            margin-bottom: 0.3rem !important;
+            margin-bottom: 0.2rem !important;
             font-size: 12px !important;
             font-weight: bold !important;
           }
@@ -580,13 +583,16 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
             pointer-events: none;
           }
           .pdf-export-mode .grid {
-            gap: 0.3rem !important;
+            gap: 0.2rem !important;
           }
           .pdf-export-mode .athlete-pr-info {
             display: none !important;
           }
           .pdf-export-mode .pr-badge {
             display: none !important;
+          }
+          .pdf-export-mode .space-y-2 {
+            gap: 0.05rem !important;
           }
         `}
       </style>
