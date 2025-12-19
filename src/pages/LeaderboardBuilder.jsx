@@ -217,6 +217,9 @@ export default function LeaderboardBuilder() {
       const indicators = element.querySelectorAll('.page-break-indicator');
       indicators.forEach(ind => ind.style.display = 'none');
 
+      // Add PDF export class for special styling
+      element.classList.add('pdf-exporting');
+
       // If there are page breaks, handle them
       if (pageBreakPositions.length > 0) {
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -288,11 +291,17 @@ export default function LeaderboardBuilder() {
         pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       }
       
+      // Remove PDF export class
+      element.classList.remove('pdf-exporting');
+      
       // Show page break indicators again
       indicators.forEach(ind => ind.style.display = 'flex');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to export PDF: ' + error.message);
+      
+      // Remove PDF export class
+      element.classList.remove('pdf-exporting');
       
       // Show page break indicators again
       const indicators = element.querySelectorAll('.page-break-indicator');
@@ -354,6 +363,7 @@ export default function LeaderboardBuilder() {
           {...(provided?.draggableProps || {})}
           {...(provided?.dragHandleProps || {})}
           onClick={(e) => handleLeaderboardClick(e, globalIndex)}
+          className="athlete-box"
           style={{
             padding: boxPadding,
             marginBottom: '0.05rem',
@@ -363,26 +373,26 @@ export default function LeaderboardBuilder() {
             fontSize: fontSize,
             color: 'black',
             cursor: pageBreakMode ? 'crosshair' : 'default',
-            minHeight: '20px',
             display: 'flex',
             alignItems: 'center',
+            boxSizing: 'border-box',
             ...(provided?.draggableProps?.style || {})
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', flexShrink: 0 }}>
               {Icon ? (
-                <Icon style={{ width: '12px', height: '12px', flexShrink: 0 }} className={rankColor} />
+                <Icon style={{ width: '12px', height: '12px', display: 'block' }} className={rankColor} />
               ) : (
-                <span style={{ fontWeight: 'bold', fontSize: fontSize }} className={rankColor}>#{index + 1}</span>
+                <span style={{ fontWeight: 'bold', fontSize: fontSize, display: 'block' }} className={rankColor}>#{index + 1}</span>
               )}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {item.athlete_name}
               </span>
             </div>
-            <div style={{ textAlign: 'right', minWidth: '60px', flexShrink: 0 }}>
+            <div style={{ textAlign: 'right', width: '60px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <span style={{ fontWeight: 'bold', fontSize: fontSize }}>
                 {item.value.toFixed(metric.decimal_places ?? 2)} {metric.unit}
               </span>
@@ -668,8 +678,21 @@ export default function LeaderboardBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950 p-6">
-      <div className="max-w-[1800px] mx-auto space-y-6">
+    <>
+      <style>
+        {`
+          .pdf-exporting .athlete-box {
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          .pdf-exporting .athlete-box * {
+            vertical-align: middle !important;
+            line-height: 1 !important;
+          }
+        `}
+      </style>
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950 p-6">
+        <div className="max-w-[1800px] mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
