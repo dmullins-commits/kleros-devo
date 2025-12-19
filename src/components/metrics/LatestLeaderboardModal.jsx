@@ -204,7 +204,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
       const dateLabel = viewMode === 'alltime' ? 'AllTime' : selectedDate;
       
       // Get all athlete rows
-      const allRows = element.querySelectorAll('.leaderboard-row');
+      const allRows = Array.from(element.querySelectorAll('.leaderboard-row'));
       const rowsPerPage = 15;
       const totalPages = Math.ceil(allRows.length / rowsPerPage);
       
@@ -217,19 +217,22 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
       for (let page = 0; page < totalPages; page++) {
         if (page > 0) pdf.addPage();
         
-        // Clone the element and filter rows for this page
-        const clone = element.cloneNode(true);
-        const cloneRows = clone.querySelectorAll('.leaderboard-row');
+        const startIdx = page * rowsPerPage;
+        const endIdx = startIdx + rowsPerPage;
         
-        cloneRows.forEach((row, idx) => {
-          const startIdx = page * rowsPerPage;
-          const endIdx = startIdx + rowsPerPage;
+        // Hide rows not on this page
+        allRows.forEach((row, idx) => {
           if (idx < startIdx || idx >= endIdx) {
-            row.remove();
+            row.style.display = 'none';
+          } else {
+            row.style.display = '';
           }
         });
         
-        const canvas = await html2canvas(clone, {
+        // Small delay to ensure DOM updates
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(element, {
           scale: 2,
           backgroundColor: '#0a0a0a',
           logging: false,
@@ -243,9 +246,15 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       }
       
+      // Restore all rows
+      allRows.forEach(row => {
+        row.style.display = '';
+      });
+      
       pdf.save(`${metric?.name}_Leaderboard_${dateLabel}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsExportingPDF(false);
     }
