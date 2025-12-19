@@ -363,27 +363,29 @@ export default function LeaderboardBuilder() {
             fontSize: fontSize,
             color: 'black',
             cursor: pageBreakMode ? 'crosshair' : 'default',
-            overflow: 'hidden',
+            minHeight: '20px',
+            display: 'flex',
+            alignItems: 'center',
             ...(provided?.draggableProps?.style || {})
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', lineHeight: '1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px', flexShrink: 0 }}>
               {Icon ? (
                 <Icon style={{ width: '12px', height: '12px', flexShrink: 0 }} className={rankColor} />
               ) : (
-                <span style={{ fontWeight: 'bold', fontSize: fontSize, lineHeight: '1' }} className={rankColor}>#{index + 1}</span>
+                <span style={{ fontWeight: 'bold', fontSize: fontSize }} className={rankColor}>#{index + 1}</span>
               )}
             </div>
-            <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-              <p style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0, lineHeight: '1.2' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ fontWeight: 'bold', fontSize: fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
                 {item.athlete_name}
-              </p>
+              </span>
             </div>
             <div style={{ textAlign: 'right', minWidth: '60px', flexShrink: 0 }}>
-              <p style={{ fontWeight: 'bold', fontSize: fontSize, margin: 0, lineHeight: '1.2' }}>
+              <span style={{ fontWeight: 'bold', fontSize: fontSize }}>
                 {item.value.toFixed(metric.decimal_places ?? 2)} {metric.unit}
-              </p>
+              </span>
             </div>
           </div>
         </div>
