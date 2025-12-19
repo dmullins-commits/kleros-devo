@@ -713,10 +713,6 @@ export default function LeaderboardBuilder() {
             </h1>
             <p className="text-gray-400 font-semibold">Create custom performance leaderboards with drag-and-drop layout</p>
           </div>
-          <Badge className="bg-gradient-to-r from-amber-400/30 to-yellow-500/30 text-amber-200 border border-amber-400/50 px-4 py-2 text-lg font-black">
-            <Crown className="w-5 h-5 mr-2" />
-            PREMIUM FEATURE
-          </Badge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Metric, MetricCategory } from "@/entities/all";
-import { Clipboard, Zap, Target, FileSpreadsheet, Trophy } from "lucide-react";
+import { Clipboard, Zap, Target, FileSpreadsheet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTeam } from "@/components/TeamContext";
@@ -8,14 +8,12 @@ import { useMetrics, useAthletes, useTeams, useClassPeriods } from "@/components
 
 import LiveDataEntry from "../components/metrics/LiveDataEntry";
 import RawDataPanel from "../components/metrics/RawDataPanel";
-import LatestLeaderboardModal from "../components/metrics/LatestLeaderboardModal";
 import QuickAddMetricModal from "../components/metrics/QuickAddMetricModal";
 
 export default function TestingCenter() {
   const { selectedOrganization } = useTeam();
   const [categories, setCategories] = useState([]);
   const [showRawData, setShowRawData] = useState(false);
-  const [showLatestLeaderboard, setShowLatestLeaderboard] = useState(false);
   const [showQuickAddMetric, setShowQuickAddMetric] = useState(false);
 
   // Use React Query hooks for automatic caching and deduplication
@@ -72,13 +70,6 @@ export default function TestingCenter() {
                   <FileSpreadsheet className="w-5 h-5 mr-2" />
                   Raw Data
                 </Button>
-                <Button
-                  onClick={() => setShowLatestLeaderboard(true)}
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-black"
-                >
-                  <Trophy className="w-5 h-5 mr-2" />
-                  Latest Leaderboard
-                </Button>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-amber-300">
                     <Zap className="w-4 h-4" />
@@ -108,16 +99,6 @@ export default function TestingCenter() {
 
         {showRawData && (
           <RawDataPanel onClose={() => setShowRawData(false)} />
-        )}
-
-        {showLatestLeaderboard && (
-          <LatestLeaderboardModal 
-            onClose={() => setShowLatestLeaderboard(false)}
-            metrics={metrics}
-            athletes={athletes}
-            teams={teams}
-            classPeriods={classPeriods}
-          />
         )}
 
         <QuickAddMetricModal
