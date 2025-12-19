@@ -532,21 +532,23 @@ export default function LeaderboardBuilder() {
       return (
         <div style={{ background: 'white', padding: '1rem', color: 'black', minHeight: '100vh' }}>
           <div style={{ position: 'relative', minHeight: '100vh' }}>
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
-              alt="Watermark"
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                opacity: 0.08,
-                width: '60%',
-                height: 'auto',
-                zIndex: 0,
-                pointerEvents: 'none'
-              }}
-            />
+            {selectedOrganization?.logo && (
+              <img 
+                src={selectedOrganization.logo}
+                alt="Watermark"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  opacity: 0.08,
+                  width: '60%',
+                  height: 'auto',
+                  zIndex: 0,
+                  pointerEvents: 'none'
+                }}
+              />
+            )}
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid #FCD34D' }}>
                 <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
@@ -638,21 +640,23 @@ export default function LeaderboardBuilder() {
               pageBreakAfter: sectionIndex < pageSections.length - 1 ? 'always' : 'auto'
             }}
           >
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b8df636a0ee4f52ceab427/982139d90_AppLogo1.png"
-              alt="Watermark"
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                opacity: 0.08,
-                width: '60%',
-                height: 'auto',
-                zIndex: 0,
-                pointerEvents: 'none'
-              }}
-            />
+            {selectedOrganization?.logo && (
+              <img 
+                src={selectedOrganization.logo}
+                alt="Watermark"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  opacity: 0.08,
+                  width: '60%',
+                  height: 'auto',
+                  zIndex: 0,
+                  pointerEvents: 'none'
+                }}
+              />
+            )}
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid #FCD34D' }}>
                 <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
