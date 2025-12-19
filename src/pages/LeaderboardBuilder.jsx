@@ -394,7 +394,7 @@ export default function LeaderboardBuilder() {
             </div>
             <div style={{ textAlign: 'right', width: '60px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <span style={{ fontWeight: 'bold', fontSize: fontSize }}>
-                {item.value.toFixed(metric.decimal_places ?? 2)} {metric.unit}
+                {item.value.toFixed(metric.decimal_places ?? 2)}
               </span>
             </div>
           </div>
@@ -552,6 +552,9 @@ export default function LeaderboardBuilder() {
                 <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
                   {title}
                 </h1>
+                <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#333', marginBottom: '0.25rem' }}>
+                  {metrics.find(m => m.id === selectedMetric)?.name} ({metrics.find(m => m.id === selectedMetric)?.unit})
+                </p>
                 <p style={{ fontSize: '12px', color: '#666' }}>
                   {format(new Date(selectedDate), "MMMM d, yyyy")}
                 </p>
@@ -655,6 +658,9 @@ export default function LeaderboardBuilder() {
                 <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '0.5rem', color: 'black' }}>
                   {title}
                 </h1>
+                <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#333', marginBottom: '0.25rem' }}>
+                  {metrics.find(m => m.id === selectedMetric)?.name} ({metrics.find(m => m.id === selectedMetric)?.unit})
+                </p>
                 <p style={{ fontSize: '12px', color: '#666' }}>
                   {format(new Date(selectedDate), "MMMM d, yyyy")} - Page {sectionIndex + 1}
                 </p>
