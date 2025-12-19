@@ -11,7 +11,7 @@ import { jsPDF } from "jspdf";
 
 import { useTeam } from "@/components/TeamContext";
 
-export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
+export default function LatestLeaderboardModal({ onClose, metrics, athletes, teams = [], classPeriods = [] }) {
   const { selectedOrganization } = useTeam();
   const printableRef = useRef(null);
   const [records, setRecords] = useState([]);
@@ -27,6 +27,9 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   const [viewMode, setViewMode] = useState('latest'); // 'latest' or 'alltime'
   const [allTimeMetricId, setAllTimeMetricId] = useState('');
   const [showAllTimeLeaderboard, setShowAllTimeLeaderboard] = useState(false);
+  const [filterType, setFilterType] = useState(''); // 'class_period', 'team', 'all'
+  const [selectedFilterValue, setSelectedFilterValue] = useState('');
+  const [showFilterSelection, setShowFilterSelection] = useState(true);
 
   useEffect(() => {
     loadRecords();
@@ -83,12 +86,25 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     }
   }, [allTimeMetricId, records, metrics, athletes, groupByClassPeriod, groupByClassGrade, viewMode, showAllTimeLeaderboard]);
 
+  const getFilteredAthletes = () => {
+    if (filterType === 'all') return athletes;
+    if (filterType === 'class_period') {
+      return athletes.filter(a => (a.class_period || a.data?.class_period) === selectedFilterValue);
+    }
+    if (filterType === 'team') {
+      return athletes.filter(a => (a.team_ids || a.data?.team_ids)?.includes(selectedFilterValue));
+    }
+    return athletes;
+  };
+
   const generateAllTimeLeaderboard = () => {
     const metric = metrics.find(m => m.id === allTimeMetricId);
     if (!metric) return;
 
+    const filteredAthletes = getFilteredAthletes();
+    
     // Get all athletes with records for this metric
-    const athleteData = athletes.map(athlete => {
+    const athleteData = filteredAthletes.map(athlete => {
       const athleteRecords = records.filter(r => 
         r.athlete_id === athlete.id && 
         r.metric_id === allTimeMetricId
@@ -130,10 +146,11 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     const metric = metrics.find(m => m.id === selectedMetricId);
     if (!metric) return;
 
+    const filteredAthletes = getFilteredAthletes();
     const dateRecords = records.filter(r => r.recorded_date === selectedDate && r.metric_id === selectedMetricId);
     
     const athleteData = dateRecords.map(record => {
-      const athlete = athletes.find(a => a.id === record.athlete_id);
+      const athlete = filteredAthletes.find(a => a.id === record.athlete_id);
       if (!athlete) return null;
 
       const allAthleteRecords = records.filter(r => 
@@ -181,26 +198,50 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
     setIsExportingPDF(true);
     try {
       const element = printableRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#0a0a0a',
-        logging: false,
-        useCORS: true
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      
       const metric = viewMode === 'alltime' 
         ? metrics.find(m => m.id === allTimeMetricId)
         : metrics.find(m => m.id === selectedMetricId);
       const dateLabel = viewMode === 'alltime' ? 'AllTime' : selectedDate;
+      
+      // Get all athlete rows
+      const allRows = element.querySelectorAll('.leaderboard-row');
+      const rowsPerPage = 15;
+      const totalPages = Math.ceil(allRows.length / rowsPerPage);
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'letter'
+      });
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+        
+        // Clone the element and filter rows for this page
+        const clone = element.cloneNode(true);
+        const cloneRows = clone.querySelectorAll('.leaderboard-row');
+        
+        cloneRows.forEach((row, idx) => {
+          const startIdx = page * rowsPerPage;
+          const endIdx = startIdx + rowsPerPage;
+          if (idx < startIdx || idx >= endIdx) {
+            row.remove();
+          }
+        });
+        
+        const canvas = await html2canvas(clone, {
+          scale: 2,
+          backgroundColor: '#0a0a0a',
+          logging: false,
+          useCORS: true
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
       
       pdf.save(`${metric?.name}_Leaderboard_${dateLabel}.pdf`);
     } catch (error) {
@@ -365,7 +406,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
                               'bg-gray-900/50 border border-gray-700';
 
               return (
-                <div key={item.athlete_id} className={`p-4 rounded-lg ${bgColor} print:p-1 print:rounded-sm print:border`}>
+                <div key={item.athlete_id} className={`leaderboard-row p-4 rounded-lg ${bgColor} print:p-1 print:rounded-sm print:border`}>
                   <div className="flex items-center gap-3 print:gap-1">
                     <div className="flex items-center justify-center w-10 h-10 print:w-4 print:h-4 print:min-w-4">
                       {Icon ? (
@@ -529,6 +570,75 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400" />
+            </div>
+          ) : showFilterSelection ? (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Filter Athletes By</label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                    <SelectValue placeholder="Select filter type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-700">
+                    <SelectItem value="all" className="text-white">All Athletes</SelectItem>
+                    <SelectItem value="class_period" className="text-white">Class Period</SelectItem>
+                    <SelectItem value="team" className="text-white">Team</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {filterType === 'class_period' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Select Class Period</label>
+                  <Select value={selectedFilterValue} onValueChange={setSelectedFilterValue}>
+                    <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                      <SelectValue placeholder="Select class period" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      {classPeriods.map(period => (
+                        <SelectItem key={period.id} value={period.name} className="text-white">
+                          {period.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {filterType === 'team' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Select Team</label>
+                  <Select value={selectedFilterValue} onValueChange={setSelectedFilterValue}>
+                    <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      {teams.map(team => (
+                        <SelectItem key={team.id} value={team.id} className="text-white">
+                          {team.name} - {team.sport}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="border-gray-700 text-gray-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => setShowFilterSelection(false)}
+                  disabled={!filterType || (filterType !== 'all' && !selectedFilterValue)}
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold"
+                >
+                  Continue
+                </Button>
+              </div>
             </div>
           ) : viewMode === 'alltime' && !showAllTimeLeaderboard ? (
             <div className="space-y-6">
