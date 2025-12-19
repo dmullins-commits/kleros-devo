@@ -690,6 +690,7 @@ export default function LeaderboardBuilder() {
           .pdf-exporting .athlete-box {
             height: auto !important;
             min-height: 0 !important;
+            background: rgba(255, 255, 255, 0.7) !important;
           }
           .pdf-exporting .athlete-box span {
             white-space: normal !important;
