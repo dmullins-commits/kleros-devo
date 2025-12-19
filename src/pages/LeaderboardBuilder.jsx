@@ -95,7 +95,14 @@ export default function LeaderboardBuilder() {
     let filteredAthletes = athletes.filter(a => a.status === 'active');
     
     if (filterType === 'team' && filterId) {
-      filteredAthletes = filteredAthletes.filter(a => a.team_ids?.includes(filterId));
+      console.log('Filtering by team:', filterId);
+      console.log('Sample athlete team_ids:', athletes[0]?.team_ids);
+      console.log('Athletes before filter:', filteredAthletes.length);
+      filteredAthletes = filteredAthletes.filter(a => {
+        const teamIds = a.team_ids || [];
+        return Array.isArray(teamIds) && teamIds.includes(filterId);
+      });
+      console.log('Athletes after filter:', filteredAthletes.length);
     } else if (filterType === 'class_period' && filterId) {
       filteredAthletes = filteredAthletes.filter(a => a.class_period === filterId);
     }
