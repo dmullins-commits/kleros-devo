@@ -205,7 +205,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
       
       // Get all athlete rows
       const allRows = Array.from(element.querySelectorAll('.leaderboard-row'));
-      const rowsPerPage = 15;
+      const rowsPerPage = 30;
       const totalPages = Math.ceil(allRows.length / rowsPerPage);
       
       const pdf = new jsPDF({
@@ -435,12 +435,12 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
                       <div className="flex items-center gap-2 print:gap-0.5">
                         <p className="text-white font-bold text-lg print:text-[0.55rem] print:truncate">{item.athlete_name}</p>
                         {item.is_new_pr && (
-                          <Badge className="bg-green-500/20 text-green-400 border border-green-500/50 print:text-[0.4rem] print:px-0.5 print:py-0 print:hidden sm:print:inline">
+                          <Badge className="pr-badge bg-green-500/20 text-green-400 border border-green-500/50 print:text-[0.4rem] print:px-0.5 print:py-0 print:hidden sm:print:inline">
                             PR!
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-400 print:text-[0.45rem] print:hidden">
+                      <p className="athlete-pr-info text-sm text-gray-400 print:text-[0.45rem] print:hidden">
                         PR: {item.pr.toFixed(metric.decimal_places ?? 2)} {metric.unit}
                       </p>
                     </div>
@@ -550,35 +550,43 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes, tea
           .pdf-export-mode {
             background: white !important;
             color: black !important;
-            padding: 1rem !important;
+            padding: 0.5rem !important;
           }
           .pdf-export-mode * {
-            font-size: calc(1em - 3pt) !important;
+            font-size: 10px !important;
             color: black !important;
           }
           .pdf-export-mode .leaderboard-row {
-            padding: 0.25rem !important;
-            margin-bottom: 0.15rem !important;
+            padding: 0.15rem 0.3rem !important;
+            margin-bottom: 0.1rem !important;
             background: white !important;
-            border: 1px solid #e5e7eb !important;
+            border: 1px solid #d1d5db !important;
           }
           .pdf-export-mode h2, .pdf-export-mode h3 {
             color: black !important;
-            margin-bottom: 0.5rem !important;
+            margin-bottom: 0.3rem !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
           }
           .pdf-export-watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.03;
+            opacity: 0.08;
             width: 60%;
             height: auto;
             z-index: 0;
             pointer-events: none;
           }
           .pdf-export-mode .grid {
-            gap: 0.5rem !important;
+            gap: 0.3rem !important;
+          }
+          .pdf-export-mode .athlete-pr-info {
+            display: none !important;
+          }
+          .pdf-export-mode .pr-badge {
+            display: none !important;
           }
         `}
       </style>
