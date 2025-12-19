@@ -61,6 +61,12 @@ const allNavigationItems = [
     featureKey: "metrics"
   },
   {
+    title: "Leaderboard Builder",
+    url: createPageUrl("LeaderboardBuilder"),
+    icon: Crown,
+    featureKey: "leaderboard_builder"
+  },
+  {
     title: "Progress Tracking",
     url: createPageUrl("ProgressTracking"),
     icon: TrendingUp,
