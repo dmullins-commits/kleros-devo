@@ -211,11 +211,17 @@ export default function AthleteCSVUploadModal({ open, onOpenChange, teams, class
               }
             }
             
+            // Clean class period: remove suffixes like "st", "nd", "rd", "th"
+            let cleanedClassPeriod = athleteData.class_period || '';
+            if (cleanedClassPeriod) {
+              cleanedClassPeriod = cleanedClassPeriod.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
+            }
+            
             parsedAthletes.push({
               first_name: athleteData.first_name,
               last_name: athleteData.last_name,
               class_grade: athleteData.class_grade || '',
-              class_period: athleteData.class_period || '',
+              class_period: cleanedClassPeriod,
               gender: athleteData.gender || '',
               team_ids: teamIds,
               status: 'active',
