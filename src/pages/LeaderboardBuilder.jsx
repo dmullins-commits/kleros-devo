@@ -30,7 +30,7 @@ import jsPDF from 'jspdf';
 import { base44 } from "@/api/base44Client";
 
 export default function LeaderboardBuilder() {
-  const { selectedOrgId } = useTeam();
+  const { selectedOrgId, selectedOrganization } = useTeam();
   const { data: athletes = [], isLoading: loadingAthletes } = useAthletes(selectedOrgId);
   const { data: metrics = [], isLoading: loadingMetrics } = useMetrics(selectedOrgId);
   const { data: records = [], isLoading: loadingRecords } = useMetricRecords(selectedOrgId);
