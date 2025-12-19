@@ -213,6 +213,10 @@ export default function LeaderboardBuilder() {
     const element = previewRef.current;
     
     try {
+      // Hide page break indicators before export
+      const indicators = element.querySelectorAll('.page-break-indicator');
+      indicators.forEach(ind => ind.style.display = 'none');
+
       // If there are page breaks, handle them
       if (pageBreakPositions.length > 0) {
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -222,6 +226,10 @@ export default function LeaderboardBuilder() {
         // Get all page sections
         const pageSections = element.querySelectorAll('.page-section');
         
+        if (pageSections.length === 0) {
+          throw new Error('No page sections found');
+        }
+
         for (let i = 0; i < pageSections.length; i++) {
           if (i > 0) pdf.addPage();
           
@@ -237,7 +245,13 @@ export default function LeaderboardBuilder() {
           const imgWidth = pdfWidth;
           const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          // Fit to page height if needed
+          if (imgHeight > pdfHeight) {
+            const ratio = pdfHeight / imgHeight;
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, pdfHeight);
+          } else {
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          }
         }
 
         pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
@@ -273,9 +287,16 @@ export default function LeaderboardBuilder() {
 
         pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       }
+      
+      // Show page break indicators again
+      indicators.forEach(ind => ind.style.display = 'flex');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to export PDF');
+      alert('Failed to export PDF: ' + error.message);
+      
+      // Show page break indicators again
+      const indicators = element.querySelectorAll('.page-break-indicator');
+      indicators.forEach(ind => ind.style.display = 'flex');
     }
   };
 
@@ -305,7 +326,7 @@ export default function LeaderboardBuilder() {
     return (
       <>
         {hasPageBreakBefore && (
-          <div style={{ 
+          <div className="page-break-indicator" style={{ 
             width: '100%', 
             height: '2px', 
             background: 'linear-gradient(to right, #ef4444, #f97316, #ef4444)',
