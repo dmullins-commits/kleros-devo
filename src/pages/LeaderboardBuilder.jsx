@@ -1005,6 +1005,6 @@ export default function LeaderboardBuilder() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
