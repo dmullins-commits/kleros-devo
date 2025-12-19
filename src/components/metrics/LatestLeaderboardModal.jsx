@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Medal, Award, Check, FileDown } from "lucide-react";
+import { Trophy, Medal, Award, Check, FileDown, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MetricRecord } from "@/entities/all";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 import { useTeam } from "@/components/TeamContext";
 
 export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
   const { selectedOrganization } = useTeam();
+  const printableRef = useRef(null);
   const [records, setRecords] = useState([]);
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedMetricId, setSelectedMetricId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ male: [], female: [] });
   const [groupByClassPeriod, setGroupByClassPeriod] = useState(false);
   const [groupByClassGrade, setGroupByClassGrade] = useState(false);
@@ -169,6 +173,41 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
       male: sortedData.filter(a => a.gender === 'Male'),
       female: sortedData.filter(a => a.gender === 'Female')
     });
+  };
+
+  const handleExportPDF = async () => {
+    if (!printableRef.current) return;
+    
+    setIsExportingPDF(true);
+    try {
+      const element = printableRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#0a0a0a',
+        logging: false,
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      
+      const metric = viewMode === 'alltime' 
+        ? metrics.find(m => m.id === allTimeMetricId)
+        : metrics.find(m => m.id === selectedMetricId);
+      const dateLabel = viewMode === 'alltime' ? 'AllTime' : selectedDate;
+      
+      pdf.save(`${metric?.name}_Leaderboard_${dateLabel}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   const handleExportCSV = () => {
@@ -610,7 +649,7 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
 
               {((viewMode === 'latest' && selectedDate && selectedMetric) || (viewMode === 'alltime' && showAllTimeLeaderboard && allTimeMetricId)) && (
                 <>
-                  <div id="printable-content" className="print:block">
+                  <div ref={printableRef} id="printable-content" className="print:block bg-black p-6 rounded-lg">
                     <div className="text-center mb-6 print:mb-2">
                       <h2 className="text-3xl font-black text-white mb-2 print:text-base print:mb-0.5">
                         {viewMode === 'alltime' 
@@ -656,6 +695,23 @@ export default function LatestLeaderboardModal({ onClose, metrics, athletes }) {
                       className="border-gray-700 text-gray-300"
                     >
                       Close
+                    </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      disabled={isExportingPDF}
+                      className="bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-black font-bold"
+                    >
+                      {isExportingPDF ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2" />
+                          Generating PDF...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Export as PDF
+                        </>
+                      )}
                     </Button>
                     <Button
                       onClick={handleExportCSV}
