@@ -367,7 +367,7 @@ export default function LeaderboardBuilder() {
           style={{
             padding: boxPadding,
             marginBottom: '0.05rem',
-            background: 'white',
+            background: 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #d1d5db',
             borderRadius: '4px',
             fontSize: fontSize,
