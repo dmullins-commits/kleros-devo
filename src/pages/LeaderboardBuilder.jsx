@@ -541,8 +541,8 @@ export default function LeaderboardBuilder() {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  opacity: 0.08,
-                  width: '60%',
+                  opacity: 0.15,
+                  width: '70%',
                   height: 'auto',
                   zIndex: 0,
                   pointerEvents: 'none'
@@ -649,8 +649,8 @@ export default function LeaderboardBuilder() {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  opacity: 0.08,
-                  width: '60%',
+                  opacity: 0.15,
+                  width: '70%',
                   height: 'auto',
                   zIndex: 0,
                   pointerEvents: 'none'
