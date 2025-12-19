@@ -227,8 +227,29 @@ export default function LeaderboardBuilder() {
       // Add PDF export class for special styling
       element.classList.add('pdf-exporting');
 
-      // If there are page breaks, handle them
-      if (pageBreakPositions.length > 0) {
+      // Calculate automatic page breaks based on boxesPerPage
+      const calculateAutoPageBreaks = () => {
+        const allAthletes = genderSeparation === 'separate' 
+          ? Math.max(leaderboardData.male.length, leaderboardData.female.length)
+          : leaderboardData.male.length + leaderboardData.female.length;
+        
+        if (allAthletes <= boxesPerPage) {
+          return []; // No breaks needed for small lists
+        }
+        
+        const breaks = [];
+        for (let i = boxesPerPage; i < allAthletes; i += boxesPerPage) {
+          breaks.push(i);
+        }
+        return breaks;
+      };
+
+      const effectivePageBreaks = pageBreakPositions.length > 0 
+        ? pageBreakPositions 
+        : calculateAutoPageBreaks();
+
+      // If there are page breaks (manual or automatic), handle them
+      if (effectivePageBreaks.length > 0) {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -262,37 +283,6 @@ export default function LeaderboardBuilder() {
           } else {
             pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
           }
-        }
-
-        pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-      } else {
-        // Standard export without page breaks
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          logging: false,
-          useCORS: true
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        const imgWidth = pdfWidth;
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-
-        while (heightLeft > 0) {
-          position -= pdfHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight;
         }
 
         pdf.save(`${title}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
@@ -440,19 +430,27 @@ export default function LeaderboardBuilder() {
 
     const athletesByGender = getAllAthletes();
 
-    // Split athletes by page breaks
+    // Split athletes by page breaks (manual or automatic)
     const splitByPageBreaks = (athletes) => {
-      if (pageBreakPositions.length === 0) {
+      // Calculate automatic breaks if no manual breaks exist
+      const effectiveBreaks = pageBreakPositions.length > 0 
+        ? pageBreakPositions 
+        : (athletes.length > boxesPerPage ? Array.from(
+            { length: Math.floor(athletes.length / boxesPerPage) }, 
+            (_, i) => (i + 1) * boxesPerPage
+          ) : []);
+      
+      if (effectiveBreaks.length === 0) {
         return [athletes];
       }
 
       const sections = [];
       let lastIndex = 0;
       
-      const sortedBreaks = [...pageBreakPositions].sort((a, b) => a - b);
+      const sortedBreaks = [...effectiveBreaks].sort((a, b) => a - b);
       
       sortedBreaks.forEach(breakPoint => {
-        if (breakPoint > lastIndex) {
+        if (breakPoint > lastIndex && breakPoint <= athletes.length) {
           sections.push(athletes.slice(lastIndex, breakPoint));
           lastIndex = breakPoint;
         }
