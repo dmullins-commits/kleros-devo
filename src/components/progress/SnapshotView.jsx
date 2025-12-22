@@ -65,7 +65,7 @@ export default function SnapshotView({
     records.forEach(r => {
       const rMetricId = r.data?.metric_id || r.metric_id;
       const rDate = r.data?.recorded_date || r.recorded_date;
-      if (selectedMetricIds.includes(rMetricId)) {
+      if (selectedMetricIds.includes(rMetricId) && rDate && rDate !== 'undefined' && rDate !== 'null') {
         dates.add(rDate);
       }
     });
@@ -121,7 +121,9 @@ export default function SnapshotView({
 
       // Get unique dates and sort them
       // Handle both nested and flat data structures for recorded_date
-      const dates = [...new Set(metricRecords.map(r => r.data?.recorded_date || r.recorded_date))].sort();
+      const dates = [...new Set(metricRecords.map(r => r.data?.recorded_date || r.recorded_date))]
+        .filter(d => d && d !== 'undefined' && d !== 'null') // Filter out invalid dates
+        .sort();
 
       // Build data structure: athlete -> date -> value
       const dataByAthlete = {};
@@ -147,8 +149,14 @@ export default function SnapshotView({
           const recordedDate = record.data?.recorded_date || record.recorded_date;
           const value = record.data?.value ?? record.value;
 
+          if (!recordedDate || recordedDate === 'undefined' || recordedDate === 'null') {
+            console.warn(`Invalid date for athlete ${athlete.id}, metric ${metric.name}:`, recordedDate);
+            return;
+          }
+
           if (value === undefined || value === null) {
             console.warn(`Invalid value for athlete ${athlete.id}, metric ${metric.name}, date ${recordedDate}:`, value);
+            return;
           }
 
           dataByAthlete[athlete.id][recordedDate] = value;
