@@ -97,6 +97,13 @@ export default function SnapshotView({
       let metricRecords = records.filter(r => {
         const rMetricId = r.data?.metric_id || r.metric_id;
         const rAthleteId = r.data?.athlete_id || r.athlete_id;
+        const rDate = r.data?.recorded_date || r.recorded_date;
+        
+        // Filter out records with invalid dates immediately
+        if (!rDate || rDate === 'undefined' || rDate === 'null' || rDate.toString().trim() === '') {
+          return false;
+        }
+        
         return rMetricId === metricId && athleteIds.has(rAthleteId);
       });
       
