@@ -15,6 +15,7 @@ import Reports from './pages/Reports';
 import TestingCenter from './pages/TestingCenter';
 import Upload from './pages/Upload';
 import Workouts from './pages/Workouts';
+import FixInvalidDates from './pages/FixInvalidDates';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "TestingCenter": TestingCenter,
     "Upload": Upload,
     "Workouts": Workouts,
+    "FixInvalidDates": FixInvalidDates,
 }
 
 export const pagesConfig = {
