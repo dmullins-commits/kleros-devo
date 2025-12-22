@@ -14,6 +14,7 @@ import YesterdayOverview from "../components/dashboard/YesterdayOverview";
 
 import TopPerformers from "../components/dashboard/TopPerformers";
 import TeamOverview from "../components/dashboard/TeamOverview";
+import GenericDashboard from "../components/dashboard/GenericDashboard";
 
 import { 
   useAthletes, 
@@ -26,6 +27,11 @@ import {
 
 export default function Dashboard() {
   const { selectedTeamId, selectedOrganization, filteredTeams } = useTeam();
+  
+  // Show generic dashboard if user has no organization assigned
+  if (!selectedOrganization) {
+    return <GenericDashboard />;
+  }
   
   // Get team IDs for filtering
   const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
