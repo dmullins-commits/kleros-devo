@@ -132,10 +132,16 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
       const lines = text.split('\n').filter(line => line.trim());
       const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
 
-      // Load all athletes and metrics
+      // Load all athletes, metrics, and existing records
       const allAthletes = await Athlete.list();
       const allMetrics = await Metric.list();
       const orgMetrics = allMetrics.filter(m => !m.organization_id || m.organization_id === organizationId);
+      
+      // Load existing records for duplicate checking
+      const existingRecords = await MetricRecord.list('-created_date', 10000);
+      const orgRecords = existingRecords.filter(r => 
+        (r.data?.organization_id || r.organization_id) === organizationId
+      );
 
       const parsedRecords = [];
       const errors = [];
@@ -189,11 +195,31 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
         }
       }
 
-      const results = { success: 0, errors: errors };
+      const results = { success: 0, skipped: 0, errors: errors };
 
       for (let i = 0; i < parsedRecords.length; i++) {
         try {
-          await MetricRecord.create(parsedRecords[i]);
+          const record = parsedRecords[i];
+          
+          // Check for duplicates
+          const isDuplicate = orgRecords.some(existingRecord => {
+            const existingAthleteId = existingRecord.data?.athlete_id || existingRecord.athlete_id;
+            const existingMetricId = existingRecord.data?.metric_id || existingRecord.metric_id;
+            const existingValue = existingRecord.data?.value ?? existingRecord.value;
+            const existingDate = existingRecord.data?.recorded_date || existingRecord.recorded_date;
+            
+            return existingAthleteId === record.athlete_id &&
+                   existingMetricId === record.metric_id &&
+                   existingDate === record.recorded_date &&
+                   Math.abs(existingValue - record.value) < 0.001;
+          });
+          
+          if (isDuplicate) {
+            results.skipped++;
+            continue;
+          }
+          
+          await MetricRecord.create(record);
           results.success++;
           
           if (i < parsedRecords.length - 1) {
@@ -206,7 +232,7 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
 
       setUploadStatus({
         type: results.errors.length === 0 ? "success" : "partial",
-        message: `Successfully imported ${results.success} metric records${results.errors.length > 0 ? `, ${results.errors.length} failed` : ''}`,
+        message: `Uploaded ${results.success} record${results.success !== 1 ? 's' : ''} and skipped ${results.skipped} duplicate${results.skipped !== 1 ? 's' : ''}${results.errors.length > 0 ? `. ${results.errors.length} failed` : ''}`,
         errors: results.errors
       });
 
