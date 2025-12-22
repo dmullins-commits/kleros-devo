@@ -102,10 +102,25 @@ export default function FixInvalidDates() {
       for (const [invalidDate, correctedDate] of Object.entries(corrections)) {
         if (!correctedDate) continue;
 
-        // Validate corrected date format
-        const validFormat = /^\d{4}-\d{2}-\d{2}$/.test(correctedDate);
+        // Convert MM-DD-YYYY to YYYY-MM-DD for storage
+        let formattedDate = correctedDate;
+        if (correctedDate.includes('-')) {
+          const parts = correctedDate.split('-');
+          if (parts.length === 3) {
+            if (parts[0].length <= 2) {
+              // MM-DD-YYYY format
+              formattedDate = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+            } else {
+              // Already YYYY-MM-DD format
+              formattedDate = correctedDate;
+            }
+          }
+        }
+
+        // Validate final format
+        const validFormat = /^\d{4}-\d{2}-\d{2}$/.test(formattedDate);
         if (!validFormat) {
-          alert(`Invalid date format for "${invalidDate}". Please use YYYY-MM-DD format.`);
+          alert(`Invalid date format for "${invalidDate}". Please use MM-DD-YYYY format (e.g., 09-15-2025).`);
           continue;
         }
 
@@ -116,7 +131,7 @@ export default function FixInvalidDates() {
         // Update all records in this group
         for (const record of group.records) {
           await MetricRecord.update(record.id, {
-            recorded_date: correctedDate
+            recorded_date: formattedDate
           });
           totalUpdated++;
           
@@ -182,8 +197,8 @@ export default function FixInvalidDates() {
             <p className="font-semibold mb-2">Instructions:</p>
             <ul className="list-disc list-inside space-y-1 text-sm">
               <li>Invalid dates are shown below grouped by their current value</li>
-              <li>Enter the correct date in YYYY-MM-DD format (e.g., 2025-09-15)</li>
-              <li>All records with that invalid date will be updated to the corrected date</li>
+              <li>Enter the correct date in MM-DD-YYYY format (e.g., 09-15-2025)</li>
+              <li>The system will convert it to internal format and update all affected records</li>
             </ul>
           </AlertDescription>
         </Alert>
@@ -235,11 +250,11 @@ export default function FixInvalidDates() {
                         Correct Date:
                       </label>
                       <Input
-                        type="date"
+                        type="text"
                         value={corrections[group.invalidDate] || ''}
                         onChange={(e) => handleCorrectionChange(group.invalidDate, e.target.value)}
                         className="flex-1 bg-gray-900 border-gray-700 text-white"
-                        placeholder="YYYY-MM-DD"
+                        placeholder="MM-DD-YYYY (e.g., 09-15-2025)"
                       />
                     </div>
                   </div>

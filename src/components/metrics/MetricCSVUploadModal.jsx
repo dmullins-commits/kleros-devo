@@ -185,11 +185,21 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
             continue;
           }
 
+          // Convert MM-DD-YYYY to YYYY-MM-DD for storage
+          let formattedDate = recordData.date;
+          if (recordData.date && recordData.date.includes('-')) {
+            const parts = recordData.date.split('-');
+            if (parts.length === 3 && parts[0].length <= 2) {
+              // Appears to be MM-DD-YYYY format
+              formattedDate = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+            }
+          }
+
           parsedRecords.push({
             athlete_id: athlete.id,
             metric_id: metric.id,
             value: value,
-            recorded_date: recordData.date,
+            recorded_date: formattedDate,
             organization_id: organizationId
           });
         }
@@ -382,7 +392,7 @@ export default function MetricCSVUploadModal({ open, onOpenChange, categories, o
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   <li>Upload your CSV with columns: First Name, Last Name, Date, Metric Name, Value</li>
                   <li>Each row represents one measurement for one athlete</li>
-                  <li>Date format: YYYY-MM-DD (e.g., 2025-12-06)</li>
+                  <li>Date format: MM-DD-YYYY (e.g., 12-06-2025)</li>
                   <li>Athletes and metrics must already exist in the system</li>
                 </ol>
               ) : (

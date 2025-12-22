@@ -199,8 +199,17 @@ export default function SnapshotView({
     snapshotData.forEach(({ metric, dates }) => {
       dates.forEach(date => {
         try {
+          if (!date) {
+            headerParts.push(`${metric.name} - Invalid Date`);
+            return;
+          }
           const [year, month, day] = date.split('-');
-          const formattedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString();
+          if (!year || !month || !day) {
+            headerParts.push(`${metric.name} - ${date}`);
+            return;
+          }
+          // Convert YYYY-MM-DD to MM-DD-YYYY for display
+          const formattedDate = `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
           headerParts.push(`${metric.name} - ${formattedDate}`);
         } catch (e) {
           headerParts.push(`${metric.name} - ${date}`);
@@ -609,7 +618,8 @@ export default function SnapshotView({
                            if (!date) return 'Invalid Date';
                            const [year, month, day] = date.split('-');
                            if (!year || !month || !day) return 'Invalid Date';
-                           return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString();
+                           // Display as MM-DD-YYYY
+                           return `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
                          } catch (e) {
                            console.error('Date parsing error:', date, e);
                            return 'Invalid Date';
