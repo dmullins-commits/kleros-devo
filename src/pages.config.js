@@ -16,6 +16,7 @@ import TestingCenter from './pages/TestingCenter';
 import Upload from './pages/Upload';
 import Workouts from './pages/Workouts';
 import FixInvalidDates from './pages/FixInvalidDates';
+import FixDatePadding from './pages/FixDatePadding';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "Upload": Upload,
     "Workouts": Workouts,
     "FixInvalidDates": FixInvalidDates,
+    "FixDatePadding": FixDatePadding,
 }
 
 export const pagesConfig = {
