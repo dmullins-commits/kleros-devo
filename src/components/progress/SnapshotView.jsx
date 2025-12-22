@@ -183,7 +183,13 @@ export default function SnapshotView({
     const headerParts = ['Athlete'];
     snapshotData.forEach(({ metric, dates }) => {
       dates.forEach(date => {
-        headerParts.push(`${metric.name} - ${new Date(date).toLocaleDateString()}`);
+        try {
+          const [year, month, day] = date.split('-');
+          const formattedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString();
+          headerParts.push(`${metric.name} - ${formattedDate}`);
+        } catch (e) {
+          headerParts.push(`${metric.name} - ${date}`);
+        }
       });
     });
     
@@ -581,14 +587,21 @@ export default function SnapshotView({
                 <tr className="border-b-2 border-gray-700">
                   <th className="sticky left-0 z-40 bg-gray-900 p-3 border-r-2 border-gray-700"></th>
                   {snapshotData.map(({ metric, dates }) => 
-                    dates.map(date => (
-                      <th key={`${metric.id}-${date}`} className="bg-gray-900 p-2 text-center text-white font-semibold text-xs min-w-[100px] border-r border-gray-800">
-                        {(() => {
-                          const [year, month, day] = date.split('-');
-                          return new Date(year, month - 1, day).toLocaleDateString();
-                        })()}
-                      </th>
-                    ))
+                   dates.map(date => (
+                     <th key={`${metric.id}-${date}`} className="bg-gray-900 p-2 text-center text-white font-semibold text-xs min-w-[100px] border-r border-gray-800">
+                       {(() => {
+                         try {
+                           if (!date) return 'Invalid Date';
+                           const [year, month, day] = date.split('-');
+                           if (!year || !month || !day) return 'Invalid Date';
+                           return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString();
+                         } catch (e) {
+                           console.error('Date parsing error:', date, e);
+                           return 'Invalid Date';
+                         }
+                       })()}
+                     </th>
+                   ))
                   )}
                 </tr>
               </thead>
