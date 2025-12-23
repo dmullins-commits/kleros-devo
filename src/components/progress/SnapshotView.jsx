@@ -57,6 +57,15 @@ export default function SnapshotView({
     });
   }, [athletes, filterType, filterValue]);
 
+  // Validate date helper
+  const isValidDate = (dateStr) => {
+    if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || dateStr.toString().trim() === '') {
+      return false;
+    }
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime());
+  };
+
   // Get all dates with data for selected metrics
   const datesWithData = useMemo(() => {
     if (selectedMetricIds.length === 0) return new Set();
@@ -65,7 +74,7 @@ export default function SnapshotView({
     records.forEach(r => {
       const rMetricId = r.data?.metric_id || r.metric_id;
       const rDate = r.data?.recorded_date || r.recorded_date;
-      if (selectedMetricIds.includes(rMetricId) && rDate && rDate !== 'undefined' && rDate !== 'null') {
+      if (selectedMetricIds.includes(rMetricId) && isValidDate(rDate)) {
         dates.add(rDate);
       }
     });
@@ -98,12 +107,12 @@ export default function SnapshotView({
         const rMetricId = r.data?.metric_id || r.metric_id;
         const rAthleteId = r.data?.athlete_id || r.athlete_id;
         const rDate = r.data?.recorded_date || r.recorded_date;
-        
+
         // Filter out records with invalid dates immediately
-        if (!rDate || rDate === 'undefined' || rDate === 'null' || rDate.toString().trim() === '') {
+        if (!isValidDate(rDate)) {
           return false;
         }
-        
+
         return rMetricId === metricId && athleteIds.has(rAthleteId);
       });
       
@@ -129,7 +138,7 @@ export default function SnapshotView({
       // Get unique dates and sort them
       // Handle both nested and flat data structures for recorded_date
       const dates = [...new Set(metricRecords.map(r => r.data?.recorded_date || r.recorded_date))]
-        .filter(d => d && d !== 'undefined' && d !== 'null') // Filter out invalid dates
+        .filter(d => isValidDate(d)) // Filter out invalid dates
         .sort();
 
       // Build data structure: athlete -> date -> value
@@ -156,7 +165,7 @@ export default function SnapshotView({
           const recordedDate = record.data?.recorded_date || record.recorded_date;
           const value = record.data?.value ?? record.value;
 
-          if (!recordedDate || recordedDate === 'undefined' || recordedDate === 'null') {
+          if (!isValidDate(recordedDate)) {
             console.warn(`Invalid date for athlete ${athlete.id}, metric ${metric.name}:`, recordedDate);
             return;
           }
@@ -199,7 +208,7 @@ export default function SnapshotView({
     snapshotData.forEach(({ metric, dates }) => {
       dates.forEach(date => {
         try {
-          if (!date) {
+          if (!isValidDate(date)) {
             headerParts.push(`${metric.name} - Invalid Date`);
             return;
           }
@@ -486,7 +495,7 @@ export default function SnapshotView({
                     className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-bold"
                   >
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {startDate ? `Since ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Show since...'}
+                    {startDate && isValidDate(startDate) ? `Since ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Show since...'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800" align="start">
