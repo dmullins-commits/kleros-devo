@@ -83,11 +83,19 @@ export default function Dashboard() {
   const [groupAveragesBefore, setGroupAveragesBefore] = useState({});
   const [groupAveragesAfter, setGroupAveragesAfter] = useState({});
 
+  const isValidDate = (dateStr) => {
+    if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || dateStr.toString().trim() === '') {
+      return false;
+    }
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime());
+  };
+
   const processYesterdayData = useCallback((allRecords, athletesData, metricsData) => {
     const yesterdayRecords = allRecords.filter(r => {
-      if (!r.recorded_date) return false;
+      if (!isValidDate(r.recorded_date)) return false;
       const date = new Date(r.recorded_date);
-      return !isNaN(date.getTime()) && isYesterday(date);
+      return isYesterday(date);
     });
     const overview = [];
 
@@ -97,7 +105,7 @@ export default function Dashboard() {
       if (!athlete || !metric) continue;
 
       const previousRecords = allRecords.filter(r => {
-        if (!r.recorded_date || !record.recorded_date) return false;
+        if (!isValidDate(r.recorded_date) || !isValidDate(record.recorded_date)) return false;
         return r.athlete_id === record.athlete_id &&
                r.metric_id === record.metric_id &&
                new Date(r.recorded_date) < new Date(record.recorded_date);
@@ -133,11 +141,7 @@ export default function Dashboard() {
 
   const processPerformanceStats = useCallback((recordsData, athletesData, metricsData, teamsData, allAthletesData) => {
     // Filter out records with invalid dates
-    const validRecords = recordsData.filter(r => {
-      if (!r.recorded_date) return false;
-      const date = new Date(r.recorded_date);
-      return !isNaN(date.getTime());
-    });
+    const validRecords = recordsData.filter(r => isValidDate(r.recorded_date));
     
     const sortedRecords = [...validRecords].sort((a, b) => 
       new Date(b.recorded_date) - new Date(a.recorded_date)
