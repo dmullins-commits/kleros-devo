@@ -264,6 +264,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      if (!isValidDate(label)) return null;
       const [year, month, day] = label.split('-');
       const safeDate = new Date(year, month - 1, day);
       return (
@@ -485,6 +486,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                           stroke="#9CA3AF"
                           fontSize={12}
                           tickFormatter={(date) => {
+                            if (!isValidDate(date)) return 'Invalid';
                             const [year, month, day] = date.split('-');
                             return format(new Date(year, month - 1, day), "MMM d");
                           }}
@@ -577,6 +579,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               <div className="text-amber-400/80 text-xs uppercase mb-1 font-black">First Record</div>
                               <div className="text-white font-black">{formatValue(firstValue, metric)} {metric.unit}</div>
                               <div className="text-amber-500/60 text-xs font-semibold">{(() => {
+                                if (!isValidDate(firstDate)) return 'Invalid Date';
                                 const [year, month, day] = firstDate.split('-');
                                 return format(new Date(year, month - 1, day), "MMM d, yyyy");
                               })()}</div>
@@ -585,6 +588,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               <div className="text-amber-400/80 text-xs uppercase mb-1 font-black">Latest</div>
                               <div className="text-amber-400 font-black">{formatValue(latestValue, metric)} {metric.unit}</div>
                               <div className="text-amber-500/60 text-xs font-semibold">{(() => {
+                                if (!isValidDate(latestDate)) return 'Invalid Date';
                                 const [year, month, day] = latestDate.split('-');
                                 return format(new Date(year, month - 1, day), "MMM d, yyyy");
                               })()}</div>

@@ -156,6 +156,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      if (!isValidDate(label)) return null;
       const [year, month, day] = label.split('-');
       const safeDate = new Date(year, month - 1, day);
       return (
@@ -342,6 +343,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                               stroke="#9CA3AF"
                               fontSize={12}
                               tickFormatter={(date) => {
+                                if (!isValidDate(date)) return 'Invalid';
                                 const [year, month, day] = date.split('-');
                                 return format(new Date(year, month - 1, day), "MMM d");
                               }}
