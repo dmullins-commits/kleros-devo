@@ -25,12 +25,21 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
     other: "#6B7280"
   };
 
+  // Validate date helper
+  const isValidDate = (dateStr) => {
+    if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || dateStr.toString().trim() === '') {
+      return false;
+    }
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime());
+  };
+
   // Get all dates with data
   const datesWithData = useMemo(() => {
     const dates = new Set();
     records.forEach(r => {
       const date = r.recorded_date || r.data?.recorded_date;
-      if (date) dates.add(date);
+      if (isValidDate(date)) dates.add(date);
     });
     return dates;
   }, [records]);
@@ -40,7 +49,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
     if (!startDate && !endDate) return records;
     return records.filter(r => {
       const date = r.recorded_date || r.data?.recorded_date;
-      if (!date) return false;
+      if (!isValidDate(date)) return false;
       const recordDate = new Date(date);
       if (startDate && recordDate < new Date(startDate)) return false;
       if (endDate && recordDate > new Date(endDate)) return false;
@@ -78,7 +87,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
     metricRecords.forEach(record => {
       const date = record.recorded_date || record.data?.recorded_date;
       const value = record.value ?? record.data?.value;
-      if (!date || value == null) return;
+      if (!isValidDate(date) || value == null) return;
       
       if (!dateGroups[date]) {
         dateGroups[date] = [];
@@ -108,7 +117,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
       });
       metricRecords.forEach(record => {
         const date = record.recorded_date || record.data?.recorded_date;
-        if (date) allDates.add(date);
+        if (isValidDate(date)) allDates.add(date);
       });
     });
 
@@ -212,7 +221,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
               <PopoverTrigger asChild>
                 <Button variant="outline" className="bg-gray-900 border-gray-700 text-white">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {startDate ? `From ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Start date'}
+                  {startDate && isValidDate(startDate) ? `From ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Start date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
@@ -240,7 +249,7 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
               <PopoverTrigger asChild>
                 <Button variant="outline" className="bg-gray-900 border-gray-700 text-white">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {endDate ? `To ${format(new Date(endDate), 'MMM d, yyyy')}` : 'End date'}
+                  {endDate && isValidDate(endDate) ? `To ${format(new Date(endDate), 'MMM d, yyyy')}` : 'End date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">

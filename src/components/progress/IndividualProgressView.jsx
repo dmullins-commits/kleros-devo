@@ -30,6 +30,15 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     other: "#6B7280"
   };
 
+  // Validate date helper
+  const isValidDate = (dateStr) => {
+    if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || dateStr.toString().trim() === '') {
+      return false;
+    }
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime());
+  };
+
   // Get all dates with data
   const datesWithData = useMemo(() => {
     if (!athlete) return new Set();
@@ -39,7 +48,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
       return athleteId === athlete.id;
     }).forEach(r => {
       const date = r.recorded_date || r.data?.recorded_date;
-      if (date) dates.add(date);
+      if (isValidDate(date)) dates.add(date);
     });
     return dates;
   }, [records, athlete]);
@@ -49,7 +58,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     if (!startDate && !endDate) return records;
     return records.filter(r => {
       const date = r.recorded_date || r.data?.recorded_date;
-      if (!date) return false;
+      if (!isValidDate(date)) return false;
       const recordDate = new Date(date);
       if (startDate && recordDate < new Date(startDate)) return false;
       if (endDate && recordDate > new Date(endDate)) return false;
@@ -185,6 +194,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
         .sort((a, b) => {
           const dateA = a.recorded_date || a.data?.recorded_date;
           const dateB = b.recorded_date || b.data?.recorded_date;
+          if (!isValidDate(dateA) || !isValidDate(dateB)) return 0;
           return new Date(dateA) - new Date(dateB);
         });
 
@@ -208,7 +218,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     categoryMetrics.forEach(({ records: metricRecords }) => {
       metricRecords.forEach(record => {
         const date = record.recorded_date || record.data?.recorded_date;
-        if (date) allDates.add(date);
+        if (isValidDate(date)) allDates.add(date);
       });
     });
 
@@ -321,7 +331,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="bg-gray-900 border-gray-700 text-white">
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {startDate ? `From ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Start date'}
+                    {startDate && isValidDate(startDate) ? `From ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Start date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
@@ -349,7 +359,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="bg-gray-900 border-gray-700 text-white">
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {endDate ? `To ${format(new Date(endDate), 'MMM d, yyyy')}` : 'End date'}
+                    {endDate && isValidDate(endDate) ? `To ${format(new Date(endDate), 'MMM d, yyyy')}` : 'End date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
