@@ -29,6 +29,14 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { base44 } from "@/api/base44Client";
 
+const isValidDate = (dateStr) => {
+  if (!dateStr || dateStr === 'undefined' || dateStr === 'null' || dateStr.toString().trim() === '') {
+    return false;
+  }
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
+};
+
 export default function LeaderboardBuilder() {
   const { selectedOrgId, selectedOrganization } = useTeam();
   const { data: athletes = [], isLoading: loadingAthletes } = useAthletes(selectedOrgId);
@@ -108,10 +116,12 @@ export default function LeaderboardBuilder() {
 
     // Get records for each athlete
     const athleteData = filteredAthletes.map(athlete => {
-      let athleteRecords = records.filter(r => 
-        (r.athlete_id || r.data?.athlete_id) === athlete.id &&
-        (r.metric_id || r.data?.metric_id) === selectedMetric
-      );
+      let athleteRecords = records.filter(r => {
+        const recDate = r.recorded_date || r.data?.recorded_date;
+        return (r.athlete_id || r.data?.athlete_id) === athlete.id &&
+               (r.metric_id || r.data?.metric_id) === selectedMetric &&
+               isValidDate(recDate);
+      });
 
       if (!useAllTimePR && selectedDate) {
         athleteRecords = athleteRecords.filter(r => {
@@ -142,12 +152,29 @@ export default function LeaderboardBuilder() {
     const maleData = athleteData.filter(a => a.gender === 'Male');
     const femaleData = athleteData.filter(a => a.gender === 'Female');
 
-    console.log('Result:', maleData.length, 'male,', femaleData.length, 'female');
+    // Filter out any records with invalid dates
+    const validMaleData = maleData.filter(item => {
+      const hasValidRecords = athleteRecords.some(r => {
+        const recDate = r.recorded_date || r.data?.recorded_date;
+        return isValidDate(recDate);
+      });
+      return hasValidRecords;
+    });
 
-    setLeaderboardData({ male: maleData, female: femaleData });
-  };
+    const validFemaleData = femaleData.filter(item => {
+      const hasValidRecords = athleteRecords.some(r => {
+        const recDate = r.recorded_date || r.data?.recorded_date;
+        return isValidDate(recDate);
+      });
+      return hasValidRecords;
+    });
 
-  const handleDragEnd = (result) => {
+    console.log('Result:', validMaleData.length, 'male,', validFemaleData.length, 'female');
+
+    setLeaderboardData({ male: validMaleData, female: validFemaleData });
+    };
+
+    const handleDragEnd = (result) => {
     if (!result.destination) return;
 
     const sourceList = result.source.droppableId === 'male' ? 'male' : 'female';
@@ -564,7 +591,7 @@ export default function LeaderboardBuilder() {
                   {metrics.find(m => m.id === selectedMetric)?.name} ({metrics.find(m => m.id === selectedMetric)?.unit})
                 </p>
                 <p style={{ fontSize: '12px', color: '#666' }}>
-                  {format(new Date(selectedDate), "MMMM d, yyyy")}
+                  {isValidDate(selectedDate) ? format(new Date(selectedDate), "MMMM d, yyyy") : 'Invalid Date'}
                 </p>
               </div>
               {genderSeparation === 'separate' ? (
@@ -672,7 +699,7 @@ export default function LeaderboardBuilder() {
                   {metrics.find(m => m.id === selectedMetric)?.name} ({metrics.find(m => m.id === selectedMetric)?.unit})
                 </p>
                 <p style={{ fontSize: '12px', color: '#666' }}>
-                  {format(new Date(selectedDate), "MMMM d, yyyy")} - Page {sectionIndex + 1}
+                  {isValidDate(selectedDate) ? format(new Date(selectedDate), "MMMM d, yyyy") : 'Invalid Date'} - Page {sectionIndex + 1}
                 </p>
               </div>
               {renderPageContent(section, sectionIndex, 0)}
@@ -764,8 +791,8 @@ export default function LeaderboardBuilder() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full bg-gray-900 border-gray-700 text-white justify-start">
                         <CalendarIcon className="w-4 h-4 mr-2" />
-                        {format(new Date(selectedDate), 'MMM d, yyyy')}
-                      </Button>
+                        {isValidDate(selectedDate) ? format(new Date(selectedDate), 'MMM d, yyyy') : 'Invalid Date'}
+                        </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
                       <Calendar
