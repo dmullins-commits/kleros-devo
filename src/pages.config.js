@@ -16,6 +16,7 @@ import Reports from './pages/Reports';
 import TestingCenter from './pages/TestingCenter';
 import Upload from './pages/Upload';
 import Workouts from './pages/Workouts';
+import DiagnoseDates from './pages/DiagnoseDates';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "TestingCenter": TestingCenter,
     "Upload": Upload,
     "Workouts": Workouts,
+    "DiagnoseDates": DiagnoseDates,
 }
 
 export const pagesConfig = {
