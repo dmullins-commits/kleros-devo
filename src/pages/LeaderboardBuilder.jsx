@@ -574,7 +574,7 @@ export default function LeaderboardBuilder() {
                   {metrics.find(m => m.id === selectedMetric)?.name} ({metrics.find(m => m.id === selectedMetric)?.unit})
                 </p>
                 <p style={{ fontSize: '12px', color: '#666' }}>
-                  {isValidDate(selectedDate) ? format(new Date(selectedDate), "MMMM d, yyyy") : 'Invalid Date'}
+                  {selectedDate && isValidDate(selectedDate) ? format(new Date(selectedDate), "MMMM d, yyyy") : 'Date not set'}
                 </p>
               </div>
               {genderSeparation === 'separate' ? (
@@ -682,7 +682,7 @@ export default function LeaderboardBuilder() {
                   {metrics.find(m => m.id === selectedMetric)?.name} ({metrics.find(m => m.id === selectedMetric)?.unit})
                 </p>
                 <p style={{ fontSize: '12px', color: '#666' }}>
-                  {isValidDate(selectedDate) ? format(new Date(selectedDate), "MMMM d, yyyy") : 'Invalid Date'} - Page {sectionIndex + 1}
+                  {selectedDate && isValidDate(selectedDate) ? format(new Date(selectedDate), "MMMM d, yyyy") : 'Date not set'} - Page {sectionIndex + 1}
                 </p>
               </div>
               {renderPageContent(section, sectionIndex, 0)}
@@ -774,7 +774,7 @@ export default function LeaderboardBuilder() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full bg-gray-900 border-gray-700 text-white justify-start">
                         <CalendarIcon className="w-4 h-4 mr-2" />
-                        {isValidDate(selectedDate) ? format(new Date(selectedDate), 'MMM d, yyyy') : 'Invalid Date'}
+                        {selectedDate && isValidDate(selectedDate) ? format(new Date(selectedDate), 'MMM d, yyyy') : 'Select Date'}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">

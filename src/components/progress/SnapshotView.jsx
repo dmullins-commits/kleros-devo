@@ -495,7 +495,7 @@ export default function SnapshotView({
                     className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-bold"
                   >
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {startDate && isValidDate(startDate) ? `Since ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Show since...'}
+                    {startDate && isValidDate(startDate) ? `Since ${format(new Date(startDate), 'MMM d, yyyy')}` : 'Filter by date...'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800" align="start">
