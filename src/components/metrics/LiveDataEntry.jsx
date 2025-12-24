@@ -107,7 +107,7 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       }
       
       console.log('LiveDataEntry: Fetching records for organization:', selectedOrganization.id);
-      const recordsData = await MetricRecord.filter({ organization_id: selectedOrganization.id });
+      const recordsData = await MetricRecord.filter({ organization_id: selectedOrganization.id }, '-recorded_date');
       console.log('LiveDataEntry: Raw records fetched:', recordsData.length);
       
       // Normalize records to handle nested data structures
@@ -121,7 +121,11 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       }));
       
       console.log('LiveDataEntry: Normalized records:', normalizedRecords.length);
-      console.log('LiveDataEntry: Sample records:', normalizedRecords.slice(0, 3));
+      if (normalizedRecords.length > 0) {
+        console.log('LiveDataEntry: Sample records:', normalizedRecords.slice(0, 3));
+      } else {
+        console.log('LiveDataEntry: No records found for organization');
+      }
       setAllRecords(normalizedRecords);
     } catch (error) {
       console.error('Error loading records:', error);
