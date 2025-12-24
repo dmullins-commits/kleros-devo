@@ -253,21 +253,44 @@ export default function TeamReportView({ filterType, teamId, team, classPeriod, 
                   return format(new Date(year, month - 1, day), "MMM d");
                 }}
               />
-              <YAxis 
-                yAxisId="left"
-                stroke="#9ca3af"
-                tick={{ fill: '#9ca3af' }}
-                label={{ value: categoryUnits[0], angle: -90, position: 'insideLeft', fill: '#9ca3af' }}
-              />
-              {needsDual && (
-                <YAxis 
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="#9ca3af"
-                  tick={{ fill: '#9ca3af' }}
-                  label={{ value: categoryUnits[1], angle: 90, position: 'insideRight', fill: '#9ca3af' }}
-                />
-              )}
+              {(() => {
+                // Calculate Y-axis domain for better scaling
+                const allValues = [];
+                chartData.forEach(dataPoint => {
+                  [...leftMetrics, ...rightMetrics].forEach(metric => {
+                    if (dataPoint[metric.id] != null) allValues.push(dataPoint[metric.id]);
+                  });
+                });
+                if (allValues.length === 0) return <YAxis yAxisId="left" stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />;
+                
+                const minVal = Math.min(...allValues);
+                const maxVal = Math.max(...allValues);
+                const range = maxVal - minVal;
+                const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
+                const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
+                
+                return (
+                  <>
+                    <YAxis 
+                      yAxisId="left"
+                      stroke="#9ca3af"
+                      tick={{ fill: '#9ca3af' }}
+                      domain={[yMin, yMax]}
+                      label={{ value: categoryUnits[0], angle: -90, position: 'insideLeft', fill: '#9ca3af' }}
+                    />
+                    {needsDual && (
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="#9ca3af"
+                        tick={{ fill: '#9ca3af' }}
+                        domain={[yMin, yMax]}
+                        label={{ value: categoryUnits[1], angle: 90, position: 'insideRight', fill: '#9ca3af' }}
+                      />
+                    )}
+                  </>
+                );
+              })()}
               <Tooltip 
                 contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
                 labelStyle={{ color: '#fff' }}

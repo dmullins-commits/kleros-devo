@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { 
   FileDown, ArrowLeft, Plus, Trash2, Save, Lock, Unlock, 
-  Type, BarChart3, Move, GripVertical, Settings
+  Type, BarChart3, Move, GripVertical, Settings, TrendingUp, BarChart2
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -70,12 +70,37 @@ export default function ReportEditor({
     setSelectedElement(newElement.id);
   };
 
-  // Add graph element with auto-inserted summary table
+  // Add line graph element with auto-inserted summary table
   const addGraphElement = () => {
     const timestamp = Date.now();
     const graphElement = {
       id: `graph-${timestamp}`,
       type: 'graph',
+      graphType: 'line',
+      title: 'Performance Chart',
+      metricIds: [],
+      height: 300,
+      locked: false,
+      linkedSummaryId: `summary-${timestamp}`
+    };
+    const summaryElement = {
+      id: `summary-${timestamp}`,
+      type: 'summary',
+      metricIds: [],
+      locked: false,
+      linkedGraphId: `graph-${timestamp}`
+    };
+    setElements([...elements, graphElement, summaryElement]);
+    setSelectedElement(graphElement.id);
+  };
+
+  // Add bar graph element with auto-inserted summary table
+  const addBarGraphElement = () => {
+    const timestamp = Date.now();
+    const graphElement = {
+      id: `graph-${timestamp}`,
+      type: 'graph',
+      graphType: 'bar',
       title: 'Performance Chart',
       metricIds: [],
       height: 300,
@@ -396,73 +421,171 @@ export default function ReportEditor({
                   {element.metricIds && element.metricIds.length > 0 ? (
                     <div style={{ height: element.height }} className="chart-container">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={getChartData(element.metricIds)}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                          <XAxis 
-                            dataKey="date" 
-                            stroke="#9CA3AF"
-                            tickFormatter={(date) => format(new Date(date), "MMM d")}
-                          />
-                          {/* Dual Y-Axis: Left axis for first metric unit group, Right for second */}
-                          {(() => {
-                            const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
-                            const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
-                            const hasMultipleUnits = uniqueUnits.length > 1;
-                            
-                            if (hasMultipleUnits) {
-                              return (
-                                <>
-                                  <YAxis 
-                                    yAxisId="left" 
-                                    stroke="#9CA3AF"
-                                    label={{ value: uniqueUnits[0], angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
-                                  />
-                                  <YAxis 
-                                    yAxisId="right" 
-                                    orientation="right" 
-                                    stroke="#9CA3AF"
-                                    label={{ value: uniqueUnits[1], angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
-                                  />
-                                </>
-                              );
-                            }
-                            return <YAxis stroke="#9CA3AF" />;
-                          })()}
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                            labelFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
-                            formatter={(value, name) => {
-                              const metric = metrics.find(m => m.name === name || m.id === name);
-                              return [value?.toFixed(metric?.decimal_places ?? 2), `${name} (${metric?.unit || ''})`];
-                            }}
-                          />
-                          <Legend />
-                          {(() => {
-                            const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
-                            const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
-                            const hasMultipleUnits = uniqueUnits.length > 1;
-                            
-                            return element.metricIds.map((metricId, idx) => {
-                              const metric = metrics.find(m => m.id === metricId);
-                              const yAxisId = hasMultipleUnits 
-                                ? (metric?.unit === uniqueUnits[0] ? 'left' : 'right')
-                                : undefined;
+                        {element.graphType === 'bar' ? (
+                          <BarChart data={getChartData(element.metricIds)}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="#9CA3AF"
+                              tickFormatter={(date) => format(new Date(date), "MMM d")}
+                            />
+                            {(() => {
+                              const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                              const chartData = getChartData(element.metricIds);
+                              const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                              const hasMultipleUnits = uniqueUnits.length > 1;
                               
-                              return (
-                                <Line
-                                  key={metricId}
-                                  type="monotone"
-                                  dataKey={metricId}
-                                  name={metric?.name || metricId}
-                                  stroke={colors[idx % colors.length]}
-                                  strokeWidth={2}
-                                  dot={{ r: 4 }}
-                                  yAxisId={yAxisId}
-                                />
-                              );
-                            });
-                          })()}
-                        </LineChart>
+                              // Calculate Y-axis domain for better scaling
+                              const allValues = [];
+                              chartData.forEach(dataPoint => {
+                                element.metricIds.forEach(metricId => {
+                                  if (dataPoint[metricId] != null) allValues.push(dataPoint[metricId]);
+                                });
+                              });
+                              const minVal = Math.min(...allValues);
+                              const maxVal = Math.max(...allValues);
+                              const range = maxVal - minVal;
+                              const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
+                              const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
+                              
+                              if (hasMultipleUnits) {
+                                return (
+                                  <>
+                                    <YAxis 
+                                      yAxisId="left" 
+                                      stroke="#9CA3AF"
+                                      domain={[yMin, yMax]}
+                                      label={{ value: uniqueUnits[0], angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                                    />
+                                    <YAxis 
+                                      yAxisId="right" 
+                                      orientation="right" 
+                                      stroke="#9CA3AF"
+                                      domain={[yMin, yMax]}
+                                      label={{ value: uniqueUnits[1], angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+                                    />
+                                  </>
+                                );
+                              }
+                              return <YAxis stroke="#9CA3AF" domain={[yMin, yMax]} />;
+                            })()}
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
+                              labelFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                              formatter={(value, name) => {
+                                const metric = metrics.find(m => m.name === name || m.id === name);
+                                return [value?.toFixed(metric?.decimal_places ?? 2), `${name} (${metric?.unit || ''})`];
+                              }}
+                            />
+                            <Legend />
+                            {(() => {
+                              const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                              const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                              const hasMultipleUnits = uniqueUnits.length > 1;
+                              
+                              return element.metricIds.map((metricId, idx) => {
+                                const metric = metrics.find(m => m.id === metricId);
+                                const yAxisId = hasMultipleUnits 
+                                  ? (metric?.unit === uniqueUnits[0] ? 'left' : 'right')
+                                  : undefined;
+                                
+                                return (
+                                  <Bar
+                                    key={metricId}
+                                    dataKey={metricId}
+                                    name={metric?.name || metricId}
+                                    fill={colors[idx % colors.length]}
+                                    yAxisId={yAxisId}
+                                  />
+                                );
+                              });
+                            })()}
+                          </BarChart>
+                        ) : (
+                          <LineChart data={getChartData(element.metricIds)}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="#9CA3AF"
+                              tickFormatter={(date) => format(new Date(date), "MMM d")}
+                            />
+                            {(() => {
+                              const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                              const chartData = getChartData(element.metricIds);
+                              const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                              const hasMultipleUnits = uniqueUnits.length > 1;
+                              
+                              // Calculate Y-axis domain for better scaling
+                              const allValues = [];
+                              chartData.forEach(dataPoint => {
+                                element.metricIds.forEach(metricId => {
+                                  if (dataPoint[metricId] != null) allValues.push(dataPoint[metricId]);
+                                });
+                              });
+                              const minVal = Math.min(...allValues);
+                              const maxVal = Math.max(...allValues);
+                              const range = maxVal - minVal;
+                              const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
+                              const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
+                              
+                              if (hasMultipleUnits) {
+                                return (
+                                  <>
+                                    <YAxis 
+                                      yAxisId="left" 
+                                      stroke="#9CA3AF"
+                                      domain={[yMin, yMax]}
+                                      label={{ value: uniqueUnits[0], angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                                    />
+                                    <YAxis 
+                                      yAxisId="right" 
+                                      orientation="right" 
+                                      stroke="#9CA3AF"
+                                      domain={[yMin, yMax]}
+                                      label={{ value: uniqueUnits[1], angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+                                    />
+                                  </>
+                                );
+                              }
+                              return <YAxis stroke="#9CA3AF" domain={[yMin, yMax]} />;
+                            })()}
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
+                              labelFormatter={(date) => format(new Date(date), "MMM d, yyyy")}
+                              formatter={(value, name) => {
+                                const metric = metrics.find(m => m.name === name || m.id === name);
+                                return [value?.toFixed(metric?.decimal_places ?? 2), `${name} (${metric?.unit || ''})`];
+                              }}
+                            />
+                            <Legend />
+                            {(() => {
+                              const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                              const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                              const hasMultipleUnits = uniqueUnits.length > 1;
+                              
+                              return element.metricIds.map((metricId, idx) => {
+                                const metric = metrics.find(m => m.id === metricId);
+                                const yAxisId = hasMultipleUnits 
+                                  ? (metric?.unit === uniqueUnits[0] ? 'left' : 'right')
+                                  : undefined;
+                                
+                                return (
+                                  <Line
+                                    key={metricId}
+                                    type="monotone"
+                                    dataKey={metricId}
+                                    name={metric?.name || metricId}
+                                    stroke={colors[idx % colors.length]}
+                                    strokeWidth={2}
+                                    dot={{ r: 4 }}
+                                    connectNulls={true}
+                                    yAxisId={yAxisId}
+                                  />
+                                );
+                              });
+                            })()}
+                          </LineChart>
+                        )}
                       </ResponsiveContainer>
                     </div>
                   ) : (
@@ -563,8 +686,17 @@ export default function ReportEditor({
                 className="border-gray-700 text-gray-300 hover:bg-gray-800 flex flex-col h-16"
                 disabled={isLocked}
               >
-                <BarChart3 className="w-5 h-5 mb-1" />
-                <span className="text-xs">Graph</span>
+                <TrendingUp className="w-5 h-5 mb-1" />
+                <span className="text-xs">Line Graph</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={addBarGraphElement}
+                className="border-gray-700 text-gray-300 hover:bg-gray-800 flex flex-col h-16"
+                disabled={isLocked}
+              >
+                <BarChart2 className="w-5 h-5 mb-1" />
+                <span className="text-xs">Bar Graph</span>
               </Button>
               <Button
                 variant="outline"
