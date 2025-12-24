@@ -433,41 +433,100 @@ export default function ReportEditor({
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
                               const chartData = getChartData(element.metricIds);
                               const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
-                              const hasMultipleUnits = uniqueUnits.length > 1;
                               
-                              // Calculate Y-axis domain for better scaling
-                              const allValues = [];
+                              // Calculate averages for each metric to check scale differences
+                              const metricAverages = {};
+                              element.metricIds.forEach(metricId => {
+                                const values = chartData.map(d => d[metricId]).filter(v => v != null);
+                                if (values.length > 0) {
+                                  metricAverages[metricId] = values.reduce((sum, v) => sum + v, 0) / values.length;
+                                }
+                              });
+                              
+                              // Check if metrics have very different scales (>4 units apart)
+                              const avgValues = Object.values(metricAverages);
+                              const needsDualAxisForScale = avgValues.length >= 2 && 
+                                Math.abs(Math.max(...avgValues) - Math.min(...avgValues)) > 4;
+                              
+                              const hasMultipleUnits = uniqueUnits.length > 1;
+                              const needsDualAxis = hasMultipleUnits || needsDualAxisForScale;
+                              
+                              // Split metrics into two groups for dual axis
+                              let leftAxisMetrics = selectedMetrics;
+                              let rightAxisMetrics = [];
+                              
+                              if (needsDualAxis) {
+                                if (hasMultipleUnits) {
+                                  leftAxisMetrics = selectedMetrics.filter(m => m.unit === uniqueUnits[0]);
+                                  rightAxisMetrics = selectedMetrics.filter(m => m.unit !== uniqueUnits[0]);
+                                } else {
+                                  // Split by scale - first metric on left, others with different scale on right
+                                  const sortedByAvg = element.metricIds
+                                    .map(id => ({ id, avg: metricAverages[id] || 0 }))
+                                    .sort((a, b) => b.avg - a.avg);
+                                  
+                                  leftAxisMetrics = selectedMetrics.filter(m => m.id === sortedByAvg[0].id);
+                                  rightAxisMetrics = selectedMetrics.filter(m => 
+                                    m.id !== sortedByAvg[0].id && 
+                                    Math.abs(metricAverages[m.id] - sortedByAvg[0].avg) > 4
+                                  );
+                                }
+                              }
+                              
+                              // Calculate Y-axis domains
+                              const leftValues = [];
+                              const rightValues = [];
                               chartData.forEach(dataPoint => {
-                                element.metricIds.forEach(metricId => {
-                                  if (dataPoint[metricId] != null) allValues.push(dataPoint[metricId]);
+                                leftAxisMetrics.forEach(m => {
+                                  if (dataPoint[m.id] != null) leftValues.push(dataPoint[m.id]);
+                                });
+                                rightAxisMetrics.forEach(m => {
+                                  if (dataPoint[m.id] != null) rightValues.push(dataPoint[m.id]);
                                 });
                               });
-                              const minVal = Math.min(...allValues);
-                              const maxVal = Math.max(...allValues);
-                              const range = maxVal - minVal;
-                              const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
-                              const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
                               
-                              if (hasMultipleUnits) {
-                                return (
-                                  <>
-                                    <YAxis 
-                                      yAxisId="left" 
-                                      stroke="#9CA3AF"
-                                      domain={[yMin, yMax]}
-                                      label={{ value: uniqueUnits[0], angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
-                                    />
+                              const calcDomain = (values) => {
+                                if (values.length === 0) return [0, 10];
+                                const minVal = Math.min(...values);
+                                const maxVal = Math.max(...values);
+                                const range = maxVal - minVal;
+                                const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
+                                const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
+                                return [yMin, yMax];
+                              };
+                              
+                              const leftDomain = calcDomain(leftValues);
+                              const rightDomain = calcDomain(rightValues);
+                              
+                              return (
+                                <>
+                                  <YAxis 
+                                    yAxisId="left" 
+                                    stroke="#9CA3AF"
+                                    domain={leftDomain}
+                                    label={{ 
+                                      value: leftAxisMetrics[0]?.unit || '', 
+                                      angle: -90, 
+                                      position: 'insideLeft', 
+                                      fill: '#9CA3AF' 
+                                    }}
+                                  />
+                                  {needsDualAxis && rightAxisMetrics.length > 0 && (
                                     <YAxis 
                                       yAxisId="right" 
                                       orientation="right" 
                                       stroke="#9CA3AF"
-                                      domain={[yMin, yMax]}
-                                      label={{ value: uniqueUnits[1], angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+                                      domain={rightDomain}
+                                      label={{ 
+                                        value: rightAxisMetrics[0]?.unit || '', 
+                                        angle: 90, 
+                                        position: 'insideRight', 
+                                        fill: '#9CA3AF' 
+                                      }}
                                     />
-                                  </>
-                                );
-                              }
-                              return <YAxis stroke="#9CA3AF" domain={[yMin, yMax]} />;
+                                  )}
+                                </>
+                              );
                             })()}
                             <Tooltip 
                               contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
@@ -480,14 +539,44 @@ export default function ReportEditor({
                             <Legend />
                             {(() => {
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                              const chartData = getChartData(element.metricIds);
                               const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                              
+                              // Calculate metric averages
+                              const metricAverages = {};
+                              element.metricIds.forEach(metricId => {
+                                const values = chartData.map(d => d[metricId]).filter(v => v != null);
+                                if (values.length > 0) {
+                                  metricAverages[metricId] = values.reduce((sum, v) => sum + v, 0) / values.length;
+                                }
+                              });
+                              
+                              const avgValues = Object.values(metricAverages);
+                              const needsDualAxisForScale = avgValues.length >= 2 && 
+                                Math.abs(Math.max(...avgValues) - Math.min(...avgValues)) > 4;
+                              
                               const hasMultipleUnits = uniqueUnits.length > 1;
+                              const needsDualAxis = hasMultipleUnits || needsDualAxisForScale;
                               
                               return element.metricIds.map((metricId, idx) => {
                                 const metric = metrics.find(m => m.id === metricId);
-                                const yAxisId = hasMultipleUnits 
-                                  ? (metric?.unit === uniqueUnits[0] ? 'left' : 'right')
-                                  : undefined;
+                                
+                                let yAxisId = 'left';
+                                if (needsDualAxis) {
+                                  if (hasMultipleUnits) {
+                                    yAxisId = metric?.unit === uniqueUnits[0] ? 'left' : 'right';
+                                  } else if (needsDualAxisForScale) {
+                                    const sortedByAvg = element.metricIds
+                                      .map(id => ({ id, avg: metricAverages[id] || 0 }))
+                                      .sort((a, b) => b.avg - a.avg);
+                                    const firstMetricId = sortedByAvg[0].id;
+                                    const firstAvg = sortedByAvg[0].avg;
+                                    
+                                    if (metricId !== firstMetricId && Math.abs(metricAverages[metricId] - firstAvg) > 4) {
+                                      yAxisId = 'right';
+                                    }
+                                  }
+                                }
                                 
                                 return (
                                   <Bar
@@ -496,6 +585,12 @@ export default function ReportEditor({
                                     name={metric?.name || metricId}
                                     fill={colors[idx % colors.length]}
                                     yAxisId={yAxisId}
+                                    label={{ 
+                                      position: 'top', 
+                                      fill: colors[idx % colors.length],
+                                      fontSize: 11,
+                                      formatter: (value) => value != null ? Number(value).toFixed(metric?.decimal_places ?? 2) : ''
+                                    }}
                                   />
                                 );
                               });
@@ -513,41 +608,100 @@ export default function ReportEditor({
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
                               const chartData = getChartData(element.metricIds);
                               const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
-                              const hasMultipleUnits = uniqueUnits.length > 1;
                               
-                              // Calculate Y-axis domain for better scaling
-                              const allValues = [];
+                              // Calculate averages for each metric to check scale differences
+                              const metricAverages = {};
+                              element.metricIds.forEach(metricId => {
+                                const values = chartData.map(d => d[metricId]).filter(v => v != null);
+                                if (values.length > 0) {
+                                  metricAverages[metricId] = values.reduce((sum, v) => sum + v, 0) / values.length;
+                                }
+                              });
+                              
+                              // Check if metrics have very different scales (>4 units apart)
+                              const avgValues = Object.values(metricAverages);
+                              const needsDualAxisForScale = avgValues.length >= 2 && 
+                                Math.abs(Math.max(...avgValues) - Math.min(...avgValues)) > 4;
+                              
+                              const hasMultipleUnits = uniqueUnits.length > 1;
+                              const needsDualAxis = hasMultipleUnits || needsDualAxisForScale;
+                              
+                              // Split metrics into two groups for dual axis
+                              let leftAxisMetrics = selectedMetrics;
+                              let rightAxisMetrics = [];
+                              
+                              if (needsDualAxis) {
+                                if (hasMultipleUnits) {
+                                  leftAxisMetrics = selectedMetrics.filter(m => m.unit === uniqueUnits[0]);
+                                  rightAxisMetrics = selectedMetrics.filter(m => m.unit !== uniqueUnits[0]);
+                                } else {
+                                  // Split by scale - first metric on left, others with different scale on right
+                                  const sortedByAvg = element.metricIds
+                                    .map(id => ({ id, avg: metricAverages[id] || 0 }))
+                                    .sort((a, b) => b.avg - a.avg);
+                                  
+                                  leftAxisMetrics = selectedMetrics.filter(m => m.id === sortedByAvg[0].id);
+                                  rightAxisMetrics = selectedMetrics.filter(m => 
+                                    m.id !== sortedByAvg[0].id && 
+                                    Math.abs(metricAverages[m.id] - sortedByAvg[0].avg) > 4
+                                  );
+                                }
+                              }
+                              
+                              // Calculate Y-axis domains separately for each axis
+                              const leftValues = [];
+                              const rightValues = [];
                               chartData.forEach(dataPoint => {
-                                element.metricIds.forEach(metricId => {
-                                  if (dataPoint[metricId] != null) allValues.push(dataPoint[metricId]);
+                                leftAxisMetrics.forEach(m => {
+                                  if (dataPoint[m.id] != null) leftValues.push(dataPoint[m.id]);
+                                });
+                                rightAxisMetrics.forEach(m => {
+                                  if (dataPoint[m.id] != null) rightValues.push(dataPoint[m.id]);
                                 });
                               });
-                              const minVal = Math.min(...allValues);
-                              const maxVal = Math.max(...allValues);
-                              const range = maxVal - minVal;
-                              const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
-                              const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
                               
-                              if (hasMultipleUnits) {
-                                return (
-                                  <>
-                                    <YAxis 
-                                      yAxisId="left" 
-                                      stroke="#9CA3AF"
-                                      domain={[yMin, yMax]}
-                                      label={{ value: uniqueUnits[0], angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
-                                    />
+                              const calcDomain = (values) => {
+                                if (values.length === 0) return [0, 10];
+                                const minVal = Math.min(...values);
+                                const maxVal = Math.max(...values);
+                                const range = maxVal - minVal;
+                                const yMin = Math.floor((minVal - range * 0.1) * 10) / 10;
+                                const yMax = Math.ceil((maxVal + range * 0.1) * 10) / 10;
+                                return [yMin, yMax];
+                              };
+                              
+                              const leftDomain = calcDomain(leftValues);
+                              const rightDomain = calcDomain(rightValues);
+                              
+                              return (
+                                <>
+                                  <YAxis 
+                                    yAxisId="left" 
+                                    stroke="#9CA3AF"
+                                    domain={leftDomain}
+                                    label={{ 
+                                      value: leftAxisMetrics[0]?.unit || '', 
+                                      angle: -90, 
+                                      position: 'insideLeft', 
+                                      fill: '#9CA3AF' 
+                                    }}
+                                  />
+                                  {needsDualAxis && rightAxisMetrics.length > 0 && (
                                     <YAxis 
                                       yAxisId="right" 
                                       orientation="right" 
                                       stroke="#9CA3AF"
-                                      domain={[yMin, yMax]}
-                                      label={{ value: uniqueUnits[1], angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+                                      domain={rightDomain}
+                                      label={{ 
+                                        value: rightAxisMetrics[0]?.unit || '', 
+                                        angle: 90, 
+                                        position: 'insideRight', 
+                                        fill: '#9CA3AF' 
+                                      }}
                                     />
-                                  </>
-                                );
-                              }
-                              return <YAxis stroke="#9CA3AF" domain={[yMin, yMax]} />;
+                                  )}
+                                </>
+                              );
                             })()}
                             <Tooltip 
                               contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
@@ -560,14 +714,44 @@ export default function ReportEditor({
                             <Legend />
                             {(() => {
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
+                              const chartData = getChartData(element.metricIds);
                               const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
+                              
+                              // Calculate metric averages
+                              const metricAverages = {};
+                              element.metricIds.forEach(metricId => {
+                                const values = chartData.map(d => d[metricId]).filter(v => v != null);
+                                if (values.length > 0) {
+                                  metricAverages[metricId] = values.reduce((sum, v) => sum + v, 0) / values.length;
+                                }
+                              });
+                              
+                              const avgValues = Object.values(metricAverages);
+                              const needsDualAxisForScale = avgValues.length >= 2 && 
+                                Math.abs(Math.max(...avgValues) - Math.min(...avgValues)) > 4;
+                              
                               const hasMultipleUnits = uniqueUnits.length > 1;
+                              const needsDualAxis = hasMultipleUnits || needsDualAxisForScale;
                               
                               return element.metricIds.map((metricId, idx) => {
                                 const metric = metrics.find(m => m.id === metricId);
-                                const yAxisId = hasMultipleUnits 
-                                  ? (metric?.unit === uniqueUnits[0] ? 'left' : 'right')
-                                  : undefined;
+                                
+                                let yAxisId = 'left';
+                                if (needsDualAxis) {
+                                  if (hasMultipleUnits) {
+                                    yAxisId = metric?.unit === uniqueUnits[0] ? 'left' : 'right';
+                                  } else if (needsDualAxisForScale) {
+                                    const sortedByAvg = element.metricIds
+                                      .map(id => ({ id, avg: metricAverages[id] || 0 }))
+                                      .sort((a, b) => b.avg - a.avg);
+                                    const firstMetricId = sortedByAvg[0].id;
+                                    const firstAvg = sortedByAvg[0].avg;
+                                    
+                                    if (metricId !== firstMetricId && Math.abs(metricAverages[metricId] - firstAvg) > 4) {
+                                      yAxisId = 'right';
+                                    }
+                                  }
+                                }
                                 
                                 return (
                                   <Line
