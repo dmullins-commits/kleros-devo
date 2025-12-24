@@ -4,6 +4,7 @@ import CleanupUnknownTeams from './pages/CleanupUnknownTeams';
 import Dashboard from './pages/Dashboard';
 import DataMigration from './pages/DataMigration';
 import DataMigrationOrg from './pages/DataMigrationOrg';
+import DiagnoseDates from './pages/DiagnoseDates';
 import FixDatePadding from './pages/FixDatePadding';
 import FixUnknownAthletes from './pages/FixUnknownAthletes';
 import Home from './pages/Home';
@@ -16,7 +17,7 @@ import Reports from './pages/Reports';
 import TestingCenter from './pages/TestingCenter';
 import Upload from './pages/Upload';
 import Workouts from './pages/Workouts';
-import DiagnoseDates from './pages/DiagnoseDates';
+import CleanupUnknownAthletes from './pages/CleanupUnknownAthletes';
 import __Layout from './Layout.jsx';
 
 
@@ -27,6 +28,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DataMigration": DataMigration,
     "DataMigrationOrg": DataMigrationOrg,
+    "DiagnoseDates": DiagnoseDates,
     "FixDatePadding": FixDatePadding,
     "FixUnknownAthletes": FixUnknownAthletes,
     "Home": Home,
@@ -39,7 +41,7 @@ export const PAGES = {
     "TestingCenter": TestingCenter,
     "Upload": Upload,
     "Workouts": Workouts,
-    "DiagnoseDates": DiagnoseDates,
+    "CleanupUnknownAthletes": CleanupUnknownAthletes,
 }
 
 export const pagesConfig = {
