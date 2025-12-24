@@ -152,26 +152,9 @@ export default function LeaderboardBuilder() {
     const maleData = athleteData.filter(a => a.gender === 'Male');
     const femaleData = athleteData.filter(a => a.gender === 'Female');
 
-    // Filter out any records with invalid dates
-    const validMaleData = maleData.filter(item => {
-      const hasValidRecords = athleteRecords.some(r => {
-        const recDate = r.recorded_date || r.data?.recorded_date;
-        return isValidDate(recDate);
-      });
-      return hasValidRecords;
-    });
+    console.log('Result:', maleData.length, 'male,', femaleData.length, 'female');
 
-    const validFemaleData = femaleData.filter(item => {
-      const hasValidRecords = athleteRecords.some(r => {
-        const recDate = r.recorded_date || r.data?.recorded_date;
-        return isValidDate(recDate);
-      });
-      return hasValidRecords;
-    });
-
-    console.log('Result:', validMaleData.length, 'male,', validFemaleData.length, 'female');
-
-    setLeaderboardData({ male: validMaleData, female: validFemaleData });
+    setLeaderboardData({ male: maleData, female: femaleData });
     };
 
     const handleDragEnd = (result) => {
