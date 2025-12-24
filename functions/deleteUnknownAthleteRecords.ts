@@ -9,7 +9,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organizationId } = await req.json();
+    let organizationId;
+    try {
+      const body = await req.json();
+      organizationId = body.organizationId;
+    } catch (e) {
+      return Response.json({ error: 'Invalid request body' }, { status: 400 });
+    }
 
     if (!organizationId) {
       return Response.json({ error: 'Organization ID is required' }, { status: 400 });
