@@ -80,7 +80,7 @@ export function useMetrics(organizationId, options = {}) {
   });
 }
 
-// Metric Records query hook - fetches ALL records with pagination
+// Metric Records query hook - server-side filtered by organization
 export function useMetricRecords(organizationId, options = {}) {
   return useQuery({
     queryKey: queryKeys.metricRecords(organizationId),
@@ -89,70 +89,15 @@ export function useMetricRecords(organizationId, options = {}) {
         console.warn('useMetricRecords: No organizationId provided');
         return [];
       }
-      
-      console.log(`useMetricRecords: Starting fetch for org "${organizationId}"...`);
-      
-      // Fetch all records in batches to overcome API limits
-      let allRecords = [];
-      let skip = 0;
-      const limit = 5000; // Backend limit per request
-      let hasMore = true;
-      
-      while (hasMore) {
-        const batch = await MetricRecord.list('-recorded_date', limit, skip);
-        console.log(`Batch fetch: skip=${skip}, received ${batch.length} records`);
-        
-        if (batch.length === 0) {
-          hasMore = false;
-          break;
-        }
-        
-        // Debug: Check first record structure
-        if (skip === 0 && batch.length > 0) {
-          console.log('Sample record structure:', {
-            id: batch[0].id,
-            has_data_property: !!batch[0].data,
-            organization_id: batch[0].organization_id,
-            data_organization_id: batch[0].data?.organization_id,
-            athlete_id: batch[0].athlete_id,
-            data_athlete_id: batch[0].data?.athlete_id
-          });
-        }
-        
-        // Filter for this org
-        const orgBatch = batch.filter(r => {
-          const orgId = r.data?.organization_id || r.organization_id;
-          const matches = orgId === organizationId;
-          
-          // Debug first few mismatches
-          if (!matches && skip === 0 && batch.indexOf(r) < 3) {
-            console.log(`Record ${r.id} org mismatch: expected "${organizationId}", got "${orgId}"`);
-          }
-          
-          return matches;
-        });
-        
-        console.log(`Filtered batch: ${orgBatch.length}/${batch.length} records match org ${organizationId}`);
-        allRecords = allRecords.concat(orgBatch);
-        
-        // If we got fewer than limit, we've reached the end
-        if (batch.length < limit) {
-          hasMore = false;
-        } else {
-          skip += limit;
-        }
-      }
-      
-      console.log(`useMetricRecords FINAL: ${allRecords.length} records for org "${organizationId}"`);
-      if (allRecords.length > 0) {
-        console.log('Sample normalized record:', allRecords[0]);
-        console.log('Date range:', {
-          earliest: allRecords[allRecords.length - 1]?.recorded_date || allRecords[allRecords.length - 1]?.data?.recorded_date,
-          latest: allRecords[0]?.recorded_date || allRecords[0]?.data?.recorded_date
-        });
-      }
-      
-      return allRecords.map(r => normalizeEntity(r, [
+
+      console.log(`useMetricRecords: Fetching records for org "${organizationId}"...`);
+
+      // Use filter to do server-side filtering by organization_id
+      const records = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date');
+
+      console.log(`useMetricRecords FINAL: ${records.length} records for org "${organizationId}"`);
+
+      return records.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
     },
