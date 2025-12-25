@@ -42,7 +42,7 @@ export default function Metrics() {
       // Load all data
       const [metricsData, recordsData, athletesData, categoriesData] = await Promise.all([
         Metric.list(),
-        MetricRecord.list('-recorded_date'),
+        MetricRecord.list('-recorded_date', 1000000),
         Athlete.list(),
         MetricCategory.list()
       ]);
