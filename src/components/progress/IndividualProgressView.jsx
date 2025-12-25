@@ -87,14 +87,18 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
       const pdfHideElements = reportElement.querySelectorAll('.pdf-hide');
       pdfHideElements.forEach(el => el.style.display = 'none');
 
+      // Apply PDF-friendly styling
+      reportElement.classList.add('pdf-export-mode');
+
       const canvas = await html2canvas(reportElement, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#0a0a0a'
+        backgroundColor: '#ffffff'
       });
 
-      // Show elements again
+      // Restore original styling
+      reportElement.classList.remove('pdf-export-mode');
       pdfHideElements.forEach(el => el.style.display = '');
 
       const imgData = canvas.toDataURL('image/png');
@@ -552,6 +556,30 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
 
       {/* Report Content */}
       <div ref={reportRef} style={{ backgroundColor: '#0a0a0a', padding: '0' }}>
+        <style>{`
+          .pdf-export-mode {
+            background-color: #ffffff !important;
+          }
+          .pdf-export-mode * {
+            color: #000000 !important;
+          }
+          .pdf-export-mode .bg-gradient-to-br,
+          .pdf-export-mode .bg-gradient-to-r,
+          .pdf-export-mode [class*="bg-gray"],
+          .pdf-export-mode [class*="bg-black"] {
+            background: #ffffff !important;
+          }
+          .pdf-export-mode .border-amber-400 {
+            border-color: #d4af37 !important;
+          }
+          .pdf-export-mode h2 {
+            background: #d4af37 !important;
+            padding: 16px !important;
+            border-radius: 8px !important;
+            color: #000000 !important;
+          }
+        `}</style>
+        
         {/* Header for Print - Hidden in PDF */}
         <div className="header mb-8 pb-6 border-b-2 border-yellow-400 pdf-hide">
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '10px', color: '#000' }}>
