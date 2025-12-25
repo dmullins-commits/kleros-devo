@@ -92,8 +92,8 @@ export function useMetricRecords(organizationId, options = {}) {
 
       console.log(`useMetricRecords: Fetching records for org "${organizationId}"...`);
 
-      // Use filter to do server-side filtering by organization_id with 500k limit
-      const records = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date', 500000);
+      // Use filter to do server-side filtering by organization_id with 1M limit
+      const records = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date', 1000000);
 
       console.log(`useMetricRecords FINAL: ${records.length} records for org "${organizationId}"`);
 
