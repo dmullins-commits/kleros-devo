@@ -324,6 +324,7 @@ export default function ProgressTracking() {
               metrics={metrics}
               records={records}
               isLoading={isLoading}
+              athletes={filteredAthletes}
             />
           </div>
         )}
