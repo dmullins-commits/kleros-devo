@@ -355,10 +355,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     return targetHigher ? Math.max(...values) : Math.min(...values);
   };
 
-  const handleLegendClick = (metricId) => {
+  const handleLegendClick = (dataKey) => {
     setHiddenMetrics(prev => ({
       ...prev,
-      [metricId]: !prev[metricId]
+      [dataKey]: !prev[dataKey]
     }));
   };
 
@@ -712,9 +712,9 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                           wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold', cursor: 'pointer' }}
                           onClick={(e) => {
                             if (e.dataKey) {
-                              // Check if this is a comparison athlete
+                              // Check if this is a comparison athlete (not _avg)
                               const match = e.dataKey.match(/^(.+)_([a-f0-9-]+)$/);
-                              if (match && selectedCompareAthletes.includes(match[2])) {
+                              if (match && !e.dataKey.endsWith('_avg') && selectedCompareAthletes.includes(match[2])) {
                                 const athleteId = match[2];
                                 const action = window.confirm(`Options for ${e.value}:\n\nOK = Rename\nCancel = Remove`);
                                 if (action === true) {
@@ -723,6 +723,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                                   removeCompareAthlete(athleteId);
                                 }
                               } else {
+                                // Toggle visibility for any dataKey (metric, avg, or comparison athlete)
                                 handleLegendClick(e.dataKey);
                               }
                             }
@@ -778,23 +779,26 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                                 // Add average line/bar
                                 if (compareMode === 'averages') {
                                   const avgColor = colors[(idx + 3) % colors.length];
+                                  const avgKey = `${metric.id}_avg`;
+                                  const isAvgHidden = hiddenMetrics[avgKey];
                                   if (isBarChart) {
                                     items.push(
                                       <Bar 
-                                        key={`${metric.id}_avg`}
-                                        dataKey={`${metric.id}_avg`}
+                                        key={avgKey}
+                                        dataKey={avgKey}
                                         name={`${metric.name} (Avg)`}
                                         fill={avgColor}
-                                        opacity={0.5}
+                                        opacity={isAvgHidden ? 0.1 : 0.5}
                                         yAxisId={yAxisId}
+                                        hide={isAvgHidden}
                                       />
                                     );
                                   } else {
                                     items.push(
                                       <Line 
-                                        key={`${metric.id}_avg`}
+                                        key={avgKey}
                                         type="linear" 
-                                        dataKey={`${metric.id}_avg`}
+                                        dataKey={avgKey}
                                         name={`${metric.name} (Avg)`}
                                         stroke={avgColor}
                                         strokeWidth={2}
@@ -802,6 +806,8 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                                         dot={{ fill: avgColor, r: 3 }}
                                         connectNulls
                                         yAxisId={yAxisId}
+                                        hide={isAvgHidden}
+                                        strokeOpacity={isAvgHidden ? 0.2 : 1}
                                       />
                                     );
                                   }
@@ -814,24 +820,27 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                                     const displayName = athleteRenames[compareAthleteId] || 
                                       `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
                                     const compareColor = colors[(idx + 3 + aIdx) % colors.length];
+                                    const compareKey = `${metric.id}_${compareAthleteId}`;
+                                    const isCompareHidden = hiddenMetrics[compareKey];
                                     
                                     if (isBarChart) {
                                       items.push(
                                         <Bar 
-                                          key={`${metric.id}_${compareAthleteId}`}
-                                          dataKey={`${metric.id}_${compareAthleteId}`}
+                                          key={compareKey}
+                                          dataKey={compareKey}
                                           name={`${metric.name} (${displayName})`}
                                           fill={compareColor}
-                                          opacity={0.6}
+                                          opacity={isCompareHidden ? 0.1 : 0.6}
                                           yAxisId={yAxisId}
+                                          hide={isCompareHidden}
                                         />
                                       );
                                     } else {
                                       items.push(
                                         <Line 
-                                          key={`${metric.id}_${compareAthleteId}`}
+                                          key={compareKey}
                                           type="linear" 
-                                          dataKey={`${metric.id}_${compareAthleteId}`}
+                                          dataKey={compareKey}
                                           name={`${metric.name} (${displayName})`}
                                           stroke={compareColor}
                                           strokeWidth={2}
@@ -839,6 +848,8 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                                           dot={{ fill: compareColor, r: 3 }}
                                           connectNulls
                                           yAxisId={yAxisId}
+                                          hide={isCompareHidden}
+                                          strokeOpacity={isCompareHidden ? 0.2 : 1}
                                         />
                                       );
                                     }
