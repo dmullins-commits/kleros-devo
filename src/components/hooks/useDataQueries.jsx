@@ -90,14 +90,18 @@ export function useMetricRecords(organizationId, options = {}) {
         return [];
       }
 
-      console.log(`useMetricRecords: Fetching records for org "${organizationId}"...`);
+      console.log(`useMetricRecords: Fetching ALL records for org "${organizationId}"...`);
 
-      // Use filter with explicit 1M limit for server-side filtering
-      const records = await MetricRecord.filter({ organization_id: organizationId }, '-recorded_date', 1000000);
+      // Fetch ALL records with explicit high limit, then filter client-side
+      const allRecords = await MetricRecord.list('-recorded_date', 1000000);
+      const orgRecords = allRecords.filter(r => {
+        const recOrgId = r.organization_id || r.data?.organization_id;
+        return recOrgId === organizationId;
+      });
 
-      console.log(`useMetricRecords FINAL: ${records.length} records for org "${organizationId}"`);
+      console.log(`useMetricRecords FINAL: ${orgRecords.length} records for org "${organizationId}" (from ${allRecords.length} total)`);
 
-      return records.map(r => normalizeEntity(r, [
+      return orgRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
       },
