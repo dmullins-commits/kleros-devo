@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Users, Plus, Shield, Building2, Pencil, Search, 
-  Crown, UserCog, Briefcase, User as UserIcon 
+  Crown, UserCog, Briefcase, User as UserIcon, Download 
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -30,6 +30,8 @@ export default function ManageUsers() {
   const [editingUser, setEditingUser] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [backupResult, setBackupResult] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -137,6 +139,21 @@ export default function ManageUsers() {
     return names.length > 0 ? names.join(", ") : "No organizations";
   };
 
+  const handleBackup = async () => {
+    setIsBackingUp(true);
+    setBackupResult(null);
+    
+    try {
+      const response = await base44.functions.invoke('backupToGoogleDrive');
+      setBackupResult(response.data);
+    } catch (error) {
+      console.error("Backup error:", error);
+      setBackupResult({ success: false, error: error.message });
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -156,9 +173,50 @@ export default function ManageUsers() {
                   {users.length} users
                 </Badge>
               </div>
+              <Button
+                onClick={handleBackup}
+                disabled={isBackingUp}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold"
+              >
+                {isBackingUp ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Backing up...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Backup to Google Sheets
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
+
+        {/* Backup Result */}
+        {backupResult && (
+          <Card className={`mb-6 ${backupResult.success ? 'bg-green-950/50 border-green-800' : 'bg-red-950/50 border-red-800'}`}>
+            <CardContent className="p-4">
+              {backupResult.success ? (
+                <div>
+                  <p className="text-green-400 font-bold mb-2">✓ Backup completed successfully!</p>
+                  <p className="text-gray-300 text-sm mb-2">{backupResult.stats?.total_rows} records backed up</p>
+                  <a 
+                    href={backupResult.spreadsheet?.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline text-sm"
+                  >
+                    Open Google Sheet →
+                  </a>
+                </div>
+              ) : (
+                <p className="text-red-400 font-bold">✗ Backup failed: {backupResult.error}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Search */}
         <div className="mb-6">
