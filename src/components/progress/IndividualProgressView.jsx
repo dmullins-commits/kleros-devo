@@ -83,12 +83,19 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
       const reportElement = reportRef.current;
       if (!reportElement) return;
 
+      // Hide elements we don't want in PDF
+      const pdfHideElements = reportElement.querySelectorAll('.pdf-hide');
+      pdfHideElements.forEach(el => el.style.display = 'none');
+
       const canvas = await html2canvas(reportElement, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff'
       });
+
+      // Show elements again
+      pdfHideElements.forEach(el => el.style.display = '');
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -545,8 +552,8 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
 
       {/* Report Content */}
       <div ref={reportRef}>
-        {/* Header for Print */}
-        <div className="header mb-8 pb-6 border-b-2 border-yellow-400">
+        {/* Header for Print - Hidden in PDF */}
+        <div className="header mb-8 pb-6 border-b-2 border-yellow-400 pdf-hide">
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '10px', color: '#000' }}>
             Performance Progress Report
           </h1>
@@ -562,7 +569,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
               <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300">
                 {athlete.first_name} {athlete.last_name}
               </h2>
-              <Badge className="bg-gradient-to-r from-amber-400/30 to-yellow-500/30 text-amber-200 border border-amber-400/50 text-lg px-4 py-2 font-black">
+              <Badge className="bg-gradient-to-r from-amber-400/30 to-yellow-500/30 text-amber-200 border border-amber-400/50 text-lg px-4 py-2 font-black pdf-hide">
                 {Object.values(metricsByCategory).flat().length} METRICS TRACKED
               </Badge>
             </div>
