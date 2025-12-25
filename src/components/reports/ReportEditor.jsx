@@ -6,12 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { 
   FileDown, ArrowLeft, Plus, Trash2, Save, Lock, Unlock, 
-  Type, BarChart3, Move, GripVertical, Settings, TrendingUp, BarChart2
+  Type, BarChart3, Move, GripVertical, Settings, TrendingUp, BarChart2, Users
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription 
+} from "@/components/ui/dialog";
+import { 
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 export default function ReportEditor({
   reportType,
@@ -44,6 +50,10 @@ export default function ReportEditor({
   const [selectedElement, setSelectedElement] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
   const reportRef = useRef(null);
+  const [showCompareDialog, setShowCompareDialog] = useState(false);
+  const [compareMode, setCompareMode] = useState(null); // 'averages' or 'athletes'
+  const [selectedCompareAthletes, setSelectedCompareAthletes] = useState([]);
+  const [athleteRenames, setAthleteRenames] = useState({}); // { athleteId: customName }
 
   // Get relevant records based on report type (handle both flat and nested data structures)
   const relevantRecords = reportType === 'individual' 
@@ -105,7 +115,9 @@ export default function ReportEditor({
       metricIds: [],
       height: 300,
       locked: false,
-      linkedSummaryId: `summary-${timestamp}`
+      linkedSummaryId: `summary-${timestamp}`,
+      compareMode: null,
+      compareAthletes: []
     };
     const summaryElement = {
       id: `summary-${timestamp}`,
@@ -116,6 +128,70 @@ export default function ReportEditor({
     };
     setElements([...elements, graphElement, summaryElement]);
     setSelectedElement(graphElement.id);
+  };
+
+  // Add compare mode to selected graph
+  const handleCompareSelection = (mode) => {
+    if (!selectedEl || selectedEl.type !== 'graph') return;
+    
+    if (mode === 'averages') {
+      updateElement(selectedEl.id, { compareMode: 'averages', compareAthletes: [] });
+      setShowCompareDialog(false);
+    } else if (mode === 'athletes') {
+      setCompareMode('athletes');
+      // Keep dialog open for athlete selection
+    }
+  };
+
+  // Toggle compare athlete
+  const toggleCompareAthlete = (athleteId) => {
+    if (!selectedEl || selectedEl.type !== 'graph') return;
+    
+    const currentAthletes = selectedEl.compareAthletes || [];
+    let newAthletes;
+    
+    if (currentAthletes.includes(athleteId)) {
+      newAthletes = currentAthletes.filter(id => id !== athleteId);
+    } else if (currentAthletes.length < 2) {
+      newAthletes = [...currentAthletes, athleteId];
+    } else {
+      return; // Max 2 athletes
+    }
+    
+    updateElement(selectedEl.id, { 
+      compareMode: newAthletes.length > 0 ? 'athletes' : null, 
+      compareAthletes: newAthletes 
+    });
+  };
+
+  // Remove compare athlete
+  const removeCompareAthlete = (athleteId) => {
+    if (!selectedEl || selectedEl.type !== 'graph') return;
+    
+    const currentAthletes = selectedEl.compareAthletes || [];
+    const newAthletes = currentAthletes.filter(id => id !== athleteId);
+    
+    updateElement(selectedEl.id, { 
+      compareMode: newAthletes.length > 0 ? 'athletes' : null, 
+      compareAthletes: newAthletes 
+    });
+    
+    // Remove rename if exists
+    if (athleteRenames[athleteId]) {
+      const newRenames = { ...athleteRenames };
+      delete newRenames[athleteId];
+      setAthleteRenames(newRenames);
+    }
+  };
+
+  // Rename athlete
+  const renameAthlete = (athleteId) => {
+    const currentName = athleteRenames[athleteId] || athletes.find(a => a.id === athleteId)?.first_name + ' ' + athletes.find(a => a.id === athleteId)?.last_name;
+    const newName = prompt('Enter new display name:', currentName);
+    
+    if (newName && newName.trim()) {
+      setAthleteRenames({ ...athleteRenames, [athleteId]: newName.trim() });
+    }
   };
 
   // Add summary table element
@@ -225,8 +301,8 @@ export default function ReportEditor({
     }));
   };
 
-  // Get chart data for a graph element
-  const getChartData = (metricIds) => {
+  // Get chart data for a graph element (with comparison data)
+  const getChartData = (metricIds, element) => {
     console.log('getChartData called with metricIds:', metricIds);
     console.log('relevantRecords count:', relevantRecords.length);
     
@@ -241,12 +317,28 @@ export default function ReportEditor({
       });
     });
 
+    // Add dates from comparison athletes if applicable
+    if (element?.compareMode === 'athletes' && element?.compareAthletes?.length > 0) {
+      metricIds.forEach(metricId => {
+        records.filter(r => {
+          const mId = r.metric_id || r.data?.metric_id;
+          const aId = r.athlete_id || r.data?.athlete_id;
+          return mId === metricId && element.compareAthletes.includes(aId);
+        }).forEach(r => {
+          const date = r.recorded_date || r.data?.recorded_date;
+          if (date) allDates.add(date);
+        });
+      });
+    }
+
     console.log('allDates:', Array.from(allDates));
 
     const sortedDates = Array.from(allDates).sort();
     
     const chartData = sortedDates.map(date => {
       const dataPoint = { date };
+      
+      // Main athlete/team data
       metricIds.forEach(metricId => {
         if (reportType === 'individual') {
           const record = relevantRecords.find(r => {
@@ -270,6 +362,42 @@ export default function ReportEditor({
           }
         }
       });
+
+      // Add comparison data
+      if (element?.compareMode === 'averages' && reportType === 'individual') {
+        // Add team/class averages
+        metricIds.forEach(metricId => {
+          const dayRecords = records.filter(r => {
+            const recDate = r.recorded_date || r.data?.recorded_date;
+            const mId = r.metric_id || r.data?.metric_id;
+            const aId = r.athlete_id || r.data?.athlete_id;
+            return recDate === date && mId === metricId && athletes.some(a => a.id === aId);
+          });
+          if (dayRecords.length > 0) {
+            const avg = dayRecords.reduce((sum, r) => sum + (r.value ?? r.data?.value ?? 0), 0) / dayRecords.length;
+            dataPoint[`${metricId}_avg`] = avg;
+          }
+        });
+      }
+
+      // Add comparison athletes
+      if (element?.compareMode === 'athletes' && element?.compareAthletes?.length > 0) {
+        element.compareAthletes.forEach(compareAthleteId => {
+          metricIds.forEach(metricId => {
+            const record = records.find(r => {
+              const recDate = r.recorded_date || r.data?.recorded_date;
+              const mId = r.metric_id || r.data?.metric_id;
+              const aId = r.athlete_id || r.data?.athlete_id;
+              return recDate === date && mId === metricId && aId === compareAthleteId;
+            });
+            if (record) {
+              const value = record.value ?? record.data?.value;
+              dataPoint[`${metricId}_${compareAthleteId}`] = value;
+            }
+          });
+        });
+      }
+
       return dataPoint;
     });
     
@@ -422,7 +550,7 @@ export default function ReportEditor({
                     <div style={{ height: element.height }} className="chart-container">
                       <ResponsiveContainer width="100%" height="100%">
                         {element.graphType === 'bar' ? (
-                          <BarChart data={getChartData(element.metricIds)}>
+                          <BarChart data={getChartData(element.metricIds, element)}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                             <XAxis 
                               dataKey="date" 
@@ -539,7 +667,7 @@ export default function ReportEditor({
                             <Legend />
                             {(() => {
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
-                              const chartData = getChartData(element.metricIds);
+                              const chartData = getChartData(element.metricIds, element);
                               const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
                               
                               // Calculate metric averages
@@ -558,7 +686,10 @@ export default function ReportEditor({
                               const hasMultipleUnits = uniqueUnits.length > 1;
                               const needsDualAxis = hasMultipleUnits || needsDualAxisForScale;
                               
-                              return element.metricIds.map((metricId, idx) => {
+                              const bars = [];
+                              
+                              // Main metric bars
+                              element.metricIds.forEach((metricId, idx) => {
                                 const metric = metrics.find(m => m.id === metricId);
                                 
                                 let yAxisId = 'left';
@@ -578,7 +709,7 @@ export default function ReportEditor({
                                   }
                                 }
                                 
-                                return (
+                                bars.push(
                                   <Bar
                                     key={metricId}
                                     dataKey={metricId}
@@ -593,11 +724,59 @@ export default function ReportEditor({
                                     }}
                                   />
                                 );
+
+                                // Add average bars
+                                if (element.compareMode === 'averages') {
+                                  bars.push(
+                                    <Bar
+                                      key={`${metricId}_avg`}
+                                      dataKey={`${metricId}_avg`}
+                                      name={`${metric?.name || metricId} (Avg)`}
+                                      fill={colors[idx % colors.length]}
+                                      fillOpacity={0.5}
+                                      yAxisId={yAxisId}
+                                      label={{ 
+                                        position: 'top', 
+                                        fill: colors[idx % colors.length],
+                                        fontSize: 11,
+                                        formatter: (value) => value != null ? Number(value).toFixed(metric?.decimal_places ?? 2) : ''
+                                      }}
+                                    />
+                                  );
+                                }
+
+                                // Add comparison athlete bars
+                                if (element.compareMode === 'athletes' && element.compareAthletes?.length > 0) {
+                                  element.compareAthletes.forEach((compareAthleteId, aIdx) => {
+                                    const compareAthlete = athletes.find(a => a.id === compareAthleteId);
+                                    const displayName = athleteRenames[compareAthleteId] || 
+                                      `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+                                    
+                                    bars.push(
+                                      <Bar
+                                        key={`${metricId}_${compareAthleteId}`}
+                                        dataKey={`${metricId}_${compareAthleteId}`}
+                                        name={`${metric?.name || metricId} (${displayName})`}
+                                        fill={colors[(idx + aIdx + 1) % colors.length]}
+                                        fillOpacity={0.7}
+                                        yAxisId={yAxisId}
+                                        label={{ 
+                                          position: 'top', 
+                                          fill: colors[(idx + aIdx + 1) % colors.length],
+                                          fontSize: 11,
+                                          formatter: (value) => value != null ? Number(value).toFixed(metric?.decimal_places ?? 2) : ''
+                                        }}
+                                      />
+                                    );
+                                  });
+                                }
                               });
+                              
+                              return bars;
                             })()}
                           </BarChart>
                         ) : (
-                          <LineChart data={getChartData(element.metricIds)}>
+                          <LineChart data={getChartData(element.metricIds, element)}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                             <XAxis 
                               dataKey="date" 
@@ -714,7 +893,7 @@ export default function ReportEditor({
                             <Legend />
                             {(() => {
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
-                              const chartData = getChartData(element.metricIds);
+                              const chartData = getChartData(element.metricIds, element);
                               const uniqueUnits = [...new Set(selectedMetrics.map(m => m.unit))];
                               
                               // Calculate metric averages
@@ -733,7 +912,10 @@ export default function ReportEditor({
                               const hasMultipleUnits = uniqueUnits.length > 1;
                               const needsDualAxis = hasMultipleUnits || needsDualAxisForScale;
                               
-                              return element.metricIds.map((metricId, idx) => {
+                              const lines = [];
+                              
+                              // Main metric lines
+                              element.metricIds.forEach((metricId, idx) => {
                                 const metric = metrics.find(m => m.id === metricId);
                                 
                                 let yAxisId = 'left';
@@ -753,7 +935,7 @@ export default function ReportEditor({
                                   }
                                 }
                                 
-                                return (
+                                lines.push(
                                   <Line
                                     key={metricId}
                                     type="monotone"
@@ -766,7 +948,51 @@ export default function ReportEditor({
                                     yAxisId={yAxisId}
                                   />
                                 );
+
+                                // Add average lines
+                                if (element.compareMode === 'averages') {
+                                  lines.push(
+                                    <Line
+                                      key={`${metricId}_avg`}
+                                      type="monotone"
+                                      dataKey={`${metricId}_avg`}
+                                      name={`${metric?.name || metricId} (Avg)`}
+                                      stroke={colors[idx % colors.length]}
+                                      strokeWidth={2}
+                                      strokeDasharray="5 5"
+                                      dot={{ r: 3 }}
+                                      connectNulls={true}
+                                      yAxisId={yAxisId}
+                                    />
+                                  );
+                                }
+
+                                // Add comparison athlete lines
+                                if (element.compareMode === 'athletes' && element.compareAthletes?.length > 0) {
+                                  element.compareAthletes.forEach((compareAthleteId, aIdx) => {
+                                    const compareAthlete = athletes.find(a => a.id === compareAthleteId);
+                                    const displayName = athleteRenames[compareAthleteId] || 
+                                      `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+                                    
+                                    lines.push(
+                                      <Line
+                                        key={`${metricId}_${compareAthleteId}`}
+                                        type="monotone"
+                                        dataKey={`${metricId}_${compareAthleteId}`}
+                                        name={`${metric?.name || metricId} (${displayName})`}
+                                        stroke={colors[(idx + aIdx + 1) % colors.length]}
+                                        strokeWidth={2}
+                                        strokeDasharray="3 3"
+                                        dot={{ r: 3 }}
+                                        connectNulls={true}
+                                        yAxisId={yAxisId}
+                                      />
+                                    );
+                                  });
+                                }
                               });
+                              
+                              return lines;
                             })()}
                           </LineChart>
                         )}
@@ -843,8 +1069,100 @@ export default function ReportEditor({
 
   const selectedEl = elements.find(el => el.id === selectedElement);
 
+  // Get other athletes for comparison (exclude main athlete if individual report)
+  const compareableAthletes = reportType === 'individual' 
+    ? athletes.filter(a => a.id !== athlete?.id)
+    : [];
+
   return (
-    <div className="flex h-screen">
+    <>
+      {/* Compare Dialog */}
+      <Dialog open={showCompareDialog} onOpenChange={setShowCompareDialog}>
+        <DialogContent className="bg-gray-950 border border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Compare Options</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {compareMode === 'athletes' 
+                ? 'Select up to 2 athletes to compare (click legend to rename/remove)' 
+                : 'Choose a comparison type'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!compareMode ? (
+            <div className="space-y-3 py-4">
+              <Button
+                variant="outline"
+                onClick={() => handleCompareSelection('averages')}
+                className="w-full h-20 border-gray-700 text-white hover:bg-gray-800 flex flex-col items-center justify-center gap-2"
+              >
+                <Users className="w-6 h-6" />
+                <span className="font-bold">Compare to Averages</span>
+                <span className="text-xs text-gray-400">Show team/class average</span>
+              </Button>
+              
+              {reportType === 'individual' && (
+                <Button
+                  variant="outline"
+                  onClick={() => setCompareMode('athletes')}
+                  className="w-full h-20 border-gray-700 text-white hover:bg-gray-800 flex flex-col items-center justify-center gap-2"
+                >
+                  <Users className="w-6 h-6" />
+                  <span className="font-bold">Compare to Another Athlete</span>
+                  <span className="text-xs text-gray-400">Select up to 2 athletes</span>
+                </Button>
+              )}
+            </div>
+          ) : compareMode === 'athletes' ? (
+            <div className="space-y-4 py-4 max-h-96 overflow-y-auto">
+              {compareableAthletes.map(a => {
+                const isSelected = selectedEl?.compareAthletes?.includes(a.id);
+                const canSelect = !isSelected && (selectedEl?.compareAthletes?.length || 0) < 2;
+                
+                return (
+                  <div
+                    key={a.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      isSelected 
+                        ? 'bg-blue-500/20 border-blue-400' 
+                        : canSelect
+                          ? 'bg-gray-900 border-gray-700 hover:border-gray-600'
+                          : 'bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={() => canSelect || isSelected ? toggleCompareAthlete(a.id) : null}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-semibold">{a.first_name} {a.last_name}</p>
+                        <p className="text-gray-400 text-xs">{a.class_grade} • {a.class_period}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCompareDialog(false);
+                setCompareMode(null);
+              }}
+              className="border-gray-700 text-gray-300"
+            >
+              {compareMode === 'athletes' ? 'Done' : 'Cancel'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="flex h-screen">
       {/* Left Sidebar - Element Controls */}
       <div className="w-80 bg-gray-950 border-r border-gray-800 p-4 overflow-y-auto no-print">
         <div className="space-y-6">
@@ -881,6 +1199,20 @@ export default function ReportEditor({
               >
                 <BarChart2 className="w-5 h-5 mb-1" />
                 <span className="text-xs">Bar Graph</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (selectedEl?.type === 'graph') {
+                    setShowCompareDialog(true);
+                    setCompareMode(null);
+                  }
+                }}
+                className="border-gray-700 text-gray-300 hover:bg-gray-800 flex flex-col h-16 col-span-2"
+                disabled={isLocked || !selectedEl || selectedEl.type !== 'graph'}
+              >
+                <Users className="w-5 h-5 mb-1" />
+                <span className="text-xs">Compare</span>
               </Button>
               <Button
                 variant="outline"
@@ -1088,5 +1420,6 @@ export default function ReportEditor({
         </div>
       </div>
     </div>
+    </>
   );
 }
