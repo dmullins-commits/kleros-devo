@@ -92,8 +92,8 @@ export function useMetricRecords(organizationId, options = {}) {
 
       console.log(`useMetricRecords: Fetching ALL records for org "${organizationId}"...`);
 
-      // Fetch ALL records using list() without limit, then filter client-side
-      const allRecords = await MetricRecord.list('-recorded_date');
+      // Fetch ALL records using list() with 1M limit, then filter client-side
+      const allRecords = await MetricRecord.list('-recorded_date', 1000000);
       const orgRecords = allRecords.filter(r => {
         const recOrgId = r.organization_id || r.data?.organization_id;
         return recOrgId === organizationId;
