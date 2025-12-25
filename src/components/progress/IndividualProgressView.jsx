@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
-import { TrendingUp, BarChart3, User, FileDown, Crown, Calendar as CalendarIcon, X, Users } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
+import { TrendingUp, BarChart3, User, FileDown, Crown, Calendar as CalendarIcon, X, Users, TrendingUpIcon } from "lucide-react";
 import { format } from "date-fns";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,6 +26,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
   const [compareMode, setCompareMode] = useState(null);
   const [selectedCompareAthletes, setSelectedCompareAthletes] = useState([]);
   const [athleteRenames, setAthleteRenames] = useState({});
+  const [categoryGraphTypes, setCategoryGraphTypes] = useState({}); // 'line' or 'bar' per category
 
   const categoryColors = {
     strength: "#EF4444",
@@ -653,10 +654,22 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                     <CardHeader className="border-b-2 border-amber-400/30 bg-gradient-to-r from-amber-400/10 to-yellow-500/10">
                       <CardTitle className="flex items-center gap-3">
                         <div 
-                          className="w-8 h-8 rounded-lg flex items-center justify-center border-2 border-amber-400/50"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center border-2 border-amber-400/50 cursor-pointer hover:bg-amber-400/20 transition-all"
                           style={{ backgroundColor: `${categoryColor}30` }}
+                          onClick={() => {
+                            const currentType = categoryGraphTypes[category] || 'line';
+                            setCategoryGraphTypes({
+                              ...categoryGraphTypes,
+                              [category]: currentType === 'line' ? 'bar' : 'line'
+                            });
+                          }}
+                          title={`Toggle to ${categoryGraphTypes[category] === 'bar' ? 'line' : 'bar'} graph`}
                         >
-                          <BarChart3 className="w-4 h-4" style={{ color: categoryColor }} />
+                          {categoryGraphTypes[category] === 'bar' ? (
+                            <BarChart3 className="w-4 h-4" style={{ color: categoryColor }} />
+                          ) : (
+                            <TrendingUpIcon className="w-4 h-4" style={{ color: categoryColor }} />
+                          )}
                         </div>
                         <span className="capitalize text-amber-200 font-black" style={{ background: 'transparent', padding: 0 }}>
                           {category.replace(/_/g, ' ')}
@@ -675,23 +688,26 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                   {/* Combined Chart for All Metrics in Category */}
                   <div className="h-72 mb-4 print-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={combinedChartData} margin={{ top: 20, right: 60, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                          tickFormatter={(date) => {
-                            if (!isValidDate(date)) return 'Invalid';
-                            const [year, month, day] = date.split('-');
-                            return format(new Date(year, month - 1, day), "MMM d");
-                          }}
-                        />
-                        <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
-                        {chunkMetrics.length > 1 && (
-                          <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
-                        )}
-                        <Tooltip content={<CustomTooltip />} />
+                      {(() => {
+                        const ChartComponent = categoryGraphTypes[category] === 'bar' ? BarChart : LineChart;
+                        return (
+                          <ChartComponent data={combinedChartData} margin={{ top: 20, right: 60, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="#9CA3AF"
+                              fontSize={12}
+                              tickFormatter={(date) => {
+                                if (!isValidDate(date)) return 'Invalid';
+                                const [year, month, day] = date.split('-');
+                                return format(new Date(year, month - 1, day), "MMM d");
+                              }}
+                            />
+                            <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                            {chunkMetrics.length > 1 && (
+                              <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
+                            )}
+                            <Tooltip content={<CustomTooltip />} />
                         <Legend 
                           wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold', cursor: 'pointer' }}
                           onClick={(e) => {
@@ -716,81 +732,125 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                             return metric ? `${metric.name} (${metric.unit})` : value;
                           }}
                         />
-                        {(() => {
-                          const lines = [];
-                          const colors = ['#EF4444', '#3B82F6', '#FCD34D', '#A855F7', '#10B981', '#F97316'];
-                          
-                          chunkMetrics.forEach(({ metric }, idx) => {
-                            const color = colors[idx % colors.length];
-                            const yAxisId = idx === 0 ? 'left' : 'right';
-                            const isHidden = hiddenMetrics[metric.id];
-                            
-                            // Main athlete line
-                            lines.push(
-                              <Line 
-                                key={metric.id}
-                                type="linear" 
-                                dataKey={metric.id}
-                                name={`${metric.name} (${metric.unit})`}
-                                stroke={color}
-                                strokeWidth={3}
-                                dot={{ fill: color, strokeWidth: 2, r: 5 }}
-                                activeDot={{ r: 7 }}
-                                connectNulls
-                                yAxisId={yAxisId}
-                                hide={isHidden}
-                                strokeOpacity={isHidden ? 0.2 : 1}
-                              />
-                            );
-
-                            // Add average line
-                            if (compareMode === 'averages') {
-                              const avgColor = colors[(idx + 3) % colors.length];
-                              lines.push(
-                                <Line 
-                                  key={`${metric.id}_avg`}
-                                  type="linear" 
-                                  dataKey={`${metric.id}_avg`}
-                                  name={`${metric.name} (Avg)`}
-                                  stroke={avgColor}
-                                  strokeWidth={2}
-                                  strokeDasharray="5 5"
-                                  dot={{ fill: avgColor, r: 3 }}
-                                  connectNulls
-                                  yAxisId={yAxisId}
-                                />
-                              );
-                            }
-
-                            // Add comparison athlete lines
-                            if (compareMode === 'athletes' && selectedCompareAthletes.length > 0) {
-                              selectedCompareAthletes.forEach((compareAthleteId, aIdx) => {
-                                const compareAthlete = athletes?.find(a => a.id === compareAthleteId);
-                                const displayName = athleteRenames[compareAthleteId] || 
-                                  `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
-                                const compareColor = colors[(idx + 3 + aIdx) % colors.length];
+                            {(() => {
+                              const items = [];
+                              const colors = ['#EF4444', '#3B82F6', '#FCD34D', '#A855F7', '#10B981', '#F97316'];
+                              const isBarChart = categoryGraphTypes[category] === 'bar';
+                              
+                              chunkMetrics.forEach(({ metric }, idx) => {
+                                const color = colors[idx % colors.length];
+                                const yAxisId = idx === 0 ? 'left' : 'right';
+                                const isHidden = hiddenMetrics[metric.id];
                                 
-                                lines.push(
-                                  <Line 
-                                    key={`${metric.id}_${compareAthleteId}`}
-                                    type="linear" 
-                                    dataKey={`${metric.id}_${compareAthleteId}`}
-                                    name={`${metric.name} (${displayName})`}
-                                    stroke={compareColor}
-                                    strokeWidth={2}
-                                    strokeDasharray="3 3"
-                                    dot={{ fill: compareColor, r: 3 }}
-                                    connectNulls
-                                    yAxisId={yAxisId}
-                                  />
-                                );
+                                // Main athlete data
+                                if (isBarChart) {
+                                  items.push(
+                                    <Bar 
+                                      key={metric.id}
+                                      dataKey={metric.id}
+                                      name={`${metric.name} (${metric.unit})`}
+                                      fill={color}
+                                      yAxisId={yAxisId}
+                                      hide={isHidden}
+                                      opacity={isHidden ? 0.2 : 1}
+                                      label={{ position: 'top', fill: color, fontSize: 10 }}
+                                    />
+                                  );
+                                } else {
+                                  items.push(
+                                    <Line 
+                                      key={metric.id}
+                                      type="linear" 
+                                      dataKey={metric.id}
+                                      name={`${metric.name} (${metric.unit})`}
+                                      stroke={color}
+                                      strokeWidth={3}
+                                      dot={{ fill: color, strokeWidth: 2, r: 5 }}
+                                      activeDot={{ r: 7 }}
+                                      connectNulls
+                                      yAxisId={yAxisId}
+                                      hide={isHidden}
+                                      strokeOpacity={isHidden ? 0.2 : 1}
+                                    />
+                                  );
+                                }
+
+                                // Add average line/bar
+                                if (compareMode === 'averages') {
+                                  const avgColor = colors[(idx + 3) % colors.length];
+                                  if (isBarChart) {
+                                    items.push(
+                                      <Bar 
+                                        key={`${metric.id}_avg`}
+                                        dataKey={`${metric.id}_avg`}
+                                        name={`${metric.name} (Avg)`}
+                                        fill={avgColor}
+                                        opacity={0.5}
+                                        yAxisId={yAxisId}
+                                      />
+                                    );
+                                  } else {
+                                    items.push(
+                                      <Line 
+                                        key={`${metric.id}_avg`}
+                                        type="linear" 
+                                        dataKey={`${metric.id}_avg`}
+                                        name={`${metric.name} (Avg)`}
+                                        stroke={avgColor}
+                                        strokeWidth={2}
+                                        strokeDasharray="5 5"
+                                        dot={{ fill: avgColor, r: 3 }}
+                                        connectNulls
+                                        yAxisId={yAxisId}
+                                      />
+                                    );
+                                  }
+                                }
+
+                                // Add comparison athlete lines/bars
+                                if (compareMode === 'athletes' && selectedCompareAthletes.length > 0) {
+                                  selectedCompareAthletes.forEach((compareAthleteId, aIdx) => {
+                                    const compareAthlete = athletes?.find(a => a.id === compareAthleteId);
+                                    const displayName = athleteRenames[compareAthleteId] || 
+                                      `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+                                    const compareColor = colors[(idx + 3 + aIdx) % colors.length];
+                                    
+                                    if (isBarChart) {
+                                      items.push(
+                                        <Bar 
+                                          key={`${metric.id}_${compareAthleteId}`}
+                                          dataKey={`${metric.id}_${compareAthleteId}`}
+                                          name={`${metric.name} (${displayName})`}
+                                          fill={compareColor}
+                                          opacity={0.6}
+                                          yAxisId={yAxisId}
+                                        />
+                                      );
+                                    } else {
+                                      items.push(
+                                        <Line 
+                                          key={`${metric.id}_${compareAthleteId}`}
+                                          type="linear" 
+                                          dataKey={`${metric.id}_${compareAthleteId}`}
+                                          name={`${metric.name} (${displayName})`}
+                                          stroke={compareColor}
+                                          strokeWidth={2}
+                                          strokeDasharray="3 3"
+                                          dot={{ fill: compareColor, r: 3 }}
+                                          connectNulls
+                                          yAxisId={yAxisId}
+                                        />
+                                      );
+                                    }
+                                  });
+                                }
                               });
-                            }
-                          });
-                          
-                          return lines;
-                        })()}
-                      </LineChart>
+                              
+                              return items;
+                            })()}
+                          </ChartComponent>
+                        );
+                      })()}
                     </ResponsiveContainer>
                   </div>
 
