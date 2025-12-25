@@ -47,35 +47,32 @@ export default function Metrics() {
         MetricCategory.list()
       ]);
       
-      // Filter athletes by org teams FIRST
-      const filteredAthletes = athletesData.filter(a =>
-        a.team_ids?.some(tid => teamIds.includes(tid))
-      );
+      // Filter athletes by organization
+      const filteredAthletes = athletesData.filter(a => {
+        const orgId = a.organization_id || a.data?.organization_id;
+        return orgId === selectedOrganization.id;
+      });
       
       // Get athlete IDs for filtering
       const athleteIdsSet = new Set(filteredAthletes.map(a => a.id));
       
-      // Find which metrics have data for this org's athletes
-      const orgMetricsWithData = new Set(
-        recordsData
-          .filter(r => athleteIdsSet.has(r.athlete_id))
-          .map(r => r.metric_id)
-      );
-      
       // Filter metrics by organization - ONLY show metrics belonging to this organization
       const filteredMetrics = metricsData.filter(m => {
-        return m.organization_id === selectedOrganization.id;
+        const orgId = m.organization_id || m.data?.organization_id;
+        return orgId === selectedOrganization.id;
       });
       
       // Filter categories by organization (system categories + org-specific)
-      const filteredCategories = categoriesData.filter(c =>
-        !c.organization_id || c.is_mandatory || c.organization_id === selectedOrganization.id
-      );
+      const filteredCategories = categoriesData.filter(c => {
+        const orgId = c.organization_id || c.data?.organization_id;
+        return !orgId || c.is_mandatory || orgId === selectedOrganization.id;
+      });
       
-      // Filter records by org athletes
-      const filteredRecords = recordsData.filter(r =>
-        athleteIdsSet.has(r.athlete_id)
-      );
+      // Filter records by org athletes (handle nested data structure)
+      const filteredRecords = recordsData.filter(r => {
+        const athleteId = r.athlete_id || r.data?.athlete_id;
+        return athleteIdsSet.has(athleteId);
+      });
       
       setMetrics(filteredMetrics);
       setRecords(filteredRecords);
