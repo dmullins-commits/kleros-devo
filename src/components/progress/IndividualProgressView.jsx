@@ -574,9 +574,47 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
           }
           .pdf-export-mode h2 {
             background: #d4af37 !important;
-            padding: 16px !important;
+            padding: 12px !important;
             border-radius: 8px !important;
             color: #000000 !important;
+            font-size: 20px !important;
+          }
+          .pdf-export-mode .category-section {
+            margin-bottom: 16px !important;
+          }
+          .pdf-export-mode .print-chart-container {
+            height: 180px !important;
+            margin-bottom: 8px !important;
+          }
+          .pdf-export-mode .metric-item {
+            margin-bottom: 12px !important;
+            padding: 8px !important;
+          }
+          .pdf-export-mode .metric-header {
+            margin-bottom: 6px !important;
+          }
+          .pdf-export-mode .metric-stats {
+            gap: 8px !important;
+            margin-top: 6px !important;
+            padding: 8px !important;
+          }
+          .pdf-export-mode .stat-box {
+            padding: 6px !important;
+          }
+          .pdf-export-mode .mb-8 {
+            margin-bottom: 12px !important;
+          }
+          .pdf-export-mode .space-y-6 {
+            gap: 12px !important;
+          }
+          .pdf-export-mode .space-y-4 {
+            gap: 8px !important;
+          }
+          .pdf-export-mode .p-6 {
+            padding: 12px !important;
+          }
+          .pdf-export-mode .p-4 {
+            padding: 8px !important;
           }
         `}</style>
         
