@@ -1,4 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,112 +76,45 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     });
   }, [records, startDate, endDate]);
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (!athlete) return;
 
-    const printWindow = window.open('', '_blank');
-    const reportHTML = reportRef.current.innerHTML;
-    
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${athlete.first_name} ${athlete.last_name} - Progress Report</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              background: white;
-              color: black;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              border-bottom: 3px solid #FCD34D;
-              padding-bottom: 20px;
-            }
-            .athlete-info {
-              display: flex;
-              justify-content: space-around;
-              margin-bottom: 30px;
-              background: #f5f5f5;
-              padding: 15px;
-              border-radius: 8px;
-            }
-            .category-section {
-              margin-bottom: 10px;
-            }
-            .category-title {
-              background: #333;
-              color: white;
-              padding: 5px 10px;
-              border-radius: 4px;
-              margin-bottom: 8px;
-              font-size: 12px;
-            }
-            .metric-item {
-              margin-bottom: 8px;
-              padding: 6px;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-            }
-            .print-chart-container {
-              height: 140px !important;
-              margin-bottom: 8px;
-            }
-            .metric-header {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 10px;
-            }
-            .metric-stats {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 4px;
-              margin-top: 3px;
-            }
-            .stat-box {
-              text-align: center;
-              padding: 4px;
-              background: #f9f9f9;
-              border-radius: 4px;
-              font-size: 9px;
-            }
-            .metric-header {
-              margin-bottom: 3px;
-              font-size: 11px;
-            }
-            .athlete-info {
-              padding: 8px;
-              margin-bottom: 10px;
-            }
-            .header {
-              margin-bottom: 10px;
-              padding-bottom: 8px;
-            }
-            h1 { font-size: 18px !important; }
-            .no-print { display: none; }
-            .print-chart-container { height: 140px !important; }
-            @media print {
-              body { margin: 0; padding: 10px; }
-              .print-chart-container { height: 140px !important; }
-            }
-          </style>
-        </head>
-        <body>
-          ${reportHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
-              };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    try {
+      const reportElement = reportRef.current;
+      if (!reportElement) return;
+
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save(`${athlete.first_name}_${athlete.last_name}_Progress_Report.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF');
+    }
   };
 
   const handleCompareSelection = (mode) => {
