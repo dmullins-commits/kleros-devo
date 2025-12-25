@@ -616,6 +616,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
           .pdf-export-mode .p-4 {
             padding: 8px !important;
           }
+          .pdf-export-mode .page-break-after {
+            page-break-after: always !important;
+            break-after: always !important;
+          }
         `}</style>
         
         {/* Header for Print - Hidden in PDF */}
@@ -643,7 +647,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
         </Card>
 
         {/* Metrics by Category - COMBINED GRAPHS */}
-        {Object.entries(metricsByCategory).map(([category, categoryMetrics]) => {
+        {Object.entries(metricsByCategory).map(([category, categoryMetrics], categoryIndex) => {
           const categoryColor = categoryColors[category] || categoryColors.other;
 
           // Split into chunks of max 4 metrics
@@ -653,7 +657,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
           }
 
           return (
-            <div key={category} className="category-section space-y-6">
+            <div key={category} className={`category-section space-y-6 ${(categoryIndex + 1) % 2 === 0 ? 'page-break-after' : ''}`}>
               {metricChunks.map((chunkMetrics, chunkIdx) => {
                 const combinedChartData = getCombinedChartData(chunkMetrics);
 
