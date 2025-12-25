@@ -664,7 +664,27 @@ export default function ReportEditor({
                                 return [value?.toFixed(metric?.decimal_places ?? 2), `${name} (${metric?.unit || ''})`];
                               }}
                             />
-                            <Legend />
+                            <Legend 
+                              onClick={(e) => {
+                                if (!isLocked && e?.dataKey) {
+                                  // Check if this is a comparison athlete
+                                  const match = e.dataKey.match(/^(.+)_([a-f0-9-]+)$/);
+                                  if (match && element.compareAthletes?.includes(match[2])) {
+                                    const athleteId = match[2];
+                                    const compareAthlete = athletes.find(a => a.id === athleteId);
+                                    if (compareAthlete) {
+                                      const action = window.confirm(`Options for ${e.value}:\n\nOK = Rename\nCancel = Remove`);
+                                      if (action === true) {
+                                        renameAthlete(athleteId);
+                                      } else {
+                                        removeCompareAthlete(athleteId);
+                                      }
+                                    }
+                                  }
+                                }
+                              }}
+                              wrapperStyle={{ cursor: 'pointer' }}
+                            />
                             {(() => {
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
                               const chartData = getChartData(element.metricIds, element);
@@ -890,7 +910,27 @@ export default function ReportEditor({
                                 return [value?.toFixed(metric?.decimal_places ?? 2), `${name} (${metric?.unit || ''})`];
                               }}
                             />
-                            <Legend />
+                            <Legend 
+                              onClick={(e) => {
+                                if (!isLocked && e?.dataKey) {
+                                  // Check if this is a comparison athlete
+                                  const match = e.dataKey.match(/^(.+)_([a-f0-9-]+)$/);
+                                  if (match && element.compareAthletes?.includes(match[2])) {
+                                    const athleteId = match[2];
+                                    const compareAthlete = athletes.find(a => a.id === athleteId);
+                                    if (compareAthlete) {
+                                      const action = window.confirm(`Options for ${e.value}:\n\nOK = Rename\nCancel = Remove`);
+                                      if (action === true) {
+                                        renameAthlete(athleteId);
+                                      } else {
+                                        removeCompareAthlete(athleteId);
+                                      }
+                                    }
+                                  }
+                                }
+                              }}
+                              wrapperStyle={{ cursor: 'pointer' }}
+                            />
                             {(() => {
                               const selectedMetrics = element.metricIds.map(id => metrics.find(m => m.id === id)).filter(Boolean);
                               const chartData = getChartData(element.metricIds, element);
