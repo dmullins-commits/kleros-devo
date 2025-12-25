@@ -92,8 +92,8 @@ export function useMetricRecords(organizationId, options = {}) {
 
       console.log(`useMetricRecords: Fetching ALL records for org "${organizationId}"...`);
 
-      // Fetch ALL records with explicit high limit, then filter client-side
-      const allRecords = await MetricRecord.list('-recorded_date', 1000000);
+      // Fetch ALL records using list() without limit, then filter client-side
+      const allRecords = await MetricRecord.list('-recorded_date');
       const orgRecords = allRecords.filter(r => {
         const recOrgId = r.organization_id || r.data?.organization_id;
         return recOrgId === organizationId;
@@ -104,7 +104,7 @@ export function useMetricRecords(organizationId, options = {}) {
       return orgRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
-      },
+    },
     enabled: !!organizationId,
     staleTime: 2 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
