@@ -745,19 +745,19 @@ export default function ReportEditor({
                                   />
                                 );
 
-                                // Add average bars
+                                // Add average bars (using different color from main data)
                                 if (element.compareMode === 'averages') {
+                                  const avgColor = colors[(idx + 3) % colors.length];
                                   bars.push(
                                     <Bar
                                       key={`${metricId}_avg`}
                                       dataKey={`${metricId}_avg`}
                                       name={`${metric?.name || metricId} (Avg)`}
-                                      fill={colors[idx % colors.length]}
-                                      fillOpacity={0.5}
+                                      fill={avgColor}
                                       yAxisId={yAxisId}
                                       label={{ 
                                         position: 'top', 
-                                        fill: colors[idx % colors.length],
+                                        fill: avgColor,
                                         fontSize: 11,
                                         formatter: (value) => value != null ? Number(value).toFixed(metric?.decimal_places ?? 2) : ''
                                       }}
@@ -765,24 +765,24 @@ export default function ReportEditor({
                                   );
                                 }
 
-                                // Add comparison athlete bars
+                                // Add comparison athlete bars (using distinctly different colors)
                                 if (element.compareMode === 'athletes' && element.compareAthletes?.length > 0) {
                                   element.compareAthletes.forEach((compareAthleteId, aIdx) => {
                                     const compareAthlete = athletes.find(a => a.id === compareAthleteId);
                                     const displayName = athleteRenames[compareAthleteId] || 
                                       `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+                                    const compareColor = colors[(idx + 3 + aIdx) % colors.length];
                                     
                                     bars.push(
                                       <Bar
                                         key={`${metricId}_${compareAthleteId}`}
                                         dataKey={`${metricId}_${compareAthleteId}`}
                                         name={`${metric?.name || metricId} (${displayName})`}
-                                        fill={colors[(idx + aIdx + 1) % colors.length]}
-                                        fillOpacity={0.7}
+                                        fill={compareColor}
                                         yAxisId={yAxisId}
                                         label={{ 
                                           position: 'top', 
-                                          fill: colors[(idx + aIdx + 1) % colors.length],
+                                          fill: compareColor,
                                           fontSize: 11,
                                           formatter: (value) => value != null ? Number(value).toFixed(metric?.decimal_places ?? 2) : ''
                                         }}
@@ -989,15 +989,16 @@ export default function ReportEditor({
                                   />
                                 );
 
-                                // Add average lines
+                                // Add average lines (using different color from main data)
                                 if (element.compareMode === 'averages') {
+                                  const avgColor = colors[(idx + 3) % colors.length];
                                   lines.push(
                                     <Line
                                       key={`${metricId}_avg`}
                                       type="monotone"
                                       dataKey={`${metricId}_avg`}
                                       name={`${metric?.name || metricId} (Avg)`}
-                                      stroke={colors[idx % colors.length]}
+                                      stroke={avgColor}
                                       strokeWidth={2}
                                       strokeDasharray="5 5"
                                       dot={{ r: 3 }}
@@ -1007,12 +1008,13 @@ export default function ReportEditor({
                                   );
                                 }
 
-                                // Add comparison athlete lines
+                                // Add comparison athlete lines (using distinctly different colors)
                                 if (element.compareMode === 'athletes' && element.compareAthletes?.length > 0) {
                                   element.compareAthletes.forEach((compareAthleteId, aIdx) => {
                                     const compareAthlete = athletes.find(a => a.id === compareAthleteId);
                                     const displayName = athleteRenames[compareAthleteId] || 
                                       `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+                                    const compareColor = colors[(idx + 3 + aIdx) % colors.length];
                                     
                                     lines.push(
                                       <Line
@@ -1020,7 +1022,7 @@ export default function ReportEditor({
                                         type="monotone"
                                         dataKey={`${metricId}_${compareAthleteId}`}
                                         name={`${metric?.name || metricId} (${displayName})`}
-                                        stroke={colors[(idx + aIdx + 1) % colors.length]}
+                                        stroke={compareColor}
                                         strokeWidth={2}
                                         strokeDasharray="3 3"
                                         dot={{ r: 3 }}
