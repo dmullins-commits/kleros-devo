@@ -91,7 +91,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#0a0a0a'
       });
 
       // Show elements again
@@ -551,7 +551,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
       </Card>
 
       {/* Report Content */}
-      <div ref={reportRef}>
+      <div ref={reportRef} style={{ backgroundColor: '#0a0a0a', padding: '0' }}>
         {/* Header for Print - Hidden in PDF */}
         <div className="header mb-8 pb-6 border-b-2 border-yellow-400 pdf-hide">
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '10px', color: '#000' }}>
@@ -563,10 +563,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
         </div>
 
         {/* Athlete Info Card */}
-        <Card className="bg-gradient-to-br from-gray-950 via-black to-gray-950 border-2 border-amber-400/30 mb-8">
-          <CardContent className="p-6">
+        <Card className="bg-gradient-to-br from-gray-950 via-black to-gray-950 border-2 border-amber-400/30 mb-8" style={{ marginTop: 0 }}>
+          <CardContent className="p-6" style={{ backgroundColor: '#d4af37', borderRadius: '8px' }}>
             <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300">
+              <h2 className="text-2xl font-black" style={{ color: '#000000' }}>
                 {athlete.first_name} {athlete.last_name}
               </h2>
               <Badge className="bg-gradient-to-r from-amber-400/30 to-yellow-500/30 text-amber-200 border border-amber-400/50 text-lg px-4 py-2 font-black pdf-hide">
