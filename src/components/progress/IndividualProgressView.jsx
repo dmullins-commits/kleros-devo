@@ -4,14 +4,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
-import { TrendingUp, BarChart3, User, FileDown, Crown, Calendar as CalendarIcon, X } from "lucide-react";
+import { TrendingUp, BarChart3, User, FileDown, Crown, Calendar as CalendarIcon, X, Users } from "lucide-react";
 import { format } from "date-fns";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription 
+} from "@/components/ui/dialog";
 
-export default function IndividualProgressView({ athlete, metrics, records, isLoading }) {
+export default function IndividualProgressView({ athlete, metrics, records, isLoading, athletes }) {
   const reportRef = useRef(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [startDate, setStartDate] = useState(null);
@@ -19,6 +22,10 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [hiddenMetrics, setHiddenMetrics] = useState({});
+  const [showCompareDialog, setShowCompareDialog] = useState(false);
+  const [compareMode, setCompareMode] = useState(null);
+  const [selectedCompareAthletes, setSelectedCompareAthletes] = useState([]);
+  const [athleteRenames, setAthleteRenames] = useState({});
 
   const categoryColors = {
     strength: "#EF4444",
@@ -174,6 +181,52 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     printWindow.document.close();
   };
 
+  const handleCompareSelection = (mode) => {
+    if (mode === 'averages') {
+      setCompareMode('averages');
+      setSelectedCompareAthletes([]);
+      setShowCompareDialog(false);
+    } else if (mode === 'athletes') {
+      setCompareMode('athletes');
+    }
+  };
+
+  const toggleCompareAthlete = (athleteId) => {
+    setSelectedCompareAthletes(prev => {
+      if (prev.includes(athleteId)) {
+        const newAthletes = prev.filter(id => id !== athleteId);
+        if (newAthletes.length === 0) setCompareMode(null);
+        return newAthletes;
+      } else if (prev.length < 2) {
+        return [...prev, athleteId];
+      }
+      return prev;
+    });
+  };
+
+  const removeCompareAthlete = (athleteId) => {
+    setSelectedCompareAthletes(prev => {
+      const newAthletes = prev.filter(id => id !== athleteId);
+      if (newAthletes.length === 0) setCompareMode(null);
+      return newAthletes;
+    });
+    if (athleteRenames[athleteId]) {
+      const newRenames = { ...athleteRenames };
+      delete newRenames[athleteId];
+      setAthleteRenames(newRenames);
+    }
+  };
+
+  const renameAthlete = (athleteId) => {
+    const compareAthlete = athletes?.find(a => a.id === athleteId);
+    const currentName = athleteRenames[athleteId] || `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+    const newName = prompt('Enter new display name:', currentName);
+    
+    if (newName && newName.trim()) {
+      setAthleteRenames({ ...athleteRenames, [athleteId]: newName.trim() });
+    }
+  };
+
 
 
   const getMetricsByCategory = () => {
@@ -212,7 +265,7 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
     return grouped;
   };
 
-  // NEW: Get combined chart data for all metrics in a category
+  // NEW: Get combined chart data for all metrics in a category (with comparison data)
   const getCombinedChartData = (categoryMetrics) => {
     const allDates = new Set();
     categoryMetrics.forEach(({ records: metricRecords }) => {
@@ -221,6 +274,20 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
         if (isValidDate(date)) allDates.add(date);
       });
     });
+
+    // Add dates from comparison athletes
+    if (compareMode === 'athletes' && selectedCompareAthletes.length > 0) {
+      categoryMetrics.forEach(({ metric }) => {
+        records.filter(r => {
+          const mId = r.metric_id || r.data?.metric_id;
+          const aId = r.athlete_id || r.data?.athlete_id;
+          return mId === metric.id && selectedCompareAthletes.includes(aId);
+        }).forEach(r => {
+          const date = r.recorded_date || r.data?.recorded_date;
+          if (isValidDate(date)) allDates.add(date);
+        });
+      });
+    }
 
     const sortedDates = Array.from(allDates).sort();
     
@@ -235,10 +302,42 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
           const value = record.value ?? record.data?.value;
           dataPoint[metric.id] = value;
         }
+
+        // Add comparison data
+        if (compareMode === 'averages' && athletes) {
+          const dayRecords = records.filter(r => {
+            const recDate = r.recorded_date || r.data?.recorded_date;
+            const mId = r.metric_id || r.data?.metric_id;
+            const aId = r.athlete_id || r.data?.athlete_id;
+            return recDate === date && mId === metric.id && athletes.some(a => a.id === aId);
+          });
+          if (dayRecords.length > 0) {
+            const avg = dayRecords.reduce((sum, r) => sum + (r.value ?? r.data?.value ?? 0), 0) / dayRecords.length;
+            dataPoint[`${metric.id}_avg`] = avg;
+          }
+        }
+
+        // Add comparison athletes
+        if (compareMode === 'athletes' && selectedCompareAthletes.length > 0) {
+          selectedCompareAthletes.forEach(compareAthleteId => {
+            const compareRecord = records.find(r => {
+              const recDate = r.recorded_date || r.data?.recorded_date;
+              const mId = r.metric_id || r.data?.metric_id;
+              const aId = r.athlete_id || r.data?.athlete_id;
+              return recDate === date && mId === metric.id && aId === compareAthleteId;
+            });
+            if (compareRecord) {
+              const value = compareRecord.value ?? compareRecord.data?.value;
+              dataPoint[`${metric.id}_${compareAthleteId}`] = value;
+            }
+          });
+        }
       });
       return dataPoint;
     });
   };
+
+  const compareableAthletes = athletes?.filter(a => a.id !== athlete?.id) || [];
 
   const getDecimalPlaces = (metric) => metric?.decimal_places ?? 2;
   
@@ -311,7 +410,94 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* Compare Dialog */}
+      <Dialog open={showCompareDialog} onOpenChange={setShowCompareDialog}>
+        <DialogContent className="bg-gray-950 border border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Compare Options</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {compareMode === 'athletes' 
+                ? 'Select up to 2 athletes to compare (click legend to rename/remove)' 
+                : 'Choose a comparison type'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!compareMode || compareMode === 'averages' ? (
+            <div className="space-y-3 py-4">
+              <Button
+                variant="outline"
+                onClick={() => handleCompareSelection('averages')}
+                className="w-full h-20 border-gray-700 text-white hover:bg-gray-800 flex flex-col items-center justify-center gap-2"
+              >
+                <Users className="w-6 h-6" />
+                <span className="font-bold">Compare to Averages</span>
+                <span className="text-xs text-gray-400">Show team/class average</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => setCompareMode('athletes')}
+                className="w-full h-20 border-gray-700 text-white hover:bg-gray-800 flex flex-col items-center justify-center gap-2"
+              >
+                <Users className="w-6 h-6" />
+                <span className="font-bold">Compare to Another Athlete</span>
+                <span className="text-xs text-gray-400">Select up to 2 athletes</span>
+              </Button>
+            </div>
+          ) : null}
+
+          {compareMode === 'athletes' && (
+            <div className="space-y-4 py-4 max-h-96 overflow-y-auto">
+              {compareableAthletes.map(a => {
+                const isSelected = selectedCompareAthletes.includes(a.id);
+                const canSelect = !isSelected && selectedCompareAthletes.length < 2;
+                
+                return (
+                  <div
+                    key={a.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      isSelected 
+                        ? 'bg-blue-500/20 border-blue-400' 
+                        : canSelect
+                          ? 'bg-gray-900 border-gray-700 hover:border-gray-600'
+                          : 'bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={() => canSelect || isSelected ? toggleCompareAthlete(a.id) : null}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-semibold">{a.first_name} {a.last_name}</p>
+                        <p className="text-gray-400 text-xs">{a.class_grade} • {a.class_period}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCompareDialog(false);
+                setCompareMode(null);
+              }}
+              className="border-gray-700 text-gray-300"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-6">
       {saveSuccess && (
         <Alert className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-2 border-amber-400">
           <Crown className="h-5 w-5 text-amber-400" />
@@ -400,13 +586,23 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
               )}
             </div>
 
-            <Button 
-              onClick={exportToPDF}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black shadow-lg shadow-amber-500/50"
-            >
-              <FileDown className="w-4 h-4 mr-2" />
-              EXPORT TO PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCompareDialog(true)}
+                className="border-gray-700 text-gray-300 hover:bg-gray-800"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Compare
+              </Button>
+              <Button 
+                onClick={exportToPDF}
+                className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-black font-black shadow-lg shadow-amber-500/50"
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                EXPORT TO PDF
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -499,35 +695,101 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                         <Legend 
                           wrapperStyle={{ color: '#f59e0b', fontWeight: 'bold', cursor: 'pointer' }}
                           onClick={(e) => {
-                            if (e.dataKey) handleLegendClick(e.dataKey);
+                            if (e.dataKey) {
+                              // Check if this is a comparison athlete
+                              const match = e.dataKey.match(/^(.+)_([a-f0-9-]+)$/);
+                              if (match && selectedCompareAthletes.includes(match[2])) {
+                                const athleteId = match[2];
+                                const action = window.confirm(`Options for ${e.value}:\n\nOK = Rename\nCancel = Remove`);
+                                if (action === true) {
+                                  renameAthlete(athleteId);
+                                } else {
+                                  removeCompareAthlete(athleteId);
+                                }
+                              } else {
+                                handleLegendClick(e.dataKey);
+                              }
+                            }
                           }}
                           formatter={(value) => {
                             const metric = metrics.find(m => m.id === value);
                             return metric ? `${metric.name} (${metric.unit})` : value;
                           }}
                         />
-                        {chunkMetrics.map(({ metric }, idx) => {
+                        {(() => {
+                          const lines = [];
                           const colors = ['#EF4444', '#3B82F6', '#FCD34D', '#A855F7', '#10B981', '#F97316'];
-                          const color = colors[idx % colors.length];
-                          const yAxisId = idx === 0 ? 'left' : 'right';
-                          const isHidden = hiddenMetrics[metric.id];
-                          return (
-                            <Line 
-                              key={metric.id}
-                              type="linear" 
-                              dataKey={metric.id}
-                              name={`${metric.name} (${metric.unit})`}
-                              stroke={color}
-                              strokeWidth={3}
-                              dot={{ fill: color, strokeWidth: 2, r: 5 }}
-                              activeDot={{ r: 7 }}
-                              connectNulls
-                              yAxisId={yAxisId}
-                              hide={isHidden}
-                              strokeOpacity={isHidden ? 0.2 : 1}
-                            />
-                          );
-                        })}
+                          
+                          chunkMetrics.forEach(({ metric }, idx) => {
+                            const color = colors[idx % colors.length];
+                            const yAxisId = idx === 0 ? 'left' : 'right';
+                            const isHidden = hiddenMetrics[metric.id];
+                            
+                            // Main athlete line
+                            lines.push(
+                              <Line 
+                                key={metric.id}
+                                type="linear" 
+                                dataKey={metric.id}
+                                name={`${metric.name} (${metric.unit})`}
+                                stroke={color}
+                                strokeWidth={3}
+                                dot={{ fill: color, strokeWidth: 2, r: 5 }}
+                                activeDot={{ r: 7 }}
+                                connectNulls
+                                yAxisId={yAxisId}
+                                hide={isHidden}
+                                strokeOpacity={isHidden ? 0.2 : 1}
+                              />
+                            );
+
+                            // Add average line
+                            if (compareMode === 'averages') {
+                              const avgColor = colors[(idx + 3) % colors.length];
+                              lines.push(
+                                <Line 
+                                  key={`${metric.id}_avg`}
+                                  type="linear" 
+                                  dataKey={`${metric.id}_avg`}
+                                  name={`${metric.name} (Avg)`}
+                                  stroke={avgColor}
+                                  strokeWidth={2}
+                                  strokeDasharray="5 5"
+                                  dot={{ fill: avgColor, r: 3 }}
+                                  connectNulls
+                                  yAxisId={yAxisId}
+                                />
+                              );
+                            }
+
+                            // Add comparison athlete lines
+                            if (compareMode === 'athletes' && selectedCompareAthletes.length > 0) {
+                              selectedCompareAthletes.forEach((compareAthleteId, aIdx) => {
+                                const compareAthlete = athletes?.find(a => a.id === compareAthleteId);
+                                const displayName = athleteRenames[compareAthleteId] || 
+                                  `${compareAthlete?.first_name || ''} ${compareAthlete?.last_name || ''}`.trim();
+                                const compareColor = colors[(idx + 3 + aIdx) % colors.length];
+                                
+                                lines.push(
+                                  <Line 
+                                    key={`${metric.id}_${compareAthleteId}`}
+                                    type="linear" 
+                                    dataKey={`${metric.id}_${compareAthleteId}`}
+                                    name={`${metric.name} (${displayName})`}
+                                    stroke={compareColor}
+                                    strokeWidth={2}
+                                    strokeDasharray="3 3"
+                                    dot={{ fill: compareColor, r: 3 }}
+                                    connectNulls
+                                    yAxisId={yAxisId}
+                                  />
+                                );
+                              });
+                            }
+                          });
+                          
+                          return lines;
+                        })()}
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -616,5 +878,6 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
               })}
       </div>
     </div>
+    </>
   );
 }
