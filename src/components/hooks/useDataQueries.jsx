@@ -80,7 +80,7 @@ export function useMetrics(organizationId, options = {}) {
   });
 }
 
-// Metric Records query hook - server-side filtered by organization
+// Metric Records query hook - fetch ALL records then filter client-side
 export function useMetricRecords(organizationId, options = {}) {
   return useQuery({
     queryKey: queryKeys.metricRecords(organizationId),
@@ -90,17 +90,26 @@ export function useMetricRecords(organizationId, options = {}) {
         return [];
       }
 
-      console.log(`useMetricRecords: Fetching records for org "${organizationId}" using filter...`);
+      console.log(`useMetricRecords: Fetching ALL records with high limit...`);
 
-      // Use server-side filtering - same as RawDataPanel which works
-      const orgRecords = await MetricRecord.filter({ organization_id: organizationId });
+      // Fetch ALL records with no filtering - use list() with very high limit
+      const allRecords = await MetricRecord.list('-recorded_date', 50000);
 
-      console.log(`useMetricRecords RESULT: ${orgRecords.length} records found`);
-      console.log(`useMetricRecords SAMPLE:`, orgRecords.slice(0, 2).map(r => ({
+      console.log(`useMetricRecords: Fetched ${allRecords.length} total records from database`);
+
+      // Filter client-side by organization
+      const orgRecords = allRecords.filter(r => {
+        const recOrgId = r.organization_id || r.data?.organization_id;
+        return recOrgId === organizationId;
+      });
+
+      console.log(`useMetricRecords RESULT: ${orgRecords.length} records for org "${organizationId}"`);
+      console.log(`useMetricRecords SAMPLE:`, orgRecords.slice(0, 3).map(r => ({
         id: r.id,
         athlete_id: r.athlete_id || r.data?.athlete_id,
         metric_id: r.metric_id || r.data?.metric_id,
         value: r.value ?? r.data?.value,
+        recorded_date: r.recorded_date || r.data?.recorded_date,
         organization_id: r.organization_id || r.data?.organization_id
       })));
 
@@ -108,7 +117,7 @@ export function useMetricRecords(organizationId, options = {}) {
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
 
-      console.log(`useMetricRecords NORMALIZED SAMPLE:`, normalized.slice(0, 2));
+      console.log(`useMetricRecords FINAL COUNT: ${normalized.length} normalized records`);
 
       return normalized;
     },
