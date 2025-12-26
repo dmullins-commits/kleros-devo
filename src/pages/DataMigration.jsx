@@ -286,6 +286,81 @@ export default function DataMigration() {
           </CardContent>
         </Card>
 
+        <Card className="bg-gray-950 border border-purple-400/30">
+          <CardHeader className="border-b border-purple-400/30">
+            <CardTitle className="flex items-center gap-3 text-purple-200">
+              <AlertCircle className="w-6 h-6 text-purple-400" />
+              Debug: Data Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Button
+              onClick={async () => {
+                try {
+                  const [records, athletes, metrics, orgs] = await Promise.all([
+                    base44.entities.MetricRecord.list('-created_date', 100),
+                    base44.entities.Athlete.list('-created_date', 100),
+                    base44.entities.Metric.list('-created_date', 100),
+                    Organization.list()
+                  ]);
+                  
+                  console.log('=== DATA DEBUG ===');
+                  console.log('Organizations:', orgs.map(o => ({ id: o.id, name: o.name || o.data?.name })));
+                  console.log('Sample Athletes (first 5):', athletes.slice(0, 5).map(a => ({
+                    id: a.id,
+                    name: `${a.first_name || a.data?.first_name} ${a.last_name || a.data?.last_name}`,
+                    org_id: a.organization_id || a.data?.organization_id
+                  })));
+                  console.log('Sample Records (first 5):', records.slice(0, 5).map(r => ({
+                    id: r.id,
+                    athlete_id: r.athlete_id || r.data?.athlete_id,
+                    metric_id: r.metric_id || r.data?.metric_id,
+                    org_id: r.organization_id || r.data?.organization_id,
+                    value: r.value || r.data?.value
+                  })));
+                  console.log('Sample Metrics (first 5):', metrics.slice(0, 5).map(m => ({
+                    id: m.id,
+                    name: m.name || m.data?.name,
+                    org_id: m.organization_id || m.data?.organization_id
+                  })));
+                  
+                  // Count by org
+                  const athletesByOrg = {};
+                  const recordsByOrg = {};
+                  const metricsByOrg = {};
+                  
+                  athletes.forEach(a => {
+                    const orgId = a.organization_id || a.data?.organization_id || 'null';
+                    athletesByOrg[orgId] = (athletesByOrg[orgId] || 0) + 1;
+                  });
+                  
+                  records.forEach(r => {
+                    const orgId = r.organization_id || r.data?.organization_id || 'null';
+                    recordsByOrg[orgId] = (recordsByOrg[orgId] || 0) + 1;
+                  });
+                  
+                  metrics.forEach(m => {
+                    const orgId = m.organization_id || m.data?.organization_id || 'null';
+                    metricsByOrg[orgId] = (metricsByOrg[orgId] || 0) + 1;
+                  });
+                  
+                  console.log('Athletes by org:', athletesByOrg);
+                  console.log('Records by org:', recordsByOrg);
+                  console.log('Metrics by org:', metricsByOrg);
+                  
+                  alert('Debug info logged to console. Check browser console (F12).');
+                } catch (err) {
+                  console.error('Debug error:', err);
+                  alert('Error: ' + err.message);
+                }
+              }}
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-bold"
+            >
+              Run Data Debug (Check Console)
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card className="bg-gray-950 border border-amber-400/30">
           <CardHeader className="border-b border-amber-400/30">
             <CardTitle className="flex items-center gap-3 text-amber-200">
