@@ -90,10 +90,18 @@ export function useMetricRecords(organizationId, options = {}) {
         return [];
       }
 
-      console.log(`useMetricRecords: Fetching records for org "${organizationId}" using filter...`);
+      console.log(`useMetricRecords: Fetching ALL records using list() with high limit...`);
 
-      // Use server-side filtering directly - same as RawDataPanel
-      const orgRecords = await MetricRecord.filter({ organization_id: organizationId });
+      // Fetch ALL records with a very high limit, then filter client-side
+      // This avoids any server-side filtering limits
+      const allRecords = await MetricRecord.list('-recorded_date', 100000);
+      
+      console.log(`useMetricRecords: Fetched ${allRecords.length} total records, now filtering by org "${organizationId}"...`);
+      
+      const orgRecords = allRecords.filter(r => {
+        const recOrgId = r.organization_id || r.data?.organization_id;
+        return recOrgId === organizationId;
+      });
 
       console.log(`useMetricRecords FINAL: ${orgRecords.length} records for org "${organizationId}"`);
 
