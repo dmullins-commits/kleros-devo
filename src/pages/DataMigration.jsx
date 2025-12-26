@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Athlete, Team, Organization } from "@/entities/all";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Database, CheckCircle, Loader2, Users } from "lucide-react";
+import { AlertCircle, Database, CheckCircle, Loader2, Users, RefreshCw } from "lucide-react";
 
 export default function DataMigration() {
   const [isRunning, setIsRunning] = useState(false);
@@ -17,6 +18,8 @@ export default function DataMigration() {
   const [isLoadingUnassigned, setIsLoadingUnassigned] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [orgIdMigrationStatus, setOrgIdMigrationStatus] = useState('idle');
+  const [orgIdMigrationResults, setOrgIdMigrationResults] = useState(null);
 
   useEffect(() => {
     loadUnassignedAthletes();
@@ -64,6 +67,28 @@ export default function DataMigration() {
       setError('Failed to save assignments');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const runOrgIdMigration = async () => {
+    setOrgIdMigrationStatus('running');
+    setOrgIdMigrationResults(null);
+    setError(null);
+    
+    try {
+      const response = await base44.functions.invoke('assignOrganizationIds', {});
+      
+      if (response.success) {
+        setOrgIdMigrationResults(response.stats);
+        setOrgIdMigrationStatus('success');
+      } else {
+        setOrgIdMigrationStatus('error');
+        setError(response.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Organization ID migration error:', error);
+      setOrgIdMigrationStatus('error');
+      setError(error.message);
     }
   };
 
@@ -254,6 +279,76 @@ export default function DataMigration() {
                 </Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-950 border border-amber-400/30">
+          <CardHeader className="border-b border-amber-400/30">
+            <CardTitle className="flex items-center gap-3 text-amber-200">
+              <RefreshCw className="w-6 h-6 text-amber-400" />
+              Assign Organization IDs to Records & Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <Alert className="bg-blue-950/20 border-blue-800">
+              <AlertCircle className="h-4 w-4 text-blue-400" />
+              <AlertDescription className="text-blue-300">
+                <div className="font-bold mb-2">This migration will:</div>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Assign organization_id to all MetricRecords based on their athlete's organization</li>
+                  <li>Assign organization_id to all Metrics based on where they're used</li>
+                  <li>Skip records that already have an organization_id</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+
+            {orgIdMigrationResults && (
+              <Alert className="bg-green-950/20 border-green-800">
+                <CheckCircle className="h-4 w-4 text-green-400" />
+                <AlertDescription className="text-green-300">
+                  <div className="font-bold mb-2">Migration Complete!</div>
+                  <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
+                    <div>
+                      <p className="font-bold">Metric Records:</p>
+                      <ul className="list-disc list-inside">
+                        <li>Updated: {orgIdMigrationResults.records?.updated || 0}</li>
+                        <li>Skipped: {orgIdMigrationResults.records?.skipped || 0}</li>
+                        <li>Total: {orgIdMigrationResults.records?.total || 0}</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-bold">Metrics:</p>
+                      <ul className="list-disc list-inside">
+                        <li>Updated: {orgIdMigrationResults.metrics?.updated || 0}</li>
+                        <li>Skipped: {orgIdMigrationResults.metrics?.skipped || 0}</li>
+                        <li>Total: {orgIdMigrationResults.metrics?.total || 0}</li>
+                      </ul>
+                    </div>
+                  </div>
+                  {orgIdMigrationResults.errors > 0 && (
+                    <p className="text-yellow-400 mt-2">⚠️ {orgIdMigrationResults.errors} errors occurred</p>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              onClick={runOrgIdMigration}
+              disabled={orgIdMigrationStatus === 'running'}
+              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-black py-6 text-lg"
+            >
+              {orgIdMigrationStatus === 'running' ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Running Migration...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2" />
+                  Assign Organization IDs to Records & Metrics
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
