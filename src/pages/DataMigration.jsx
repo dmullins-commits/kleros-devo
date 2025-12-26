@@ -129,12 +129,6 @@ export default function DataMigration() {
         const athlete = allAthletes[i];
         const athleteData = athlete.data || athlete;
         
-        // Check if athlete already has organization_id
-        if (athleteData.organization_id) {
-          skipped++;
-          continue;
-        }
-
         // Get team_ids
         const teamIds = athleteData.team_ids || [];
         if (teamIds.length === 0) {
@@ -156,8 +150,14 @@ export default function DataMigration() {
           continue;
         }
 
+        // Check if athlete already has correct organization_id
+        if (athleteData.organization_id === organizationId) {
+          skipped++;
+          continue;
+        }
+
         try {
-          // Update athlete with organization_id
+          // Update athlete with correct organization_id
           await Athlete.update(athlete.id, {
             organization_id: organizationId
           });
