@@ -90,24 +90,27 @@ export function useMetricRecords(organizationId, options = {}) {
         return [];
       }
 
-      console.log(`useMetricRecords: Fetching ALL records using list() with high limit...`);
+      console.log(`useMetricRecords: Fetching records for org "${organizationId}" using filter...`);
 
-      // Fetch ALL records with a very high limit, then filter client-side
-      // This avoids any server-side filtering limits
-      const allRecords = await MetricRecord.list('-recorded_date', 100000);
-      
-      console.log(`useMetricRecords: Fetched ${allRecords.length} total records, now filtering by org "${organizationId}"...`);
-      
-      const orgRecords = allRecords.filter(r => {
-        const recOrgId = r.organization_id || r.data?.organization_id;
-        return recOrgId === organizationId;
-      });
+      // Use server-side filtering - same as RawDataPanel which works
+      const orgRecords = await MetricRecord.filter({ organization_id: organizationId });
 
-      console.log(`useMetricRecords FINAL: ${orgRecords.length} records for org "${organizationId}"`);
+      console.log(`useMetricRecords RESULT: ${orgRecords.length} records found`);
+      console.log(`useMetricRecords SAMPLE:`, orgRecords.slice(0, 2).map(r => ({
+        id: r.id,
+        athlete_id: r.athlete_id || r.data?.athlete_id,
+        metric_id: r.metric_id || r.data?.metric_id,
+        value: r.value ?? r.data?.value,
+        organization_id: r.organization_id || r.data?.organization_id
+      })));
 
-      return orgRecords.map(r => normalizeEntity(r, [
+      const normalized = orgRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
+
+      console.log(`useMetricRecords NORMALIZED SAMPLE:`, normalized.slice(0, 2));
+
+      return normalized;
     },
     enabled: !!organizationId,
     staleTime: 2 * 60 * 1000,
