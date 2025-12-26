@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Users, Plus, Shield, Building2, Pencil, Search, 
-  Crown, UserCog, Briefcase, User as UserIcon 
+  Crown, UserCog, Briefcase, User as UserIcon, Database 
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -30,6 +30,7 @@ export default function ManageUsers() {
   const [editingUser, setEditingUser] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -107,6 +108,23 @@ export default function ManageUsers() {
     setEditingUser({ ...editingUser, organization_ids: newOrgs });
   };
 
+  const handleBackupToGoogleSheets = async () => {
+    setIsBackingUp(true);
+    try {
+      const response = await base44.functions.invoke('backupToGoogleDrive');
+      if (response.success) {
+        alert(`Backup completed successfully!\n\nTotal Records: ${response.stats.total_records}\nSpreadsheet: ${response.spreadsheet.title}\n\nURL: ${response.spreadsheet.url}`);
+      } else {
+        alert(`Backup failed: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      alert(`Backup failed: ${error.message}`);
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -156,6 +174,14 @@ export default function ManageUsers() {
                   {users.length} users
                 </Badge>
               </div>
+              <Button
+                onClick={handleBackupToGoogleSheets}
+                disabled={isBackingUp}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
+              >
+                <Database className="w-4 h-4 mr-2" />
+                {isBackingUp ? 'Backing up...' : 'Backup to Google Sheets'}
+              </Button>
             </div>
           </div>
         </div>
