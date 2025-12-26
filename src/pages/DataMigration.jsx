@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle, Database, CheckCircle, Loader2, Users, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function DataMigration() {
+  const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState('');
   const [results, setResults] = useState(null);
@@ -85,6 +87,9 @@ export default function DataMigration() {
       if (data.success) {
         setOrgIdMigrationResults(data.stats);
         setOrgIdMigrationStatus('success');
+
+        // Invalidate all queries to refresh data
+        await queryClient.invalidateQueries();
       } else {
         setOrgIdMigrationStatus('error');
         setError(data.error || JSON.stringify(data) || 'Unknown error');
@@ -173,14 +178,19 @@ export default function DataMigration() {
         skipped,
         errors
       });
+      setProgress('Migration complete! Refreshing data...');
+
+      // Invalidate all queries to refresh data across the app
+      await queryClient.invalidateQueries();
+
       setProgress('Migration complete!');
-    } catch (err) {
+      } catch (err) {
       console.error('Migration error:', err);
       setError(err.message || 'Migration failed');
-    } finally {
+      } finally {
       setIsRunning(false);
-    }
-  };
+      }
+      };
 
   return (
     <div className="min-h-screen bg-black p-8">
