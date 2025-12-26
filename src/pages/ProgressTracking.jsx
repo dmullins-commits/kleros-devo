@@ -73,12 +73,23 @@ export default function ProgressTracking() {
       teamsCount: teams.length,
       classPeriodsCount: classPeriods.length,
       isLoading,
-      sampleMetrics: metrics.slice(0, 3).map(m => ({ id: m.id, name: m.name, unit: m.unit })),
+      sampleAthletes: athletes.slice(0, 3).map(a => ({ 
+        id: a.id, 
+        name: `${a.first_name} ${a.last_name}`,
+        org_id: a.organization_id 
+      })),
+      sampleMetrics: metrics.slice(0, 3).map(m => ({ 
+        id: m.id, 
+        name: m.name, 
+        unit: m.unit,
+        org_id: m.organization_id 
+      })),
       sampleRecords: records.slice(0, 3).map(r => ({ 
         id: r.id, 
         athlete_id: r.athlete_id, 
         metric_id: r.metric_id, 
-        value: r.value 
+        value: r.value,
+        org_id: r.organization_id
       }))
     });
   }, [selectedOrganization, athletes, metrics, records, teams, classPeriods, isLoading]);
