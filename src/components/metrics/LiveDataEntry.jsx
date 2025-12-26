@@ -261,10 +261,10 @@ export default function LiveDataEntry({ metrics: rawMetrics, athletes: rawAthlet
       });
 
       if (recordsToCreate.length > 0) {
-        // Add organization_id to all records
+        // Add organization_id to all records - CRITICAL for filtering
         const recordsWithOrg = recordsToCreate.map(r => ({
           ...r,
-          organization_id: selectedOrganization.id
+          organization_id: selectedOrganization?.id
         }));
         await MetricRecord.bulkCreate(recordsWithOrg);
         
