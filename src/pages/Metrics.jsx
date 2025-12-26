@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Metric, MetricRecord, Athlete, MetricCategory } from "@/entities/all";
+import React, { useState, useMemo } from "react";
+import { Metric } from "@/entities/all";
 import { Button } from "@/components/ui/button";
 import { Plus, Settings, Calculator, Filter, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTeam } from "@/components/TeamContext";
+import { useMetrics, useMetricRecords, useMetricCategories, useInvalidateQueries } from "@/components/hooks/useDataQueries";
 
 import MetricsList from "../components/metrics/MetricsList";
 import MetricForm from "../components/metrics/MetricForm";
@@ -13,75 +14,22 @@ import AutoCalcSettingsModal from "../components/metrics/AutoCalcSettingsModal";
 import MetricCSVUploadModal from "../components/metrics/MetricCSVUploadModal";
 
 export default function Metrics() {
-  const { selectedOrganization, filteredTeams } = useTeam();
-  const [metrics, setMetrics] = useState([]);
-  const [records, setRecords] = useState([]);
-  const [athletes, setAthletes] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const { selectedOrganization } = useTeam();
+  const { invalidateMetrics, invalidateMetricRecords } = useInvalidateQueries();
+  
+  // Use React Query hooks for data fetching
+  const { data: metrics = [], isLoading: metricsLoading } = useMetrics(selectedOrganization?.id);
+  const { data: records = [], isLoading: recordsLoading } = useMetricRecords(selectedOrganization?.id);
+  const { data: categories = [], isLoading: categoriesLoading } = useMetricCategories(selectedOrganization?.id);
+  
   const [showForm, setShowForm] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAutoCalcModal, setShowAutoCalcModal] = useState(false);
   const [showCSVUpload, setShowCSVUpload] = useState(false);
   const [editingMetric, setEditingMetric] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
 
-  // Get team IDs and athlete IDs for org filtering
-  const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
-  const athleteIds = useMemo(() => athletes.map(a => a.id), [athletes]);
-
-  useEffect(() => {
-    loadData();
-  }, [selectedOrganization?.id]);
-
-  const loadData = async () => {
-    if (!selectedOrganization) return;
-    
-    setIsLoading(true);
-    try {
-      // Load all data
-      const [metricsData, recordsData, athletesData, categoriesData] = await Promise.all([
-        Metric.list(),
-        MetricRecord.list('-recorded_date', 1000000),
-        Athlete.list(),
-        MetricCategory.list()
-      ]);
-      
-      // Filter athletes by organization
-      const filteredAthletes = athletesData.filter(a => {
-        const orgId = a.organization_id || a.data?.organization_id;
-        return orgId === selectedOrganization.id;
-      });
-      
-      // Get athlete IDs for filtering
-      const athleteIdsSet = new Set(filteredAthletes.map(a => a.id));
-      
-      // Filter metrics by organization - ONLY show metrics belonging to this organization
-      const filteredMetrics = metricsData.filter(m => {
-        const orgId = m.organization_id || m.data?.organization_id;
-        return orgId === selectedOrganization.id;
-      });
-      
-      // Filter categories by organization (system categories + org-specific)
-      const filteredCategories = categoriesData.filter(c => {
-        const orgId = c.organization_id || c.data?.organization_id;
-        return !orgId || c.is_mandatory || orgId === selectedOrganization.id;
-      });
-      
-      // Filter records by org athletes (handle nested data structure)
-      const filteredRecords = recordsData.filter(r => {
-        const athleteId = r.athlete_id || r.data?.athlete_id;
-        return athleteIdsSet.has(athleteId);
-      });
-      
-      setMetrics(filteredMetrics);
-      setRecords(filteredRecords);
-      setAthletes(filteredAthletes);
-      setCategories(filteredCategories);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = metricsLoading || recordsLoading || categoriesLoading;
 
   const handleSubmit = async (metricData) => {
     // Add organization_id to new metrics
@@ -97,24 +45,26 @@ export default function Metrics() {
     }
     setShowForm(false);
     setEditingMetric(null);
-    loadData();
+    
+    // Invalidate queries to refresh data
+    invalidateMetrics();
+    invalidateMetricRecords();
   };
 
   const handleDelete = async (metricId) => {
     try {
       await Metric.delete(metricId);
-      loadData();
+      
+      // Invalidate queries to refresh data
+      invalidateMetrics();
+      invalidateMetricRecords();
     } catch (error) {
       console.error('Error deleting metric:', error);
     }
   };
 
   const handleReorder = async (reorderedMetrics) => {
-    // Update the local state immediately for smooth UX
-    setMetrics(reorderedMetrics);
-    
-    // Note: You could add server-side ordering if you add an "order" field to metrics
-    // For now, the reordering is just client-side
+    // Reordering is client-side only for now
   };
 
   const filteredMetrics = metrics.filter(metric => {
@@ -228,7 +178,10 @@ export default function Metrics() {
         <CategoryManagementModal
           open={showCategoryModal}
           onOpenChange={setShowCategoryModal}
-          onCategoriesUpdated={loadData}
+          onCategoriesUpdated={() => {
+            invalidateMetrics();
+            invalidateMetricRecords();
+          }}
         />
 
         <AutoCalcSettingsModal
@@ -241,7 +194,10 @@ export default function Metrics() {
           onOpenChange={setShowCSVUpload}
           categories={categories}
           organizationId={selectedOrganization?.id}
-          onUploadComplete={loadData}
+          onUploadComplete={() => {
+            invalidateMetrics();
+            invalidateMetricRecords();
+          }}
         />
       </div>
     </div>
