@@ -77,18 +77,22 @@ export default function DataMigration() {
     
     try {
       const response = await base44.functions.invoke('assignOrganizationIds', {});
+      console.log('Migration response:', response);
       
-      if (response.success) {
-        setOrgIdMigrationResults(response.stats);
+      // Check if response.data exists (axios-style response)
+      const data = response.data || response;
+      
+      if (data.success) {
+        setOrgIdMigrationResults(data.stats);
         setOrgIdMigrationStatus('success');
       } else {
         setOrgIdMigrationStatus('error');
-        setError(response.error || 'Unknown error');
+        setError(data.error || JSON.stringify(data) || 'Unknown error');
       }
     } catch (error) {
       console.error('Organization ID migration error:', error);
       setOrgIdMigrationStatus('error');
-      setError(error.message);
+      setError(error.message || error.toString());
     }
   };
 
