@@ -47,8 +47,8 @@ export default function Metrics() {
     setEditingMetric(null);
     
     // Invalidate queries to refresh data
-    invalidateMetrics();
-    invalidateMetricRecords();
+    invalidateMetrics(selectedOrganization?.id);
+    invalidateMetricRecords(selectedOrganization?.id);
   };
 
   const handleDelete = async (metricId) => {
@@ -56,8 +56,8 @@ export default function Metrics() {
       await Metric.delete(metricId);
       
       // Invalidate queries to refresh data
-      invalidateMetrics();
-      invalidateMetricRecords();
+      invalidateMetrics(selectedOrganization?.id);
+      invalidateMetricRecords(selectedOrganization?.id);
     } catch (error) {
       console.error('Error deleting metric:', error);
     }
@@ -179,8 +179,8 @@ export default function Metrics() {
           open={showCategoryModal}
           onOpenChange={setShowCategoryModal}
           onCategoriesUpdated={() => {
-            invalidateMetrics();
-            invalidateMetricRecords();
+            invalidateMetrics(selectedOrganization?.id);
+            invalidateMetricRecords(selectedOrganization?.id);
           }}
         />
 
@@ -195,8 +195,8 @@ export default function Metrics() {
           categories={categories}
           organizationId={selectedOrganization?.id}
           onUploadComplete={() => {
-            invalidateMetrics();
-            invalidateMetricRecords();
+            invalidateMetrics(selectedOrganization?.id);
+            invalidateMetricRecords(selectedOrganization?.id);
           }}
         />
       </div>

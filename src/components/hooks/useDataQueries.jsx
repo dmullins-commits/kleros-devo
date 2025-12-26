@@ -222,8 +222,8 @@ export function useInvalidateQueries() {
   return {
     invalidateAthletes: (orgId) => queryClient.invalidateQueries({ queryKey: queryKeys.athletes(orgId) }),
     invalidateTeams: (orgId) => queryClient.invalidateQueries({ queryKey: queryKeys.teams(orgId) }),
-    invalidateMetrics: () => queryClient.invalidateQueries({ queryKey: ['metrics'] }),
-    invalidateMetricRecords: () => queryClient.invalidateQueries({ queryKey: ['metricRecords'] }),
+    invalidateMetrics: (orgId) => queryClient.invalidateQueries({ queryKey: queryKeys.metrics(orgId) }),
+    invalidateMetricRecords: (orgId) => queryClient.invalidateQueries({ queryKey: queryKeys.metricRecords(orgId) }),
     invalidateAll: () => queryClient.invalidateQueries(),
   };
 }
