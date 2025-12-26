@@ -150,14 +150,9 @@ export default function DataMigration() {
           continue;
         }
 
-        // Check if athlete already has correct organization_id
-        if (athleteData.organization_id === organizationId) {
-          skipped++;
-          continue;
-        }
-
+        // ALWAYS update to correct organization based on team assignment
+        // This will fix any mismatched organization_id values
         try {
-          // Update athlete with correct organization_id
           await Athlete.update(athlete.id, {
             organization_id: organizationId
           });
