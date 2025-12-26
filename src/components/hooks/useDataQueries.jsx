@@ -80,7 +80,7 @@ export function useMetrics(organizationId, options = {}) {
   });
 }
 
-// Metric Records query hook - fetch ALL records then filter client-side
+// Metric Records query hook - server-side filtered by organization
 export function useMetricRecords(organizationId, options = {}) {
   return useQuery({
     queryKey: queryKeys.metricRecords(organizationId),
@@ -90,36 +90,20 @@ export function useMetricRecords(organizationId, options = {}) {
         return [];
       }
 
-      console.log(`useMetricRecords: Fetching ALL records with high limit...`);
+      console.log(`useMetricRecords: Fetching ALL records for org "${organizationId}"...`);
 
-      // Fetch ALL records with no filtering - use list() with very high limit
-      const allRecords = await MetricRecord.list('-recorded_date', 50000);
-
-      console.log(`useMetricRecords: Fetched ${allRecords.length} total records from database`);
-
-      // Filter client-side by organization
+      // Fetch ALL records using list() with 1M limit, then filter client-side
+      const allRecords = await MetricRecord.list('-recorded_date', 1000000);
       const orgRecords = allRecords.filter(r => {
         const recOrgId = r.organization_id || r.data?.organization_id;
         return recOrgId === organizationId;
       });
 
-      console.log(`useMetricRecords RESULT: ${orgRecords.length} records for org "${organizationId}"`);
-      console.log(`useMetricRecords SAMPLE:`, orgRecords.slice(0, 3).map(r => ({
-        id: r.id,
-        athlete_id: r.athlete_id || r.data?.athlete_id,
-        metric_id: r.metric_id || r.data?.metric_id,
-        value: r.value ?? r.data?.value,
-        recorded_date: r.recorded_date || r.data?.recorded_date,
-        organization_id: r.organization_id || r.data?.organization_id
-      })));
+      console.log(`useMetricRecords FINAL: ${orgRecords.length} records for org "${organizationId}" (from ${allRecords.length} total)`);
 
-      const normalized = orgRecords.map(r => normalizeEntity(r, [
+      return orgRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
       ]));
-
-      console.log(`useMetricRecords FINAL COUNT: ${normalized.length} normalized records`);
-
-      return normalized;
     },
     enabled: !!organizationId,
     staleTime: 2 * 60 * 1000,
