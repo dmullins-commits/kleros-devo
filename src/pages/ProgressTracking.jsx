@@ -107,8 +107,9 @@ export default function ProgressTracking() {
   };
 
   const exportAllRecordsToCSV = () => {
+    console.log('Export button clicked - Records:', records.length, 'Athletes:', athletes.length, 'Metrics:', metrics.length);
     if (records.length === 0) {
-      alert('No records to export');
+      alert(`No records to export for ${selectedOrganization?.name}. Records: ${records.length}, Athletes: ${athletes.length}, Metrics: ${metrics.length}`);
       return;
     }
 
@@ -181,11 +182,11 @@ export default function ProgressTracking() {
               </div>
               <Button
                 onClick={exportAllRecordsToCSV}
-                disabled={records.length === 0}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                disabled={isLoading || records.length === 0}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FileDown className="w-5 h-5 mr-2" />
-                Export All Records to CSV
+                {isLoading ? 'Loading...' : `Export All Records (${records.length})`}
               </Button>
             </div>
           </div>
