@@ -84,59 +84,15 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-gray-300">Workout Name *</Label>
-                <Input
-                  placeholder="Upper Body Strength"
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  required
-                  className="bg-gray-900 border-gray-700 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-300">Duration (minutes)</Label>
-                <Input
-                  type="number"
-                  value={formData.duration_minutes}
-                  onChange={(e) => handleChange('duration_minutes', parseInt(e.target.value))}
-                  className="bg-gray-900 border-gray-700 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-300">Category</Label>
-                <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-700">
-                    <SelectItem value="strength" className="text-white">Strength</SelectItem>
-                    <SelectItem value="power" className="text-white">Power</SelectItem>
-                    <SelectItem value="speed" className="text-white">Speed</SelectItem>
-                    <SelectItem value="endurance" className="text-white">Endurance</SelectItem>
-                    <SelectItem value="recovery" className="text-white">Recovery</SelectItem>
-                    <SelectItem value="vbt_specific" className="text-white">VBT Specific</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-300">Difficulty</Label>
-                <Select value={formData.difficulty} onValueChange={(value) => handleChange('difficulty', value)}>
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-700">
-                    <SelectItem value="beginner" className="text-white">Beginner</SelectItem>
-                    <SelectItem value="intermediate" className="text-white">Intermediate</SelectItem>
-                    <SelectItem value="advanced" className="text-white">Advanced</SelectItem>
-                    <SelectItem value="elite" className="text-white">Elite</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label className="text-gray-300">Workout Name *</Label>
+              <Input
+                placeholder="Upper Body Strength"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                required
+                className="bg-gray-900 border-gray-700 text-white"
+              />
             </div>
 
             <div className="space-y-2">
