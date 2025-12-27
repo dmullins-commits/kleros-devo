@@ -221,7 +221,11 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:bg-gray-800">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold">
+              <Button 
+                type="submit" 
+                disabled={formData.workout_type && !formData.workout_config}
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Save className="w-4 h-4 mr-2" />
                 {workout ? 'Update' : 'Create'} Workout
               </Button>
