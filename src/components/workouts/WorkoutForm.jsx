@@ -215,8 +215,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                   </div>
                   <Button
                     type="submit"
-                    disabled={!formData.name || formData.assigned_teams.length === 0}
-                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
                   >
                     <Save className="w-5 h-5 mr-2" />
                     Save Workout

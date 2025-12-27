@@ -32,7 +32,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
     const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
     setTimeRemaining(setupSeconds);
     setTotalWorkoutTime(calculateTotalTime());
-    startTimer();
+    setIsPaused(true); // Start paused, user must click play
     
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
