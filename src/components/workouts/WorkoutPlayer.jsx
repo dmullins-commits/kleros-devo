@@ -9,14 +9,29 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   
   const audioRef = useRef(null);
   const timerRef = useRef(null);
+
+  // Calculate total workout time
+  const calculateTotalTime = () => {
+    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    const exerciseTime = config.exercises.reduce((acc, ex) => {
+      const work = (ex.workTime.minutes * 60) + ex.workTime.seconds;
+      const rest = (ex.restTime.minutes * 60) + ex.restTime.seconds;
+      return acc + work + rest;
+    }, 0);
+    const setRestTime = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+    return setupSeconds + (exerciseTime * config.sets) + (setRestTime * (config.sets - 1));
+  };
 
   // Initialize with setup time
   useEffect(() => {
     const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
     setTimeRemaining(setupSeconds);
+    setTotalWorkoutTime(calculateTotalTime());
     startTimer();
     
     return () => {
@@ -24,7 +39,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
     };
   }, []);
 
-  const playSound = (type) => {
+  const playSound = (type, customNumber = null) => {
     const audio = new Audio();
     if (type === 'countdown') {
       // Simple beep sound using oscillator
@@ -61,7 +76,8 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
     } else if (type === 'number') {
-      const msg = new SpeechSynthesisUtterance(timeRemaining.toString());
+      const numberToSpeak = customNumber !== null ? customNumber : timeRemaining;
+      const msg = new SpeechSynthesisUtterance(numberToSpeak.toString());
       msg.rate = 1;
       msg.pitch = 1;
       msg.volume = 1;
@@ -78,14 +94,83 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
           return 0;
         }
         
+        const newTime = prev - 1;
+        
         // Countdown audio at 5, 4, 3, 2, 1
-        if (prev <= 5 && prev > 0 && (phase === 'setup' || phase === 'work')) {
-          playSound('number');
+        if (newTime <= 5 && newTime > 0 && (phase === 'setup' || phase === 'work')) {
+          playSound('number', newTime);
         }
         
-        return prev - 1;
+        return newTime;
       });
+      setElapsedTime(prev => prev + 1);
     }, 1000);
+  };
+
+  const handleSliderChange = (e) => {
+    const newElapsed = parseInt(e.target.value);
+    setElapsedTime(newElapsed);
+    
+    // Calculate which phase we should be in based on elapsed time
+    let accumulatedTime = 0;
+    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    
+    // Setup phase
+    if (newElapsed <= setupSeconds) {
+      setPhase('setup');
+      setCurrentSet(1);
+      setCurrentExerciseIndex(0);
+      setTimeRemaining(setupSeconds - newElapsed);
+      return;
+    }
+    accumulatedTime += setupSeconds;
+    
+    // Calculate set and exercise
+    for (let set = 1; set <= config.sets; set++) {
+      for (let exerciseIdx = 0; exerciseIdx < config.exercises.length; exerciseIdx++) {
+        const exercise = config.exercises[exerciseIdx];
+        const workSeconds = (exercise.workTime.minutes * 60) + exercise.workTime.seconds;
+        const restSeconds = (exercise.restTime.minutes * 60) + exercise.restTime.seconds;
+        
+        // Work phase
+        if (newElapsed <= accumulatedTime + workSeconds) {
+          setPhase('work');
+          setCurrentSet(set);
+          setCurrentExerciseIndex(exerciseIdx);
+          setTimeRemaining(accumulatedTime + workSeconds - newElapsed);
+          return;
+        }
+        accumulatedTime += workSeconds;
+        
+        // Rest phase (skip rest after last exercise of last set)
+        if (exerciseIdx < config.exercises.length - 1 || set < config.sets) {
+          if (newElapsed <= accumulatedTime + restSeconds) {
+            setPhase('rest');
+            setCurrentSet(set);
+            setCurrentExerciseIndex(exerciseIdx);
+            setTimeRemaining(accumulatedTime + restSeconds - newElapsed);
+            return;
+          }
+          accumulatedTime += restSeconds;
+        }
+      }
+      
+      // Set rest (between sets)
+      if (set < config.sets) {
+        const setRestSeconds = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+        if (newElapsed <= accumulatedTime + setRestSeconds) {
+          setPhase('setRest');
+          setCurrentSet(set);
+          setCurrentExerciseIndex(config.exercises.length - 1);
+          setTimeRemaining(accumulatedTime + setRestSeconds - newElapsed);
+          return;
+        }
+        accumulatedTime += setRestSeconds;
+      }
+    }
+    
+    // Workout complete
+    setPhase('complete');
   };
 
   useEffect(() => {
@@ -201,24 +286,43 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Top bar with X and Stop */}
-      <div className="absolute top-4 right-4 flex gap-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onClose()}
-          className="text-white hover:bg-white/10 w-12 h-12"
-        >
-          <X className="w-8 h-8" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleStop}
-          className="text-red-400 hover:bg-red-400/10 w-12 h-12"
-        >
-          <StopCircle className="w-8 h-8" />
-        </Button>
+      {/* Top bar with slider */}
+      <div className="absolute top-4 left-4 right-4 z-10">
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <input
+              type="range"
+              min="0"
+              max={totalWorkoutTime}
+              value={elapsedTime}
+              onChange={handleSliderChange}
+              className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, #FFD700 0%, #FFD700 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 100%)`
+              }}
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>{formatTime(elapsedTime)}</span>
+              <span>{formatTime(totalWorkoutTime)}</span>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onClose()}
+            className="text-white hover:bg-white/10 w-10 h-10 flex-shrink-0"
+          >
+            <X className="w-6 h-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleStop}
+            className="text-red-400 hover:bg-red-400/10 w-10 h-10 flex-shrink-0"
+          >
+            <StopCircle className="w-6 h-6" />
+          </Button>
+        </div>
       </div>
 
       {/* Main content */}
@@ -315,8 +419,8 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         </div>
       </div>
 
-      {/* Bottom controls */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
+      {/* Bottom right controls */}
+      <div className="absolute bottom-8 right-8 flex gap-4">
         <Button
           onClick={togglePause}
           size="lg"
