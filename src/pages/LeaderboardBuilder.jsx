@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   LayoutGrid, 
@@ -54,7 +53,6 @@ export default function LeaderboardBuilder() {
   const [filterType, setFilterType] = useState("all"); // all, team, class_period
   const [filterId, setFilterId] = useState(null);
   const [useAllTimePR, setUseAllTimePR] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
 
   // Visual configuration
   const [boxPadding, setBoxPadding] = useState("0.1rem 0.25rem");
@@ -75,6 +73,28 @@ export default function LeaderboardBuilder() {
   useEffect(() => {
     loadTemplates();
   }, [selectedOrgId]);
+
+  const [availableDates, setAvailableDates] = useState([]);
+
+  useEffect(() => {
+    if (selectedMetric && records.length > 0) {
+      // Get unique dates for the selected metric
+      const dates = records
+        .filter(r => (r.metric_id || r.data?.metric_id) === selectedMetric)
+        .map(r => r.recorded_date || r.data?.recorded_date)
+        .filter(d => isValidDate(d))
+        .filter((date, index, self) => self.indexOf(date) === index)
+        .sort((a, b) => new Date(b) - new Date(a));
+      setAvailableDates(dates);
+      
+      // Auto-select most recent date if not already selected or if current selection is invalid
+      if (dates.length > 0 && (!selectedDate || !dates.includes(selectedDate))) {
+        setSelectedDate(dates[0]);
+      }
+    } else {
+      setAvailableDates([]);
+    }
+  }, [selectedMetric, records]);
 
   useEffect(() => {
     if (selectedMetric && athletes.length > 0 && records.length > 0) {
@@ -770,27 +790,27 @@ export default function LeaderboardBuilder() {
 
                 <div>
                   <Label className="text-gray-300 font-semibold mb-2 block">Date</Label>
-                  <Popover open={showCalendar} onOpenChange={setShowCalendar}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full bg-gray-900 border-gray-700 text-white justify-start">
-                        <CalendarIcon className="w-4 h-4 mr-2" />
-                        {selectedDate && isValidDate(selectedDate) ? format(new Date(selectedDate), 'MMM d, yyyy') : 'Select Date'}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-gray-950 border-gray-800">
-                      <Calendar
-                        mode="single"
-                        selected={new Date(selectedDate)}
-                        onSelect={(date) => {
-                          if (date) {
-                            setSelectedDate(format(date, 'yyyy-MM-dd'));
-                            setShowCalendar(false);
-                          }
-                        }}
-                        className="bg-gray-950 text-white"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Select 
+                    value={selectedDate || ""} 
+                    onValueChange={setSelectedDate}
+                    disabled={!selectedMetric || availableDates.length === 0}
+                  >
+                    <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                      <SelectValue placeholder={!selectedMetric ? "Select a metric first" : "Select date"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-700 max-h-64">
+                      {availableDates.map(date => (
+                        <SelectItem key={date} value={date} className="text-white">
+                          {format(new Date(date), 'MMM d, yyyy')}
+                        </SelectItem>
+                      ))}
+                      {availableDates.length === 0 && selectedMetric && (
+                        <SelectItem value="no-data" disabled className="text-gray-500">
+                          No data available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center space-x-2">
