@@ -111,6 +111,10 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
     const newElapsed = parseInt(e.target.value);
     setElapsedTime(newElapsed);
     
+    // Pause and clear existing timer
+    setIsPaused(true);
+    if (timerRef.current) clearInterval(timerRef.current);
+    
     // Calculate which phase we should be in based on elapsed time
     let accumulatedTime = 0;
     const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;

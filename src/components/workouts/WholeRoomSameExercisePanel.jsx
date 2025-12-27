@@ -100,17 +100,17 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
                 min="0"
                 value={config.setupTime.minutes}
                 onChange={(e) => handleTimeChange('setupTime', 'minutes', e.target.value)}
-                className="w-16 bg-gray-800 border-gray-600 text-white text-center"
+                className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
                 placeholder="M"
               />
-              <span className="text-gray-400 self-center">:</span>
+              <span className="text-gray-400 self-center text-xl">:</span>
               <Input
                 type="number"
                 min="0"
                 max="59"
                 value={config.setupTime.seconds}
                 onChange={(e) => handleTimeChange('setupTime', 'seconds', e.target.value)}
-                className="w-16 bg-gray-800 border-gray-600 text-white text-center"
+                className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
                 placeholder="S"
               />
             </div>
@@ -124,17 +124,17 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
                 min="0"
                 value={config.restBetweenSets.minutes}
                 onChange={(e) => handleTimeChange('restBetweenSets', 'minutes', e.target.value)}
-                className="w-16 bg-gray-800 border-gray-600 text-white text-center"
+                className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
                 placeholder="M"
               />
-              <span className="text-gray-400 self-center">:</span>
+              <span className="text-gray-400 self-center text-xl">:</span>
               <Input
                 type="number"
                 min="0"
                 max="59"
                 value={config.restBetweenSets.seconds}
                 onChange={(e) => handleTimeChange('restBetweenSets', 'seconds', e.target.value)}
-                className="w-16 bg-gray-800 border-gray-600 text-white text-center"
+                className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
                 placeholder="S"
               />
             </div>
@@ -201,17 +201,17 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
                           min="0"
                           value={exercise.workTime.minutes}
                           onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'minutes', e.target.value)}
-                          className="w-12 bg-gray-800 border-gray-600 text-white text-center text-xs"
+                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
                           placeholder="M"
                         />
-                        <span className="text-gray-400 self-center text-xs">:</span>
+                        <span className="text-gray-400 self-center text-sm">:</span>
                         <Input
                           type="number"
                           min="0"
                           max="59"
                           value={exercise.workTime.seconds}
                           onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'seconds', e.target.value)}
-                          className="w-12 bg-gray-800 border-gray-600 text-white text-center text-xs"
+                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
                           placeholder="S"
                         />
                       </div>
@@ -225,17 +225,17 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
                           min="0"
                           value={exercise.restTime.minutes}
                           onChange={(e) => handleExerciseTimeChange(index, 'restTime', 'minutes', e.target.value)}
-                          className="w-12 bg-gray-800 border-gray-600 text-white text-center text-xs"
+                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
                           placeholder="M"
                         />
-                        <span className="text-gray-400 self-center text-xs">:</span>
+                        <span className="text-gray-400 self-center text-sm">:</span>
                         <Input
                           type="number"
                           min="0"
                           max="59"
                           value={exercise.restTime.seconds}
                           onChange={(e) => handleExerciseTimeChange(index, 'restTime', 'seconds', e.target.value)}
-                          className="w-12 bg-gray-800 border-gray-600 text-white text-center text-xs"
+                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
                           placeholder="S"
                         />
                       </div>
