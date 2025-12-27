@@ -33,7 +33,10 @@ export default function MetricForm({ metric, categories, organizationId, onSubmi
   useEffect(() => {
     // Set default category if not set and categories are available
     if (!formData.category && categories && categories.length > 0) {
-      setFormData(prev => ({ ...prev, category: categories[0].name }));
+      const activeCategories = categories.filter(c => !c.is_hidden);
+      if (activeCategories.length > 0) {
+        setFormData(prev => ({ ...prev, category: activeCategories[0].name }));
+      }
     }
   }, [categories, formData.category]);
 
@@ -116,11 +119,14 @@ export default function MetricForm({ metric, categories, organizationId, onSubmi
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
                     {categories && categories.length > 0 ? (
-                      categories.sort((a, b) => a.order - b.order).map(category => (
-                        <SelectItem key={category.id} value={category.name} className="text-white">
-                          {category.name}
-                        </SelectItem>
-                      ))
+                      categories
+                        .filter(category => !category.is_hidden)
+                        .sort((a, b) => (a.order || 0) - (b.order || 0))
+                        .map(category => (
+                          <SelectItem key={category.id} value={category.name} className="text-white">
+                            {category.name}
+                          </SelectItem>
+                        ))
                     ) : (
                       <SelectItem value="none" disabled className="text-gray-500">
                         No categories available - create one first
