@@ -111,14 +111,23 @@ export function useMetricRecords(organizationId, options = {}) {
 
       console.log(`Built athlete map with ${athleteOrgMap.size} athletes`);
 
-      // Filter records by inferring org from athlete (handles both legacy and new data)
+      // Filter records by BOTH direct organization_id AND inferred from athlete
       const orgRecords = allRecords.filter(r => {
+        const recordOrgId = r.organization_id || r.data?.organization_id;
         const athleteId = r.athlete_id || r.data?.athlete_id;
         const inferredOrgId = athleteOrgMap.get(athleteId);
-        return inferredOrgId === organizationId;
+        
+        // Match if EITHER the record has the org_id OR the athlete belongs to the org
+        return recordOrgId === organizationId || inferredOrgId === organizationId;
       });
 
       console.log(`useMetricRecords FINAL: ${orgRecords.length} records for org "${organizationId}"`);
+      console.log(`Sample filtered records:`, orgRecords.slice(0, 3).map(r => ({
+        id: r.id,
+        athlete_id: r.athlete_id || r.data?.athlete_id,
+        record_org_id: r.organization_id || r.data?.organization_id,
+        inferred_org: athleteOrgMap.get(r.athlete_id || r.data?.athlete_id)
+      })));
 
       return orgRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
