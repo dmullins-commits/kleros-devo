@@ -116,6 +116,11 @@ export function useMetricRecords(organizationId, options = {}) {
       console.log(`Built athlete map with ${athleteOrgMap.size} athletes total`);
       console.log(`Found ${athletesForThisOrg.length} athletes for org "${organizationId}"`);
       console.log(`Sample athlete IDs for this org:`, athletesForThisOrg.slice(0, 5));
+      
+      // Check sample records to see their athlete_ids
+      const sampleRecordAthleteIds = allRecords.slice(0, 20).map(r => r.athlete_id || r.data?.athlete_id);
+      console.log(`Sample athlete_ids from first 20 records:`, sampleRecordAthleteIds);
+      console.log(`Do any match our org athletes?`, sampleRecordAthleteIds.some(id => athletesForThisOrg.includes(id)));
 
       // Check how many records have org_id vs need inference
       const recordsWithOrgId = allRecords.filter(r => r.organization_id || r.data?.organization_id);
