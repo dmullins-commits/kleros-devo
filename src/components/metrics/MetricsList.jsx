@@ -50,13 +50,15 @@ export default function MetricsList({ metrics, records, isLoading, onEdit, onSel
     other: "bg-gray-400/20 text-gray-400 border-gray-400/30"
   };
 
-  // Group metrics by category
+  // Group metrics by category (case-insensitive)
   const groupedMetrics = metrics.reduce((acc, metric) => {
     const category = metric.category || 'Uncategorized';
-    if (!acc[category]) {
-      acc[category] = [];
+    // Normalize category name to ensure case-insensitive grouping
+    const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+    if (!acc[normalizedCategory]) {
+      acc[normalizedCategory] = [];
     }
-    acc[category].push(metric);
+    acc[normalizedCategory].push(metric);
     return acc;
   }, {});
 
