@@ -125,61 +125,45 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-gray-300">Exercises *</Label>
-                <Button type="button" onClick={addExercise} size="sm" className="bg-gray-800 hover:bg-gray-700">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Exercise
+              <Label className="text-gray-300">Workout Type *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  type="button"
+                  onClick={() => handleChange('workout_type', 'whole_room_same')}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
+                    formData.workout_type === 'whole_room_same'
+                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
+                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <Dumbbell className="w-6 h-6" />
+                  <span className="font-bold">Whole Room - Same Exercise</span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => handleChange('workout_type', 'whole_room_rotational')}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
+                    formData.workout_type === 'whole_room_rotational'
+                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
+                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <Dumbbell className="w-6 h-6" />
+                  <span className="font-bold">Whole Room - Rotational</span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => handleChange('workout_type', 'stations')}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
+                    formData.workout_type === 'stations'
+                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
+                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <Dumbbell className="w-6 h-6" />
+                  <span className="font-bold">Stations</span>
                 </Button>
               </div>
-
-              {formData.exercises.map((exercise, index) => (
-                <Card key={index} className="bg-gray-900 border-gray-700">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-yellow-400 font-semibold">Exercise {index + 1}</span>
-                      {formData.exercises.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeExercise(index)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <Input
-                        placeholder="Exercise name"
-                        value={exercise.name}
-                        onChange={(e) => updateExercise(index, 'name', e.target.value)}
-                        className="bg-gray-800 border-gray-600 text-white col-span-2 md:col-span-3"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Sets"
-                        value={exercise.sets}
-                        onChange={(e) => updateExercise(index, 'sets', parseInt(e.target.value))}
-                        className="bg-gray-800 border-gray-600 text-white"
-                      />
-                      <Input
-                        placeholder="Reps"
-                        value={exercise.reps}
-                        onChange={(e) => updateExercise(index, 'reps', e.target.value)}
-                        className="bg-gray-800 border-gray-600 text-white"
-                      />
-                      <Input
-                        placeholder="Weight"
-                        value={exercise.weight}
-                        onChange={(e) => updateExercise(index, 'weight', e.target.value)}
-                        className="bg-gray-800 border-gray-600 text-white"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
