@@ -106,6 +106,59 @@ export default function ProgressTracking() {
     }
   };
 
+  const exportAllRecordsToCSV = () => {
+    if (records.length === 0) {
+      alert('No records to export');
+      return;
+    }
+
+    // Build CSV content
+    const headers = ['Date', 'Athlete Name', 'Team(s)', 'Class Period', 'Metric', 'Category', 'Value', 'Unit', 'Notes'];
+    const rows = records.map(record => {
+      const athlete = athletes.find(a => a.id === record.athlete_id);
+      const metric = metrics.find(m => m.id === record.metric_id);
+      
+      const athleteName = athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown';
+      const teamNames = athlete?.team_ids 
+        ? teams.filter(t => athlete.team_ids.includes(t.id)).map(t => t.name).join('; ')
+        : '';
+      const classPeriod = athlete?.class_period || '';
+      const metricName = metric?.name || 'Unknown';
+      const category = metric?.category || '';
+      const value = record.value;
+      const unit = metric?.unit || '';
+      const notes = record.notes || '';
+      
+      return [
+        record.recorded_date,
+        athleteName,
+        teamNames,
+        classPeriod,
+        metricName,
+        category,
+        value,
+        unit,
+        notes
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${selectedOrganization?.name || 'organization'}_all_records_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
@@ -126,6 +179,14 @@ export default function ProgressTracking() {
                   {records.length} total records tracked
                 </Badge>
               </div>
+              <Button
+                onClick={exportAllRecordsToCSV}
+                disabled={records.length === 0}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold"
+              >
+                <FileDown className="w-5 h-5 mr-2" />
+                Export All Records to CSV
+              </Button>
             </div>
           </div>
         </div>
