@@ -23,12 +23,18 @@ export default function AthleteGrid({ athletes, teams, isLoading, onEdit, onDele
 
   const getTeamNames = (teamIds) => {
     if (!teamIds || teamIds.length === 0) return [];
-    return teamIds
+    const teamNames = teamIds
       .map(id => {
         const team = teams.find(t => t.id === id);
         return team?.name;
       })
       .filter(Boolean); // Remove undefined/null values
+    
+    // If athlete has other teams, remove "Unassigned"
+    if (teamNames.length > 1) {
+      return teamNames.filter(name => name.toLowerCase() !== 'unassigned');
+    }
+    return teamNames;
   };
 
   const handleDeleteClick = (athlete, e) => {
