@@ -98,18 +98,28 @@ export function useMetricRecords(organizationId, options = {}) {
         Athlete.list('-created_date', 100000)
       ]);
 
-      console.log(`useMetricRecords: Fetched ${allRecords.length} total records, ${athletes.length} athletes`);
+      console.log(`useMetricRecords: Fetched ${allRecords.length} total records, ${athletes.length} total athletes`);
 
       // Build athlete -> organization map
       const athleteOrgMap = new Map();
+      const athletesForThisOrg = [];
       athletes.forEach(a => {
         const aOrgId = a.organization_id || a.data?.organization_id;
         if (aOrgId) {
           athleteOrgMap.set(a.id, aOrgId);
+          if (aOrgId === organizationId) {
+            athletesForThisOrg.push(a.id);
+          }
         }
       });
 
-      console.log(`Built athlete map with ${athleteOrgMap.size} athletes`);
+      console.log(`Built athlete map with ${athleteOrgMap.size} athletes total`);
+      console.log(`Found ${athletesForThisOrg.length} athletes for org "${organizationId}"`);
+      console.log(`Sample athlete IDs for this org:`, athletesForThisOrg.slice(0, 5));
+
+      // Check how many records have org_id vs need inference
+      const recordsWithOrgId = allRecords.filter(r => r.organization_id || r.data?.organization_id);
+      console.log(`${recordsWithOrgId.length} records have organization_id, ${allRecords.length - recordsWithOrgId.length} need inference`);
 
       // Filter records by BOTH direct organization_id AND inferred from athlete
       const orgRecords = allRecords.filter(r => {
@@ -122,12 +132,28 @@ export function useMetricRecords(organizationId, options = {}) {
       });
 
       console.log(`useMetricRecords FINAL: ${orgRecords.length} records for org "${organizationId}"`);
-      console.log(`Sample filtered records:`, orgRecords.slice(0, 3).map(r => ({
-        id: r.id,
-        athlete_id: r.athlete_id || r.data?.athlete_id,
-        record_org_id: r.organization_id || r.data?.organization_id,
-        inferred_org: athleteOrgMap.get(r.athlete_id || r.data?.athlete_id)
-      })));
+      
+      if (orgRecords.length === 0) {
+        console.warn(`⚠️ NO RECORDS FOUND for org "${organizationId}"!`);
+        console.log(`Debug info:`, {
+          totalRecords: allRecords.length,
+          totalAthletes: athletes.length,
+          athletesInThisOrg: athletesForThisOrg.length,
+          recordsWithOrgId: recordsWithOrgId.length,
+          sampleRecordOrgIds: allRecords.slice(0, 10).map(r => ({
+            id: r.id,
+            org_id: r.organization_id || r.data?.organization_id,
+            athlete_id: r.athlete_id || r.data?.athlete_id
+          }))
+        });
+      } else {
+        console.log(`Sample filtered records:`, orgRecords.slice(0, 3).map(r => ({
+          id: r.id,
+          athlete_id: r.athlete_id || r.data?.athlete_id,
+          record_org_id: r.organization_id || r.data?.organization_id,
+          inferred_org: athleteOrgMap.get(r.athlete_id || r.data?.athlete_id)
+        })));
+      }
 
       return orgRecords.map(r => normalizeEntity(r, [
         'athlete_id', 'metric_id', 'value', 'recorded_date', 'notes', 'workout_id', 'organization_id'
