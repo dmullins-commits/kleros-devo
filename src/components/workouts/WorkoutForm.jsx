@@ -13,13 +13,9 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
   const [formData, setFormData] = useState(workout || {
     name: '',
     description: '',
-    exercises: [{ name: '', sets: 3, reps: '10', weight: '', rest: '60s', notes: '' }],
-    duration_minutes: 60,
-    difficulty: 'intermediate',
-    category: 'strength',
+    workout_type: '',
     assigned_teams: [],
-    assigned_athletes: [],
-    vbt_compatible: false
+    assigned_athletes: []
   });
 
   const handleSubmit = (e) => {
