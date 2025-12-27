@@ -6,17 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Save, Dumbbell, Plus, Trash2 } from "lucide-react";
+import { X, Save, Dumbbell, Edit, Play } from "lucide-react";
+import WholeRoomSameExercisePanel from "./WholeRoomSameExercisePanel";
+import WorkoutPlayer from "./WorkoutPlayer";
 
 export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(workout || {
     name: '',
     description: '',
     workout_type: '',
+    workout_config: null,
     assigned_teams: [],
     assigned_athletes: []
   });
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [isConfigSaved, setIsConfigSaved] = useState(!!workout?.workout_config);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -36,37 +40,38 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     }));
   };
 
-  const addExercise = () => {
-    setFormData(prev => ({
-      ...prev,
-      exercises: [...prev.exercises, { name: '', sets: 3, reps: '10', weight: '', rest: '60s', notes: '' }]
-    }));
+  const handleConfigSave = (config) => {
+    setFormData(prev => ({ ...prev, workout_config: config }));
+    setIsConfigSaved(true);
   };
 
-  const removeExercise = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      exercises: prev.exercises.filter((_, i) => i !== index)
-    }));
+  const handleEditConfig = () => {
+    setIsConfigSaved(false);
   };
 
-  const updateExercise = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      exercises: prev.exercises.map((ex, i) => 
-        i === index ? { ...ex, [field]: value } : ex
-      )
-    }));
+  const handlePlay = () => {
+    if (formData.workout_config) {
+      setShowPlayer(true);
+    }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="mb-8"
-    >
-      <Card className="bg-gray-950 border border-gray-800">
+    <>
+      {showPlayer && formData.workout_config && (
+        <WorkoutPlayer
+          config={formData.workout_config}
+          workoutName={formData.name}
+          onClose={() => setShowPlayer(false)}
+        />
+      )}
+      
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="mb-8"
+      >
+        <Card className="bg-gray-950 border border-gray-800">
         <CardHeader className="border-b border-gray-800">
           <CardTitle className="flex items-center justify-between text-white">
             <div className="flex items-center gap-3">
@@ -125,7 +130,10 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                   type="button"
-                  onClick={() => handleChange('workout_type', 'whole_room_same')}
+                  onClick={() => {
+                    handleChange('workout_type', 'whole_room_same');
+                    setIsConfigSaved(false);
+                  }}
                   className={`h-24 flex flex-col items-center justify-center gap-2 ${
                     formData.workout_type === 'whole_room_same'
                       ? 'bg-yellow-400 text-black hover:bg-yellow-500'
@@ -143,9 +151,11 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                       ? 'bg-yellow-400 text-black hover:bg-yellow-500'
                       : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
                   }`}
+                  disabled
                 >
                   <Dumbbell className="w-6 h-6" />
                   <span className="font-bold">Whole Room - Rotational</span>
+                  <span className="text-xs">(Coming Soon)</span>
                 </Button>
                 <Button
                   type="button"
@@ -155,12 +165,57 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                       ? 'bg-yellow-400 text-black hover:bg-yellow-500'
                       : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
                   }`}
+                  disabled
                 >
                   <Dumbbell className="w-6 h-6" />
                   <span className="font-bold">Stations</span>
+                  <span className="text-xs">(Coming Soon)</span>
                 </Button>
               </div>
             </div>
+
+            {/* Configuration panel */}
+            {formData.workout_type === 'whole_room_same' && !isConfigSaved && (
+              <WholeRoomSameExercisePanel 
+                onSave={handleConfigSave}
+                initialData={formData.workout_config}
+              />
+            )}
+
+            {/* Config saved state with edit and play buttons */}
+            {formData.workout_type === 'whole_room_same' && isConfigSaved && formData.workout_config && (
+              <Card className="bg-gray-900 border-gray-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="text-white font-bold">Workout Configured</h3>
+                      <p className="text-gray-400 text-sm">
+                        {formData.workout_config.exercises.length} exercises • {formData.workout_config.sets} set(s)
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={handleEditConfig}
+                        variant="outline"
+                        className="border-gray-600 text-white hover:bg-gray-800"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handlePlay}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Play
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
               <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:bg-gray-800">
@@ -175,5 +230,6 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
         </CardContent>
       </Card>
     </motion.div>
+    </>
   );
 }

@@ -1,18 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Dumbbell, Zap, ListChecks } from "lucide-react";
+import { Edit, Dumbbell, Play } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import WorkoutPlayer from "./WorkoutPlayer";
 
 export default function WorkoutsList({ workouts, isLoading, onEdit }) {
-  const difficultyColors = {
-    beginner: "bg-green-400/20 text-green-400",
-    intermediate: "bg-yellow-400/20 text-yellow-400",
-    advanced: "bg-orange-400/20 text-orange-400",
-    elite: "bg-red-400/20 text-red-400",
-  };
+  const [playingWorkout, setPlayingWorkout] = useState(null);
 
   if (isLoading) {
     return (
@@ -27,10 +23,19 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
   }
   
   return (
-    <Card className="bg-gray-950 border border-gray-800">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <AnimatePresence>
+    <>
+      {playingWorkout && (
+        <WorkoutPlayer
+          config={playingWorkout.workout_config}
+          workoutName={playingWorkout.name}
+          onClose={() => setPlayingWorkout(null)}
+        />
+      )}
+      
+      <Card className="bg-gray-950 border border-gray-800">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <AnimatePresence>
             {workouts.map((workout) => (
               <motion.div
                 key={workout.id}
@@ -46,32 +51,38 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
                         <p className="text-gray-400 text-sm mb-3">{workout.description}</p>
                         
                         <div className="flex gap-2 flex-wrap items-center">
-                          <Badge className={difficultyColors[workout.difficulty] || 'bg-gray-400/20 text-gray-400'}>
-                            {workout.difficulty}
-                          </Badge>
                           <Badge variant="outline" className="border-gray-600 text-gray-300 capitalize">
-                            {workout.category?.replace('_', ' ')}
+                            {workout.workout_type?.replace(/_/g, ' ') || 'Custom'}
                           </Badge>
-                           <Badge variant="outline" className="border-gray-600 text-gray-300">
-                            <ListChecks className="w-3 h-3 mr-1" />
-                            {workout.exercises.length} exercises
-                          </Badge>
-                          {workout.vbt_compatible && (
-                            <Badge className="bg-blue-400/20 text-blue-400 border border-blue-400/30">
-                              <Zap className="w-3 h-3 mr-1" /> VBT Ready
+                          {workout.workout_config && (
+                            <Badge variant="outline" className="border-gray-600 text-gray-300">
+                              <Dumbbell className="w-3 h-3 mr-1" />
+                              {workout.workout_config.exercises?.length || 0} exercises
                             </Badge>
                           )}
                         </div>
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(workout)}
-                        className="text-gray-400 hover:text-yellow-400 hover:bg-gray-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        {workout.workout_config && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setPlayingWorkout(workout)}
+                            className="text-green-400 hover:text-green-300 hover:bg-gray-800"
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit(workout)}
+                          className="text-gray-400 hover:text-yellow-400 hover:bg-gray-800"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -86,8 +97,9 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
               <p className="text-gray-500">Create your first workout to get started</p>
             </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }
