@@ -311,21 +311,29 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       if (!isValidDate(label)) return null;
-      const [year, month, day] = label.split('-');
-      const safeDate = new Date(year, month - 1, day);
-      return (
-        <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
-          <p className="text-white font-medium">{format(safeDate, "MMM d, yyyy")}</p>
-          {payload.map((entry, index) => {
-            const metric = metrics.find(m => m.id === entry.dataKey);
-            return (
-              <p key={index} style={{ color: entry.color }}>
-                {metric?.name}: {formatValue(entry.value, metric)} {metric?.unit}
-              </p>
-            );
-          })}
-        </div>
-      );
+      
+      try {
+        const [year, month, day] = label.split('-');
+        const safeDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        
+        if (isNaN(safeDate.getTime())) return null;
+        
+        return (
+          <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
+            <p className="text-white font-medium">{format(safeDate, "MMM d, yyyy")}</p>
+            {payload.map((entry, index) => {
+              const metric = metrics.find(m => m.id === entry.dataKey);
+              return (
+                <p key={index} style={{ color: entry.color }}>
+                  {metric?.name}: {formatValue(entry.value, metric)} {metric?.unit}
+                </p>
+              );
+            })}
+          </div>
+        );
+      } catch (error) {
+        return null;
+      }
     }
     return null;
   };
@@ -711,8 +719,14 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               fontSize={12}
                               tickFormatter={(date) => {
                                 if (!isValidDate(date)) return 'Invalid';
-                                const [year, month, day] = date.split('-');
-                                return format(new Date(year, month - 1, day), "MMM d");
+                                try {
+                                  const [year, month, day] = date.split('-');
+                                  const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                  if (isNaN(parsedDate.getTime())) return 'Invalid';
+                                  return format(parsedDate, "MMM d");
+                                } catch (error) {
+                                  return 'Invalid';
+                                }
                               }}
                             />
                             <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />
@@ -925,8 +939,14 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               <div className="text-white font-black">{formatValue(firstValue, metric)} {metric.unit}</div>
                               <div className="text-amber-500/60 text-xs font-semibold">{(() => {
                                 if (!isValidDate(firstDate)) return 'Invalid Date';
-                                const [year, month, day] = firstDate.split('-');
-                                return format(new Date(year, month - 1, day), "MMM d, yyyy");
+                                try {
+                                  const [year, month, day] = firstDate.split('-');
+                                  const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                  if (isNaN(parsedDate.getTime())) return 'Invalid Date';
+                                  return format(parsedDate, "MMM d, yyyy");
+                                } catch (error) {
+                                  return 'Invalid Date';
+                                }
                               })()}</div>
                             </div>
                             <div className="stat-box text-center">
@@ -934,8 +954,14 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               <div className="text-amber-400 font-black">{formatValue(latestValue, metric)} {metric.unit}</div>
                               <div className="text-amber-500/60 text-xs font-semibold">{(() => {
                                 if (!isValidDate(latestDate)) return 'Invalid Date';
-                                const [year, month, day] = latestDate.split('-');
-                                return format(new Date(year, month - 1, day), "MMM d, yyyy");
+                                try {
+                                  const [year, month, day] = latestDate.split('-');
+                                  const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                  if (isNaN(parsedDate.getTime())) return 'Invalid Date';
+                                  return format(parsedDate, "MMM d, yyyy");
+                                } catch (error) {
+                                  return 'Invalid Date';
+                                }
                               })()}</div>
                             </div>
                             <div className="stat-box text-center">
