@@ -185,7 +185,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
             {/* Config saved state with edit and play buttons */}
             {formData.workout_type === 'whole_room_same' && isConfigSaved && formData.workout_config && (
               <Card className="bg-gray-900 border-gray-700">
-                <CardContent className="p-6">
+                <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <h3 className="text-white font-bold">Workout Configured</h3>
@@ -213,23 +213,25 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                       </Button>
                     </div>
                   </div>
+                  <Button
+                    type="submit"
+                    disabled={!formData.name || formData.assigned_teams.length === 0}
+                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-5 h-5 mr-2" />
+                    Save Workout
+                  </Button>
                 </CardContent>
               </Card>
             )}
 
-            <div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
-              <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:bg-gray-800">
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={formData.workout_type && !formData.workout_config}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {workout ? 'Update' : 'Create'} Workout
-              </Button>
-            </div>
+            {!isConfigSaved && (
+              <div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
+                <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:bg-gray-800">
+                  Cancel
+                </Button>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>
