@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Edit, Dumbbell, Play, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import WorkoutPlayer from "./WorkoutPlayer";
+import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
+import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
