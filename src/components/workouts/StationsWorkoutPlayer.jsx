@@ -28,6 +28,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [colorRotation, setColorRotation] = useState(0);
   
   const timerRef = useRef(null);
 
@@ -53,6 +54,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
     setTotalWorkoutTime(calculateTotalTime());
     setElapsedTime(0);
     setIsPaused(true);
+    setColorRotation(0);
     
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -141,6 +143,13 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
     }
   }, [timeRemaining]);
 
+  const rotateColors = () => {
+    const maxExercises = migratedConfig.stations.length > 0 
+      ? Math.max(...migratedConfig.stations.map(s => (s.exercises || []).length))
+      : 0;
+    setColorRotation(prev => (prev + 1) % maxExercises);
+  };
+
   const handlePhaseComplete = () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -152,6 +161,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       startTimer();
     } else if (phase === 'work') {
       playSound('buzzer');
+      rotateColors();
       setPhase('rest');
       const restSeconds = (migratedConfig.restTime?.minutes || 0) * 60 + (migratedConfig.restTime?.seconds || 0);
       setTimeRemaining(restSeconds);
@@ -255,6 +265,57 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
               min="0"
               max={totalWorkoutTime}
               value={elapsedTime}
+              onChange={(e) => {
+                const newElapsed = parseInt(e.target.value);
+                setElapsedTime(newElapsed);
+                setIsPaused(true);
+                if (timerRef.current) clearInterval(timerRef.current);
+                
+                // Calculate phase based on elapsed time
+                let accTime = 0;
+                const setupSecs = (migratedConfig.setupTime?.minutes || 0) * 60 + (migratedConfig.setupTime?.seconds || 0);
+                const workSecs = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
+                const restSecs = (migratedConfig.restTime?.minutes || 0) * 60 + (migratedConfig.restTime?.seconds || 0);
+                const maxExercises = migratedConfig.stations.length > 0 
+                  ? Math.max(...migratedConfig.stations.map(s => (s.exercises || []).length))
+                  : 0;
+                
+                if (newElapsed <= setupSecs) {
+                  setPhase('setup');
+                  setCurrentSet(1);
+                  setCurrentExerciseIndex(0);
+                  setColorRotation(0);
+                  setTimeRemaining(setupSecs - newElapsed);
+                  return;
+                }
+                accTime += setupSecs;
+                
+                for (let set = 1; set <= migratedConfig.sets; set++) {
+                  for (let exIdx = 0; exIdx < maxExercises; exIdx++) {
+                    if (newElapsed <= accTime + workSecs) {
+                      setPhase('work');
+                      setCurrentSet(set);
+                      setCurrentExerciseIndex(exIdx);
+                      setColorRotation(Math.floor((set - 1) * maxExercises + exIdx) % maxExercises);
+                      setTimeRemaining(accTime + workSecs - newElapsed);
+                      return;
+                    }
+                    accTime += workSecs;
+                    
+                    if (newElapsed <= accTime + restSecs) {
+                      setPhase('rest');
+                      setCurrentSet(set);
+                      setCurrentExerciseIndex(exIdx);
+                      setColorRotation(Math.floor((set - 1) * maxExercises + exIdx) % maxExercises);
+                      setTimeRemaining(accTime + restSecs - newElapsed);
+                      return;
+                    }
+                    accTime += restSecs;
+                  }
+                }
+                
+                setPhase('complete');
+              }}
               className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer"
               style={{
                 background: `linear-gradient(to right, #FFD700 0%, #FFD700 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 100%)`
@@ -287,7 +348,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       {/* Main content */}
       <div className="flex-1 flex items-start justify-between gap-8 px-16 pt-24">
         {/* Stations */}
-        {(phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => (
+        {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => (
           <div key={stationIdx} className={`${stationWidth} space-y-2`}>
             {/* Sets indicator */}
             <div className="flex items-center gap-2 mb-4">
@@ -309,7 +370,8 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
             {/* Exercise rows */}
             {station.exercises.map((exercise, exIdx) => {
               const isActive = exIdx === currentExerciseIndex;
-              const color = migratedConfig.stations[0]?.exercises?.[exIdx]?.color || exercise.color || '#FFFFFF';
+              const rotatedColorIdx = (exIdx + colorRotation) % station.exercises.length;
+              const color = migratedConfig.stations[0]?.exercises?.[rotatedColorIdx]?.color || station.exercises[rotatedColorIdx]?.color || '#FFFFFF';
               
               const displayReps = exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps[currentSet - 1]
                 ? exercise.perSetReps[currentSet - 1]
@@ -319,14 +381,14 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                 <div
                   key={exIdx}
                   className="flex items-center h-16 relative"
-                  style={{ backgroundColor: isActive && phase === 'work' ? color : '#000000' }}
+                  style={{ backgroundColor: color }}
                 >
                   <div className="absolute left-2 top-1/2 -translate-y-1/2">
                     <div 
                       className="border-2 px-3 py-1 text-xl font-black"
                       style={{ 
-                        borderColor: isActive && phase === 'work' ? getColorForText(color) : '#6B7280',
-                        color: isActive && phase === 'work' ? getColorForText(color) : '#6B7280'
+                        borderColor: getColorForText(color),
+                        color: getColorForText(color)
                       }}
                     >
                       {displayReps}
@@ -334,12 +396,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                   </div>
 
                   <div className="flex-1 flex items-center justify-center gap-2">
-                    {isActive && phase === 'work' && (
-                      <span className="text-2xl" style={{ color: getColorForText(color) }}>▶</span>
-                    )}
                     <h3 
                       className="text-3xl font-black"
-                      style={{ color: isActive && phase === 'work' ? getColorForText(color) : '#FFFFFF' }}
+                      style={{ color: getColorForText(color) }}
                     >
                       {exercise.name}
                     </h3>
@@ -350,7 +409,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                       <span 
                         key={i}
                         className="text-lg font-black"
-                        style={{ color: isActive && phase === 'work' ? getColorForText(color) : '#6B7280' }}
+                        style={{ color: getColorForText(color) }}
                       >
                         {displayReps}
                       </span>
@@ -362,38 +421,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
           </div>
         ))}
 
-        {/* Setup phase */}
-        {phase === 'setup' && (
-          <div className="flex-1 max-w-5xl grid grid-cols-1 gap-6">
-            <h2 className="text-7xl font-black text-yellow-400 mb-8 text-center">Stations:</h2>
-            <div className={`grid ${numStations === 2 ? 'grid-cols-2' : numStations === 3 ? 'grid-cols-3' : 'grid-cols-4'} gap-6`}>
-              {migratedConfig.stations.map((station, stationIdx) => (
-                <div key={stationIdx} className="space-y-4">
-                  <h3 className="text-3xl font-black text-white mb-4">Station {stationIdx + 1}</h3>
-                  {station.exercises.map((ex, idx) => {
-                    const color = migratedConfig.stations[0]?.exercises?.[idx]?.color || ex.color || '#FFD700';
-                    return (
-                      <div 
-                        key={idx}
-                        className="p-4 rounded-lg"
-                        style={{ backgroundColor: color }}
-                      >
-                        <p className="text-2xl font-bold" style={{ color: getColorForText(color) }}>
-                          {ex.name} - {ex.reps}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Timer */}
         {(phase === 'work' || phase === 'rest') && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
-            <h2 className="text-4xl font-black text-yellow-400 tracking-wide">Stations</h2>
             
             <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
 
