@@ -6,11 +6,16 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
   // Migrate old config format to new format if needed
   const migratedConfig = {
     ...config,
+    sets: config.sets || 1,
     setupTime: config.setupTime || { minutes: 1, seconds: 0 },
     workTime: config.workTime || { minutes: 1, seconds: 0 },
     restTime: config.restTime || { minutes: 1, seconds: 0 },
     restBetweenSets: config.restBetweenSets || { minutes: 0, seconds: 10 },
-    exercises: config.exercises || []
+    exercises: (config.exercises || []).map(ex => ({
+      ...ex,
+      usePerSetReps: ex.usePerSetReps || false,
+      perSetReps: ex.perSetReps || []
+    }))
   };
 
   const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'complete'
@@ -26,16 +31,16 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
   const timerRef = useRef(null);
 
   const calculateTotalTime = () => {
-    const setupSeconds = migratedConfig.setupTime.minutes * 60 + migratedConfig.setupTime.seconds;
-    const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
-    const restSeconds = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
-    const exerciseTime = (workSeconds + restSeconds) * migratedConfig.exercises.length;
-    const setRestSeconds = migratedConfig.restBetweenSets.minutes * 60 + migratedConfig.restBetweenSets.seconds;
-    return setupSeconds + (exerciseTime * migratedConfig.sets) + (setRestSeconds * (migratedConfig.sets - 1));
+    const setupSeconds = (migratedConfig.setupTime?.minutes || 0) * 60 + (migratedConfig.setupTime?.seconds || 0);
+    const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
+    const restSeconds = (migratedConfig.restTime?.minutes || 0) * 60 + (migratedConfig.restTime?.seconds || 0);
+    const exerciseTime = (workSeconds + restSeconds) * (migratedConfig.exercises?.length || 0);
+    const setRestSeconds = (migratedConfig.restBetweenSets?.minutes || 0) * 60 + (migratedConfig.restBetweenSets?.seconds || 0);
+    return setupSeconds + (exerciseTime * (migratedConfig.sets || 1)) + (setRestSeconds * ((migratedConfig.sets || 1) - 1));
   };
 
   useEffect(() => {
-    const setupSeconds = migratedConfig.setupTime.minutes * 60 + migratedConfig.setupTime.seconds;
+    const setupSeconds = (migratedConfig.setupTime?.minutes || 0) * 60 + (migratedConfig.setupTime?.seconds || 0);
     setPhase('setup');
     setCurrentSet(1);
     setCurrentExerciseIndex(0);
