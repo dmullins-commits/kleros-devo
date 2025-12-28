@@ -70,6 +70,7 @@ export default function Workouts() {
   };
 
   const handleSubmit = async (workoutData) => {
+    console.log('Saving workout data:', workoutData); // Debug log
     if (editingWorkout) {
       await Workout.update(editingWorkout.id, workoutData);
     } else {
