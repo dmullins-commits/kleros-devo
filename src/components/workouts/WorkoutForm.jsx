@@ -16,7 +16,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     description: '',
     workout_type: '',
     workout_config: null,
-    assigned_teams: [],
+    assigned_teams: teams.length > 0 ? [teams[0].id] : [],
     assigned_athletes: []
   });
   const [showPlayer, setShowPlayer] = useState(false);
@@ -96,34 +96,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-gray-300">Description</Label>
-              <Textarea
-                placeholder="Workout description..."
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                className="bg-gray-900 border-gray-700 text-white h-24"
-              />
-            </div>
 
-            <div className="space-y-3">
-              <Label className="text-gray-300">Assign to Teams *</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-gray-900 border border-gray-700 rounded-lg max-h-48 overflow-y-auto">
-                {teams.map(team => (
-                  <div key={team.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`team-${team.id}`}
-                      checked={formData.assigned_teams.includes(team.id)}
-                      onCheckedChange={() => handleTeamToggle(team.id)}
-                      className="border-gray-600 data-[state=checked]:bg-yellow-400 data-[state=checked]:border-yellow-400"
-                    />
-                    <label htmlFor={`team-${team.id}`} className="text-sm text-white cursor-pointer">
-                      {team.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             <div className="space-y-3">
               <Label className="text-gray-300">Workout Type *</Label>

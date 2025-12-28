@@ -142,13 +142,19 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
         </div>
 
         <div className="text-xs text-gray-500 text-center">
-          Total time: {formatTime(config.setupTime)} + 
-          ({config.exercises.reduce((acc, ex) => {
-            const work = (ex.workTime.minutes * 60) + ex.workTime.seconds;
-            const rest = (ex.restTime.minutes * 60) + ex.restTime.seconds;
-            return acc + work + rest;
-          }, 0)} seconds × {config.sets} sets) + 
-          {formatTime(config.restBetweenSets)} × {config.sets - 1} rest
+          Total time: {(() => {
+            const setupSecs = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+            const exerciseSecs = config.exercises.reduce((acc, ex) => {
+              const work = (ex.workTime.minutes * 60) + ex.workTime.seconds;
+              const rest = (ex.restTime.minutes * 60) + ex.restTime.seconds;
+              return acc + work + rest;
+            }, 0);
+            const setRestSecs = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+            const totalSecs = setupSecs + (exerciseSecs * config.sets) + (setRestSecs * (config.sets - 1));
+            const mins = Math.floor(totalSecs / 60);
+            const secs = totalSecs % 60;
+            return `${mins} min ${secs} sec`;
+          })()}
         </div>
 
         {/* Exercises list */}
