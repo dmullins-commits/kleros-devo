@@ -7,7 +7,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -310,7 +310,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Top bar with slider */}
+      {/* Top bar with slider and set indicator */}
       <div className="absolute top-4 left-4 right-4 z-10">
         <div className="flex items-center gap-4">
           <div className="flex-1">
@@ -329,6 +329,9 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
               <span>{formatTime(elapsedTime)}</span>
               <span>{formatTime(totalWorkoutTime)}</span>
             </div>
+          </div>
+          <div className="text-yellow-400 text-lg font-bold tracking-wider whitespace-nowrap">
+            SET {currentSet} / {config.sets}
           </div>
           <Button
             variant="ghost"
@@ -407,12 +410,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         </div>
 
         {/* Right side - Timer and status */}
-        <div className="flex flex-col items-center gap-12">
-          {/* Set indicator */}
-          <div className="text-yellow-400 text-2xl font-bold tracking-wider">
-            SET {currentSet} / {config.sets}
-          </div>
-
+        <div className="flex flex-col items-center justify-center gap-8">
           {/* Timer circle */}
           <div className="relative">
             <svg className="w-[450px] h-[450px]" viewBox="0 0 200 200">
