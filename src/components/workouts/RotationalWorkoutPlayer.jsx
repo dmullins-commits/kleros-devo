@@ -78,6 +78,19 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
+    } else if (type === 'buzzer') {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 300;
+      gainNode.gain.value = 0.6;
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 1.0);
     }
   };
 
@@ -134,6 +147,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       startTimer();
     } else if (phase === 'work') {
       // Move to rest phase and rotate colors
+      playSound('buzzer');
       rotateColors();
       setPhase('rest');
       const restSeconds = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
@@ -358,6 +372,11 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
                 const displayColor = migratedConfig.exercises[rotatedColorIdx].color;
                 const isActive = exIdx === currentExerciseIndex;
                 
+                // Get reps for current set
+                const displayReps = exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps[currentSet - 1]
+                  ? exercise.perSetReps[currentSet - 1]
+                  : exercise.reps;
+                
                 return (
                   <div
                     key={exIdx}
@@ -373,7 +392,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
                           color: getColorForText(displayColor)
                         }}
                       >
-                        {exercise.reps}
+                        {displayReps}
                       </div>
                     </div>
 
@@ -423,6 +442,14 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
 
           {phase === 'setup' && (
             <h2 className="text-6xl font-black text-white tracking-wide">GET READY</h2>
+          )}
+
+          {phase === 'work' && (
+            <h2 className="text-6xl font-black text-green-400 tracking-wide">WORK</h2>
+          )}
+
+          {phase === 'rest' && (
+            <h2 className="text-6xl font-black text-blue-400 tracking-wide">REST</h2>
           )}
 
           <Button

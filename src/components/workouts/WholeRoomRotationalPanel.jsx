@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const EXERCISE_COLORS = [
   { value: '#FFD700', label: 'Yellow', text: '#000000' },
@@ -27,7 +28,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
     restTime: { minutes: 1, seconds: 0 },
     restBetweenSets: { minutes: 0, seconds: 10 },
     exercises: [
-      { name: '', reps: '15', color: '#FFD700', notes: '' }
+      { name: '', reps: '15', color: '#FFD700', notes: '', usePerSetReps: false, perSetReps: [] }
     ]
   });
 
@@ -60,8 +61,41 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
         name: '', 
         reps: '15', 
         color: '#FFD700',
-        notes: ''
+        notes: '',
+        usePerSetReps: false,
+        perSetReps: []
       }]
+    }));
+  };
+
+  const togglePerSetReps = (index) => {
+    setConfig(prev => ({
+      ...prev,
+      exercises: prev.exercises.map((ex, i) => {
+        if (i === index) {
+          const usePerSetReps = !ex.usePerSetReps;
+          return {
+            ...ex,
+            usePerSetReps,
+            perSetReps: usePerSetReps ? Array(config.sets).fill(ex.reps) : []
+          };
+        }
+        return ex;
+      })
+    }));
+  };
+
+  const handlePerSetRepChange = (exerciseIndex, setIndex, value) => {
+    setConfig(prev => ({
+      ...prev,
+      exercises: prev.exercises.map((ex, i) => {
+        if (i === exerciseIndex) {
+          const newPerSetReps = [...ex.perSetReps];
+          newPerSetReps[setIndex] = value;
+          return { ...ex, perSetReps: newPerSetReps };
+        }
+        return ex;
+      })
     }));
   };
 
@@ -224,9 +258,37 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
                     onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
                     placeholder="15"
                     className="bg-gray-800 border-gray-700 text-white text-center text-lg font-bold"
+                    disabled={exercise.usePerSetReps}
                   />
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 mt-2">
+                <Checkbox
+                  id={`per-set-${index}`}
+                  checked={exercise.usePerSetReps}
+                  onCheckedChange={() => togglePerSetReps(index)}
+                />
+                <Label htmlFor={`per-set-${index}`} className="text-gray-400 text-sm cursor-pointer">
+                  Different reps per set
+                </Label>
+              </div>
+
+              {exercise.usePerSetReps && (
+                <div className="grid grid-cols-5 gap-2 mt-2">
+                  {Array.from({ length: config.sets }, (_, setIdx) => (
+                    <div key={setIdx}>
+                      <Label className="text-gray-400 text-xs mb-1 block">Set {setIdx + 1}</Label>
+                      <Input
+                        value={exercise.perSetReps[setIdx] || ''}
+                        onChange={(e) => handlePerSetRepChange(index, setIdx, e.target.value)}
+                        placeholder="10"
+                        className="bg-gray-800 border-gray-700 text-white text-center"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="grid grid-cols-[1fr,auto] gap-4 items-end">
                 <div>
