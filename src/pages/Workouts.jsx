@@ -44,10 +44,11 @@ export default function Workouts() {
         a.team_ids?.some(tid => teamIds.includes(tid))
       );
       
-      // Filter workouts by org teams (assigned_teams)
+      // Filter workouts: show all if no teams assigned, or if assigned to current org's teams
+      const orgTeamIds = filteredTeamsData.map(t => t.id);
       const filteredWorkouts = workoutsData.filter(w =>
         !w.assigned_teams?.length || 
-        w.assigned_teams.some(tid => teamIds.includes(tid))
+        w.assigned_teams.some(tid => orgTeamIds.includes(tid))
       );
       
       setWorkouts(filteredWorkouts);
