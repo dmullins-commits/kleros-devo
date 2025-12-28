@@ -21,10 +21,13 @@ const EXERCISE_COLORS = [
 
 export default function WholeRoomRotationalPanel({ onSave, initialData }) {
   const [config, setConfig] = useState(initialData || {
-    sets: 4,
+    sets: 1,
     setupTime: { minutes: 1, seconds: 0 },
+    workTime: { minutes: 1, seconds: 0 },
+    restTime: { minutes: 1, seconds: 0 },
+    restBetweenSets: { minutes: 0, seconds: 10 },
     exercises: [
-      { name: '', reps: '', color: '#FFD700', workTime: { minutes: 0, seconds: 30 } }
+      { name: '', reps: '15', color: '#FFD700', notes: '' }
     ]
   });
 
@@ -48,26 +51,16 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
     }));
   };
 
-  const handleExerciseTimeChange = (index, timeField, type, value) => {
-    setConfig(prev => ({
-      ...prev,
-      exercises: prev.exercises.map((ex, i) => 
-        i === index ? { 
-          ...ex, 
-          [timeField]: { ...ex[timeField], [type]: parseInt(value) || 0 }
-        } : ex
-      )
-    }));
-  };
+
 
   const addExercise = () => {
     setConfig(prev => ({
       ...prev,
       exercises: [...prev.exercises, { 
         name: '', 
-        reps: '', 
+        reps: '15', 
         color: '#FFD700',
-        workTime: { minutes: 0, seconds: 30 }
+        notes: ''
       }]
     }));
   };
@@ -84,8 +77,8 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
   return (
     <Card className="bg-gray-950 border border-gray-800">
       <CardContent className="p-6 space-y-6">
-        {/* Header section with sets and setup time */}
-        <div className="flex items-center justify-between gap-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
+        {/* Header section with all global settings */}
+        <div className="grid grid-cols-5 gap-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
           <div className="text-center">
             <Label className="text-gray-400 text-xs mb-2 block">Sets</Label>
             <Input
@@ -93,29 +86,101 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
               min="1"
               value={config.sets}
               onChange={(e) => handleSetChange('sets', parseInt(e.target.value) || 1)}
-              className="w-20 bg-gray-800 border-gray-600 text-white text-center"
+              className="w-full bg-gray-800 border-gray-600 text-white text-center"
             />
           </div>
 
           <div className="text-center">
             <Label className="text-gray-400 text-xs mb-2 block">Setup Time</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <Input
                 type="number"
                 min="0"
                 value={config.setupTime.minutes}
                 onChange={(e) => handleTimeChange('setupTime', 'minutes', e.target.value)}
-                className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="M"
               />
-              <span className="text-gray-400 self-center text-xl">:</span>
+              <span className="text-gray-400 self-center">:</span>
               <Input
                 type="number"
                 min="0"
                 max="59"
                 value={config.setupTime.seconds.toString().padStart(2, '0')}
                 onChange={(e) => handleTimeChange('setupTime', 'seconds', e.target.value)}
-                className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
+                placeholder="00"
+              />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Label className="text-gray-400 text-xs mb-2 block">Work Time</Label>
+            <div className="flex gap-1">
+              <Input
+                type="number"
+                min="0"
+                value={config.workTime.minutes}
+                onChange={(e) => handleTimeChange('workTime', 'minutes', e.target.value)}
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
+                placeholder="M"
+              />
+              <span className="text-gray-400 self-center">:</span>
+              <Input
+                type="number"
+                min="0"
+                max="59"
+                value={config.workTime.seconds}
+                onChange={(e) => handleTimeChange('workTime', 'seconds', e.target.value)}
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
+                placeholder="00"
+              />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Label className="text-gray-400 text-xs mb-2 block">Rest Time</Label>
+            <div className="flex gap-1">
+              <Input
+                type="number"
+                min="0"
+                value={config.restTime.minutes}
+                onChange={(e) => handleTimeChange('restTime', 'minutes', e.target.value)}
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
+                placeholder="M"
+              />
+              <span className="text-gray-400 self-center">:</span>
+              <Input
+                type="number"
+                min="0"
+                max="59"
+                value={config.restTime.seconds}
+                onChange={(e) => handleTimeChange('restTime', 'seconds', e.target.value)}
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
+                placeholder="00"
+              />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Label className="text-gray-400 text-xs mb-2 block">Rest Between Sets</Label>
+            <div className="flex gap-1">
+              <Input
+                type="number"
+                min="0"
+                value={config.restBetweenSets.minutes}
+                onChange={(e) => handleTimeChange('restBetweenSets', 'minutes', e.target.value)}
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
+                placeholder="M"
+              />
+              <span className="text-gray-400 self-center">:</span>
+              <Input
+                type="number"
+                min="0"
+                max="59"
+                value={config.restBetweenSets.seconds}
+                onChange={(e) => handleTimeChange('restBetweenSets', 'seconds', e.target.value)}
+                className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="00"
               />
             </div>
@@ -124,95 +189,79 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
 
         {/* Exercises list */}
         <div className="space-y-3">
-          {config.exercises.map((exercise, index) => {
-            const selectedColor = EXERCISE_COLORS.find(c => c.value === exercise.color) || EXERCISE_COLORS[0];
-            return (
-              <div key={index} className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-4">
-                  <Label className="text-yellow-400 font-semibold text-sm whitespace-nowrap">Exercise {index + 1}</Label>
-                  <div className="flex-1 grid grid-cols-[1fr,auto,auto,auto,auto] gap-3 items-end">
-                    <div>
-                      <Label className="text-gray-400 text-xs mb-1 block">Exercise Name</Label>
-                      <Input
-                        value={exercise.name}
-                        onChange={(e) => handleExerciseChange(index, 'name', e.target.value)}
-                        placeholder="Bench Press"
-                        className="bg-gray-800 border-gray-700 text-white"
-                      />
-                    </div>
+          {config.exercises.map((exercise, index) => (
+            <div key={index} className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-start justify-between mb-2">
+                <Label className="text-yellow-400 font-bold text-base">Exercise {index + 1}</Label>
+                {config.exercises.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeExercise(index)}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 -mt-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
 
-                    <div className="w-20">
-                      <Label className="text-gray-400 text-xs mb-1 block">Reps</Label>
-                      <Input
-                        value={exercise.reps}
-                        onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
-                        placeholder="10"
-                        className="bg-gray-800 border-gray-700 text-white text-center"
-                      />
-                    </div>
+              <div className="grid grid-cols-[1fr,auto] gap-4">
+                <div>
+                  <Label className="text-gray-400 text-xs mb-1 block">Exercise Name</Label>
+                  <Input
+                    value={exercise.name}
+                    onChange={(e) => handleExerciseChange(index, 'name', e.target.value)}
+                    placeholder="Curl"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                </div>
 
-                    <div>
-                      <Label className="text-gray-400 text-xs mb-1 block">Work Time</Label>
-                      <div className="flex gap-1 items-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={exercise.workTime.minutes}
-                          onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'minutes', e.target.value)}
-                          className="w-14 bg-gray-800 border-gray-700 text-white text-center"
-                          placeholder="0"
-                        />
-                        <span className="text-gray-500">:</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="59"
-                          value={exercise.workTime.seconds}
-                          onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'seconds', e.target.value)}
-                          className="w-14 bg-gray-800 border-gray-700 text-white text-center"
-                          placeholder="30"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="w-32">
-                      <Label className="text-gray-400 text-xs mb-1 block">Color</Label>
-                      <Select value={exercise.color} onValueChange={(value) => handleExerciseChange(index, 'color', value)}>
-                        <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded" style={{ backgroundColor: exercise.color }} />
-                            <SelectValue />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {EXERCISE_COLORS.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded" style={{ backgroundColor: color.value }} />
-                                {color.label}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {config.exercises.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeExercise(index)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20 mb-0.5"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
+                <div className="w-24">
+                  <Label className="text-gray-400 text-xs mb-1 block">Reps</Label>
+                  <Input
+                    value={exercise.reps}
+                    onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
+                    placeholder="15"
+                    className="bg-gray-800 border-gray-700 text-white text-center text-lg font-bold"
+                  />
                 </div>
               </div>
-            );
-          })}
+
+              <div className="grid grid-cols-[1fr,auto] gap-4 items-end">
+                <div>
+                  <Label className="text-gray-400 text-xs mb-1 block">Notes</Label>
+                  <Input
+                    value={exercise.notes}
+                    onChange={(e) => handleExerciseChange(index, 'notes', e.target.value)}
+                    placeholder="Additional instructions..."
+                    className="bg-gray-800 border-gray-700 text-white text-sm"
+                  />
+                </div>
+
+                <div className="w-32">
+                  <Label className="text-gray-400 text-xs mb-1 block">Color</Label>
+                  <Select value={exercise.color} onValueChange={(value) => handleExerciseChange(index, 'color', value)}>
+                    <SelectTrigger className="bg-gray-800 border-gray-700 text-white h-10">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded" style={{ backgroundColor: exercise.color }} />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXERCISE_COLORS.map((color) => (
+                        <SelectItem key={color.value} value={color.value}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded" style={{ backgroundColor: color.value }} />
+                            {color.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Add Exercise button */}

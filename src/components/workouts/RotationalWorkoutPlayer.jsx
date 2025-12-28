@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
 export default function RotationalWorkoutPlayer({ config, workoutName, onClose }) {
-  const [phase, setPhase] = useState('setup');
+  const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'complete'
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -17,11 +17,11 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
 
   const calculateTotalTime = () => {
     const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
-    const exerciseTime = config.exercises.reduce((acc, ex) => {
-      const work = (ex.workTime.minutes * 60) + ex.workTime.seconds;
-      return acc + work;
-    }, 0);
-    return setupSeconds + (exerciseTime * config.sets);
+    const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
+    const restSeconds = (config.restTime.minutes * 60) + config.restTime.seconds;
+    const exerciseTime = (workSeconds + restSeconds) * config.exercises.length;
+    const setRestSeconds = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+    return setupSeconds + (exerciseTime * config.sets) + (setRestSeconds * (config.sets - 1));
   };
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
         
         const newTime = prev - 1;
         
-        if ((newTime === 3 || newTime === 2 || newTime === 1) && phase === 'work') {
+        if ((newTime === 3 || newTime === 2 || newTime === 1) && (phase === 'work' || phase === 'rest')) {
           playSound('countdown');
         }
         
@@ -124,36 +124,41 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     if (phase === 'setup') {
       playSound('go');
       setPhase('work');
-      const workSeconds = (config.exercises[exerciseOrder[0]].workTime.minutes * 60) + 
-                         config.exercises[exerciseOrder[0]].workTime.seconds;
+      const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
       setTimeRemaining(workSeconds);
       startTimer();
     } else if (phase === 'work') {
-      // Rotate exercises
+      // Move to rest phase
+      setPhase('rest');
+      const restSeconds = (config.restTime.minutes * 60) + config.restTime.seconds;
+      setTimeRemaining(restSeconds);
+      startTimer();
+    } else if (phase === 'rest') {
       rotateExercises();
       
-      // Check if we've completed all exercises in this set
       const nextExerciseIndexInSet = (currentExerciseIndex + 1) % config.exercises.length;
       setCurrentExerciseIndex(nextExerciseIndexInSet);
       
       if (nextExerciseIndexInSet === 0) {
-        // Completed a full set
         if (currentSet < config.sets) {
           setCurrentSet(prev => prev + 1);
+          playSound('go');
+          setPhase('work');
+          const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
+          setTimeRemaining(workSeconds);
+          startTimer();
         } else {
-          // Workout complete
           setPhase('complete');
-          return;
         }
+      } else {
+        playSound('go');
+        setPhase('work');
+        const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
+        setTimeRemaining(workSeconds);
+        startTimer();
       }
-      
-      // Start next exercise
-      playSound('go');
-      const nextExercise = config.exercises[exerciseOrder[0]];
-      const workSeconds = (nextExercise.workTime.minutes * 60) + nextExercise.workTime.seconds;
-      setTimeRemaining(workSeconds);
-      startTimer();
     }
+  };
   };
 
   const togglePause = () => {
