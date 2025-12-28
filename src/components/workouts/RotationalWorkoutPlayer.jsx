@@ -90,7 +90,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
         
         const newTime = prev - 1;
         
-        if ((newTime === 3 || newTime === 2 || newTime === 1) && (phase === 'work' || phase === 'rest')) {
+        if ((newTime === 3 || newTime === 2 || newTime === 1) && (phase === 'setup' || phase === 'work' || phase === 'rest')) {
           playSound('countdown');
         }
         
@@ -133,7 +133,8 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       setTimeRemaining(workSeconds);
       startTimer();
     } else if (phase === 'work') {
-      // Move to rest phase
+      // Move to rest phase and rotate colors
+      rotateColors();
       setPhase('rest');
       const restSeconds = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
       setTimeRemaining(restSeconds);
@@ -144,7 +145,6 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       if (nextExerciseIndexInSet === 0) {
         if (currentSet < migratedConfig.sets) {
           setCurrentSet(prev => prev + 1);
-          rotateColors();
           playSound('go');
           setPhase('work');
           setCurrentExerciseIndex(0);
@@ -155,7 +155,6 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
           setPhase('complete');
         }
       } else {
-        rotateColors();
         playSound('go');
         setPhase('work');
         setCurrentExerciseIndex(nextExerciseIndexInSet);
@@ -334,7 +333,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
             </div>
           )}
 
-          {phase === 'work' && (
+          {(phase === 'work' || phase === 'rest') && (
             <div className="space-y-2">
               {/* Sets indicator at top */}
               <div className="flex items-center gap-4 mb-6">
@@ -380,12 +379,9 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
 
                     {/* Exercise name in center */}
                     <div className="flex-1 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        {isActive && <span className="text-5xl" style={{ color: getColorForText(displayColor) }}>▶</span>}
-                        <h3 className="text-5xl font-black" style={{ color: getColorForText(displayColor) }}>
-                          {exercise.name}
-                        </h3>
-                      </div>
+                      <h3 className="text-5xl font-black" style={{ color: getColorForText(displayColor) }}>
+                        {exercise.name}
+                      </h3>
                     </div>
                   </div>
                 );
