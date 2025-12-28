@@ -152,108 +152,104 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
         </div>
 
         {/* Exercises list */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {config.exercises.map((exercise, index) => (
-            <Card key={index} className="bg-gray-900 border-gray-700">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-yellow-400 font-semibold">Exercise {index + 1}</Label>
+            <div key={index} className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-4">
+                <Label className="text-yellow-400 font-semibold text-sm whitespace-nowrap">Exercise {index + 1}</Label>
+                <div className="flex-1 grid grid-cols-[1fr,auto,auto,auto,auto] gap-3 items-end">
+                  <div>
+                    <Label className="text-gray-400 text-xs mb-1 block">Exercise Name</Label>
+                    <Input
+                      value={exercise.name}
+                      onChange={(e) => handleExerciseChange(index, 'name', e.target.value)}
+                      placeholder="Curl"
+                      className="bg-gray-800 border-gray-700 text-white"
+                    />
+                  </div>
+
+                  <div className="w-20">
+                    <Label className="text-gray-400 text-xs mb-1 block">Reps</Label>
+                    <Input
+                      value={exercise.reps}
+                      onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
+                      placeholder="15"
+                      className="bg-gray-800 border-gray-700 text-white text-center"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-gray-400 text-xs mb-1 block">Work Time</Label>
+                    <div className="flex gap-1 items-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={exercise.workTime.minutes}
+                        onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'minutes', e.target.value)}
+                        className="w-14 bg-gray-800 border-gray-700 text-white text-center"
+                        placeholder="0"
+                      />
+                      <span className="text-gray-500">:</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={exercise.workTime.seconds}
+                        onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'seconds', e.target.value)}
+                        className="w-14 bg-gray-800 border-gray-700 text-white text-center"
+                        placeholder="30"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-gray-400 text-xs mb-1 block">Rest Time</Label>
+                    <div className="flex gap-1 items-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={exercise.restTime.minutes}
+                        onChange={(e) => handleExerciseTimeChange(index, 'restTime', 'minutes', e.target.value)}
+                        className="w-14 bg-gray-800 border-gray-700 text-white text-center"
+                        placeholder="0"
+                      />
+                      <span className="text-gray-500">:</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={exercise.restTime.seconds}
+                        onChange={(e) => handleExerciseTimeChange(index, 'restTime', 'seconds', e.target.value)}
+                        className="w-14 bg-gray-800 border-gray-700 text-white text-center"
+                        placeholder="5"
+                      />
+                    </div>
+                  </div>
+
                   {config.exercises.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => removeExercise(index)}
-                      className="text-red-400 hover:text-red-300 hover:bg-gray-800"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20 mb-0.5"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
+              </div>
 
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-gray-400 text-xs mb-1 block">Exercise Name</Label>
-                    <Input
-                      value={exercise.name}
-                      onChange={(e) => handleExerciseChange(index, 'name', e.target.value)}
-                      placeholder="e.g., BB Curl"
-                      className="bg-gray-800 border-gray-600 text-white"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-gray-400 text-xs mb-1 block">Reps</Label>
-                      <Input
-                        value={exercise.reps}
-                        onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
-                        placeholder="10"
-                        className="bg-gray-800 border-gray-600 text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-gray-400 text-xs mb-1 block">Work Time</Label>
-                      <div className="flex gap-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={exercise.workTime.minutes}
-                          onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'minutes', e.target.value)}
-                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
-                          placeholder="M"
-                        />
-                        <span className="text-gray-400 self-center text-sm">:</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="59"
-                          value={exercise.workTime.seconds}
-                          onChange={(e) => handleExerciseTimeChange(index, 'workTime', 'seconds', e.target.value)}
-                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
-                          placeholder="S"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-gray-400 text-xs mb-1 block">Rest Time</Label>
-                      <div className="flex gap-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={exercise.restTime.minutes}
-                          onChange={(e) => handleExerciseTimeChange(index, 'restTime', 'minutes', e.target.value)}
-                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
-                          placeholder="M"
-                        />
-                        <span className="text-gray-400 self-center text-sm">:</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="59"
-                          value={exercise.restTime.seconds}
-                          onChange={(e) => handleExerciseTimeChange(index, 'restTime', 'seconds', e.target.value)}
-                          className="w-16 bg-gray-800 border-gray-600 text-white text-center text-sm"
-                          placeholder="S"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-400 text-xs mb-1 block">Notes</Label>
-                    <Textarea
-                      value={exercise.notes}
-                      onChange={(e) => handleExerciseChange(index, 'notes', e.target.value)}
-                      placeholder="Additional instructions..."
-                      className="bg-gray-800 border-gray-600 text-white h-16 text-sm"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div>
+                <Label className="text-gray-400 text-xs mb-1 block">Notes</Label>
+                <Textarea
+                  value={exercise.notes}
+                  onChange={(e) => handleExerciseChange(index, 'notes', e.target.value)}
+                  placeholder="Additional instructions..."
+                  className="bg-gray-800 border-gray-700 text-white h-16 text-sm resize-none"
+                />
+              </div>
+            </div>
           ))}
         </div>
 
