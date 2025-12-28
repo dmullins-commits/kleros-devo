@@ -191,11 +191,19 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
+
+    startTimer();
     
     if (timeRemaining === 0) {
       handlePhaseComplete();
     }
-  }, [timeRemaining, isPaused]);
+  }, [isPaused]);
+
+  useEffect(() => {
+    if (timeRemaining === 0 && !isPaused) {
+      handlePhaseComplete();
+    }
+  }, [timeRemaining]);
 
   const handlePhaseComplete = () => {
     if (timerRef.current) clearInterval(timerRef.current);

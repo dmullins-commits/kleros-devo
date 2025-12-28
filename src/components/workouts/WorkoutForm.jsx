@@ -24,6 +24,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Submitting workout with config:', formData);
     onSubmit(formData);
   };
 
