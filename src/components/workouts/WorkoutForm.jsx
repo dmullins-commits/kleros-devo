@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Save, Dumbbell, Edit, Play } from "lucide-react";
 import WholeRoomSameExercisePanel from "./WholeRoomSameExercisePanel";
+import WholeRoomRotationalPanel from "./WholeRoomRotationalPanel";
 import WorkoutPlayer from "./WorkoutPlayer";
+import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
 
 export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(workout || {
@@ -58,8 +60,16 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
 
   return (
     <>
-      {showPlayer && formData.workout_config && (
+      {showPlayer && formData.workout_config && formData.workout_type === 'whole_room_same' && (
         <WorkoutPlayer
+          config={formData.workout_config}
+          workoutName={formData.name}
+          onClose={() => setShowPlayer(false)}
+        />
+      )}
+      
+      {showPlayer && formData.workout_config && formData.workout_type === 'whole_room_rotational' && (
+        <RotationalWorkoutPlayer
           config={formData.workout_config}
           workoutName={formData.name}
           onClose={() => setShowPlayer(false)}
@@ -119,17 +129,18 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handleChange('workout_type', 'whole_room_rotational')}
+                  onClick={() => {
+                    handleChange('workout_type', 'whole_room_rotational');
+                    setIsConfigSaved(false);
+                  }}
                   className={`h-24 flex flex-col items-center justify-center gap-2 ${
                     formData.workout_type === 'whole_room_rotational'
                       ? 'bg-yellow-400 text-black hover:bg-yellow-500'
                       : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
                   }`}
-                  disabled
                 >
                   <Dumbbell className="w-6 h-6" />
                   <span className="font-bold">Whole Room - Rotational</span>
-                  <span className="text-xs">(Coming Soon)</span>
                 </Button>
                 <Button
                   type="button"
@@ -156,8 +167,15 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               />
             )}
 
+            {formData.workout_type === 'whole_room_rotational' && !isConfigSaved && (
+              <WholeRoomRotationalPanel 
+                onSave={handleConfigSave}
+                initialData={formData.workout_config}
+              />
+            )}
+
             {/* Config saved state with edit and play buttons */}
-            {formData.workout_type === 'whole_room_same' && isConfigSaved && formData.workout_config && (
+            {(formData.workout_type === 'whole_room_same' || formData.workout_type === 'whole_room_rotational') && isConfigSaved && formData.workout_config && (
               <Card className="bg-gray-900 border-gray-700">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
