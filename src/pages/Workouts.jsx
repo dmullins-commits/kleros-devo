@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Workout, WorkoutCycle, Team, Athlete } from "@/entities/all";
+import { Workout, Team, Athlete } from "@/entities/all";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Dumbbell, Calendar } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTeam } from "@/components/TeamContext";
 
 import WorkoutsList from "../components/workouts/WorkoutsList";
 import WorkoutForm from "../components/workouts/WorkoutForm";
-import CycleBuilder from "../components/workouts/CycleBuilder";
 
 export default function Workouts() {
   const { selectedOrganization, filteredTeams } = useTeam();
   const [workouts, setWorkouts] = useState([]);
-  const [cycles, setCycles] = useState([]);
   const [teams, setTeams] = useState([]);
   const [athletes, setAthletes] = useState([]);
   const [showWorkoutForm, setShowWorkoutForm] = useState(false);
@@ -31,9 +28,8 @@ export default function Workouts() {
     
     setIsLoading(true);
     try {
-      const [workoutsData, cyclesData, teamsData, athletesData] = await Promise.all([
+      const [workoutsData, teamsData, athletesData] = await Promise.all([
         Workout.list(),
-        WorkoutCycle.list(),
         Team.list(),
         Athlete.list()
       ]);
@@ -54,14 +50,7 @@ export default function Workouts() {
         w.assigned_teams.some(tid => teamIds.includes(tid))
       );
       
-      // Filter cycles by org teams
-      const filteredCycles = cyclesData.filter(c =>
-        !c.assigned_teams?.length ||
-        c.assigned_teams.some(tid => teamIds.includes(tid))
-      );
-      
       setWorkouts(filteredWorkouts);
-      setCycles(filteredCycles);
       setTeams(filteredTeamsData);
       setAthletes(filteredAthletes);
     } finally {
@@ -106,7 +95,7 @@ export default function Workouts() {
                   Create and program training sessions
                 </p>
                 <Badge className="mt-2 bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
-                  {workouts.length} workouts • {cycles.length} cycles
+                  {workouts.length} workouts
                 </Badge>
               </div>
               <Button 
@@ -120,54 +109,30 @@ export default function Workouts() {
           </div>
         </div>
 
-        <Tabs defaultValue="workouts" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-950 border border-gray-800">
-            <TabsTrigger value="workouts" className="data-[state=active]:bg-yellow-400/20 data-[state=active]:text-yellow-400">
-              <Dumbbell className="w-4 h-4 mr-2" />
-              Workouts
-            </TabsTrigger>
-            <TabsTrigger value="cycles" className="data-[state=active]:bg-yellow-400/20 data-[state=active]:text-yellow-400">
-              <Calendar className="w-4 h-4 mr-2" />
-              Training Cycles
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="workouts" className="space-y-8">
-            {showWorkoutForm && (
-              <WorkoutForm
-                workout={editingWorkout}
-                teams={teams}
-                athletes={athletes}
-                onSubmit={handleSubmit}
-                onCancel={() => {
-                  setShowWorkoutForm(false);
-                  setEditingWorkout(null);
-                }}
-              />
-            )}
-
-            <WorkoutsList 
-              workouts={workouts}
-              isLoading={isLoading}
-              onEdit={(workout) => {
-                setEditingWorkout(workout);
-                setShowWorkoutForm(true);
-              }}
-              onDelete={handleDelete}
-            />
-          </TabsContent>
-
-          <TabsContent value="cycles">
-            <CycleBuilder 
-              cycles={cycles}
-              workouts={workouts}
+        <div className="space-y-8">
+          {showWorkoutForm && (
+            <WorkoutForm
+              workout={editingWorkout}
               teams={teams}
               athletes={athletes}
-              isLoading={isLoading}
-              onUpdate={loadData}
+              onSubmit={handleSubmit}
+              onCancel={() => {
+                setShowWorkoutForm(false);
+                setEditingWorkout(null);
+              }}
             />
-          </TabsContent>
-        </Tabs>
+          )}
+
+          <WorkoutsList 
+            workouts={workouts}
+            isLoading={isLoading}
+            onEdit={(workout) => {
+              setEditingWorkout(workout);
+              setShowWorkoutForm(true);
+            }}
+            onDelete={handleDelete}
+          />
+        </div>
       </div>
     </div>
   );
