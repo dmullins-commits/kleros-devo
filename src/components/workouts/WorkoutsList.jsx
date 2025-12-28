@@ -35,8 +35,24 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
   
   return (
     <>
-      {playingWorkout && (
+      {playingWorkout && playingWorkout.workout_type === 'whole_room_same' && (
         <WorkoutPlayer
+          config={playingWorkout.workout_config}
+          workoutName={playingWorkout.name}
+          onClose={() => setPlayingWorkout(null)}
+        />
+      )}
+      
+      {playingWorkout && playingWorkout.workout_type === 'whole_room_rotational' && (
+        <RotationalWorkoutPlayer
+          config={playingWorkout.workout_config}
+          workoutName={playingWorkout.name}
+          onClose={() => setPlayingWorkout(null)}
+        />
+      )}
+      
+      {playingWorkout && playingWorkout.workout_type === 'stations' && (
+        <StationsWorkoutPlayer
           config={playingWorkout.workout_config}
           workoutName={playingWorkout.name}
           onClose={() => setPlayingWorkout(null)}
