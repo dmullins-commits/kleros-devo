@@ -9,8 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { X, Save, Dumbbell, Edit, Play } from "lucide-react";
 import WholeRoomSameExercisePanel from "./WholeRoomSameExercisePanel";
 import WholeRoomRotationalPanel from "./WholeRoomRotationalPanel";
+import StationsPanel from "./StationsPanel";
 import WorkoutPlayer from "./WorkoutPlayer";
 import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
+import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
 
 export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(workout || {
@@ -70,6 +72,14 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
       
       {showPlayer && formData.workout_config && formData.workout_type === 'whole_room_rotational' && (
         <RotationalWorkoutPlayer
+          config={formData.workout_config}
+          workoutName={formData.name}
+          onClose={() => setShowPlayer(false)}
+        />
+      )}
+      
+      {showPlayer && formData.workout_config && formData.workout_type === 'stations' && (
+        <StationsWorkoutPlayer
           config={formData.workout_config}
           workoutName={formData.name}
           onClose={() => setShowPlayer(false)}
@@ -144,17 +154,18 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handleChange('workout_type', 'stations')}
+                  onClick={() => {
+                    handleChange('workout_type', 'stations');
+                    setIsConfigSaved(false);
+                  }}
                   className={`h-24 flex flex-col items-center justify-center gap-2 ${
                     formData.workout_type === 'stations'
                       ? 'bg-yellow-400 text-black hover:bg-yellow-500'
                       : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
                   }`}
-                  disabled
                 >
                   <Dumbbell className="w-6 h-6" />
                   <span className="font-bold">Stations</span>
-                  <span className="text-xs">(Coming Soon)</span>
                 </Button>
               </div>
             </div>
@@ -174,15 +185,25 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               />
             )}
 
+            {formData.workout_type === 'stations' && !isConfigSaved && (
+              <StationsPanel 
+                onSave={handleConfigSave}
+                initialData={formData.workout_config}
+              />
+            )}
+
             {/* Config saved state with edit and play buttons */}
-            {(formData.workout_type === 'whole_room_same' || formData.workout_type === 'whole_room_rotational') && isConfigSaved && formData.workout_config && (
+            {(formData.workout_type === 'whole_room_same' || formData.workout_type === 'whole_room_rotational' || formData.workout_type === 'stations') && isConfigSaved && formData.workout_config && (
               <Card className="bg-gray-900 border-gray-700">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <h3 className="text-white font-bold">Workout Configured</h3>
                       <p className="text-gray-400 text-sm">
-                        {formData.workout_config.exercises.length} exercises • {formData.workout_config.sets} set(s)
+                        {formData.workout_type === 'stations' 
+                          ? `${formData.workout_config.stations.length} station(s) • ${formData.workout_config.sets} set(s)`
+                          : `${formData.workout_config.exercises.length} exercises • ${formData.workout_config.sets} set(s)`
+                        }
                       </p>
                     </div>
                     <div className="flex gap-2">
