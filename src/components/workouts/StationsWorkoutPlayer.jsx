@@ -281,7 +281,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center gap-4 px-8 py-8">
+      <div className="flex-1 flex items-start justify-between gap-8 px-16 pt-24">
         {/* Stations */}
         {(phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => (
           <div key={stationIdx} className={`${stationWidth} space-y-2`}>
@@ -386,37 +386,12 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
           </div>
         )}
 
-        {/* Timer (center or right side depending on phase) */}
+        {/* Timer */}
         {(phase === 'work' || phase === 'rest') && (
-          <div className="flex flex-col items-center justify-center gap-6">
-            <div className="relative">
-              <svg className="w-[350px] h-[350px]" viewBox="0 0 200 200">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
-                  stroke="#333"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
-                  stroke="#FFD700"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 90}`}
-                  strokeDashoffset={0}
-                  transform="rotate(-90 100 100)"
-                  className="transition-all duration-1000"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[100px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
-              </div>
-            </div>
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
+            <h2 className="text-4xl font-black text-yellow-400 tracking-wide">Stations</h2>
+            
+            <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
 
             {phase === 'work' && (
               <h2 className="text-5xl font-black text-green-400 tracking-wide">WORK</h2>
@@ -438,34 +413,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
 
         {phase === 'setup' && (
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
-            <div className="relative">
-              <svg className="w-[350px] h-[350px]" viewBox="0 0 200 200">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
-                  stroke="#333"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
-                  stroke="#FFD700"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 90}`}
-                  strokeDashoffset={0}
-                  transform="rotate(-90 100 100)"
-                  className="transition-all duration-1000"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[100px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
-              </div>
-            </div>
+            <span className="text-[100px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
 
             <h2 className="text-5xl font-black text-white tracking-wide">GET READY</h2>
 
