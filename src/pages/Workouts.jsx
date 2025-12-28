@@ -81,6 +81,15 @@ export default function Workouts() {
     loadData();
   };
 
+  const handleDelete = async (workoutId) => {
+    try {
+      await Workout.delete(workoutId);
+      loadData();
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -144,6 +153,7 @@ export default function Workouts() {
                 setEditingWorkout(workout);
                 setShowWorkoutForm(true);
               }}
+              onDelete={handleDelete}
             />
           </TabsContent>
 

@@ -3,11 +3,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Dumbbell, Play } from "lucide-react";
+import { Edit, Dumbbell, Play, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import WorkoutPlayer from "./WorkoutPlayer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-export default function WorkoutsList({ workouts, isLoading, onEdit }) {
+export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) {
+  const [deleteWorkout, setDeleteWorkout] = useState(null);
   const [playingWorkout, setPlayingWorkout] = useState(null);
 
   if (isLoading) {
@@ -81,6 +92,14 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setDeleteWorkout(workout)}
+                          className="border-red-700 text-red-400 hover:bg-red-900/20"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -99,6 +118,33 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteWorkout} onOpenChange={() => setDeleteWorkout(null)}>
+        <AlertDialogContent className="bg-gray-900 border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete Workout</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to delete "{deleteWorkout?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteWorkout && onDelete) {
+                  onDelete(deleteWorkout.id);
+                }
+                setDeleteWorkout(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
