@@ -108,10 +108,10 @@ export default function WholeRoomSameExercisePanel({ onSave, initialData }) {
                 type="number"
                 min="0"
                 max="59"
-                value={config.setupTime.seconds}
+                value={config.setupTime.seconds.toString().padStart(2, '0')}
                 onChange={(e) => handleTimeChange('setupTime', 'seconds', e.target.value)}
                 className="w-24 bg-gray-800 border-gray-600 text-white text-center text-lg"
-                placeholder="S"
+                placeholder="00"
               />
             </div>
           </div>

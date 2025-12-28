@@ -169,20 +169,20 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                     <div className="flex gap-2">
                       <Button
                         type="button"
+                        onClick={handlePlay}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Play
+                      </Button>
+                      <Button
+                        type="button"
                         onClick={handleEditConfig}
                         variant="outline"
                         className="border-gray-600 text-white hover:bg-gray-800"
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handlePlay}
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Play
                       </Button>
                     </div>
                   </div>
