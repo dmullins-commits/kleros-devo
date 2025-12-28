@@ -22,7 +22,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     assigned_athletes: []
   });
   const [showPlayer, setShowPlayer] = useState(false);
-  const [isConfigSaved, setIsConfigSaved] = useState(!!workout?.workout_config);
+  const [isConfigSaved, setIsConfigSaved] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
