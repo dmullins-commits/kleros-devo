@@ -162,18 +162,18 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       const nextExerciseIndexInSet = (currentExerciseIndex + 1) % migratedConfig.exercises.length;
       
       if (nextExerciseIndexInSet === 0) {
+        // Finished all exercises in this set
         if (currentSet < migratedConfig.sets) {
-          setCurrentSet(prev => prev + 1);
-          playSound('go');
-          setPhase('work');
-          setCurrentExerciseIndex(0);
-          const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
-          setTimeRemaining(workSeconds);
+          // Move to rest between sets
+          setPhase('setRest');
+          const setRestSeconds = (migratedConfig.restBetweenSets?.minutes || 0) * 60 + (migratedConfig.restBetweenSets?.seconds || 0);
+          setTimeRemaining(setRestSeconds);
           startTimer();
         } else {
           setPhase('complete');
         }
       } else {
+        // Move to next exercise
         playSound('go');
         setPhase('work');
         setCurrentExerciseIndex(nextExerciseIndexInSet);
@@ -181,6 +181,15 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
         setTimeRemaining(workSeconds);
         startTimer();
       }
+    } else if (phase === 'setRest') {
+      // Start next set
+      setCurrentSet(prev => prev + 1);
+      setCurrentExerciseIndex(0);
+      playSound('go');
+      setPhase('work');
+      const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
+      setTimeRemaining(workSeconds);
+      startTimer();
     }
   };
 
