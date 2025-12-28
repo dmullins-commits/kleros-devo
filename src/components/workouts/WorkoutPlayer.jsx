@@ -30,9 +30,12 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
   // Initialize with setup time
   useEffect(() => {
     const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    setPhase('setup');
+    setCurrentSet(1);
+    setCurrentExerciseIndex(0);
     setTimeRemaining(setupSeconds);
     setTotalWorkoutTime(calculateTotalTime());
-    setPhase('setup');
+    setElapsedTime(0);
     setIsPaused(true); // Start paused, user must click play
     
     return () => {
@@ -351,11 +354,11 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         {/* Left side - Exercise list */}
         <div className="flex-1 max-w-md">
           {phase === 'setup' && (
-            <div className="space-y-6">
-              <h2 className="text-6xl font-black text-yellow-400 mb-8">Exercises:</h2>
-              <div className="space-y-4">
+            <div className="space-y-8">
+              <h2 className="text-7xl font-black text-yellow-400 mb-12">Exercises:</h2>
+              <div className="space-y-6">
                 {config.exercises.map((ex, idx) => (
-                  <p key={idx} className="text-3xl text-white font-bold">
+                  <p key={idx} className="text-4xl text-white font-bold">
                     {idx + 1}. {ex.name} {ex.reps && `- ${ex.reps} reps`}
                   </p>
                 ))}
@@ -404,15 +407,15 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         </div>
 
         {/* Right side - Timer and status */}
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-12">
           {/* Set indicator */}
-          <div className="text-yellow-400 text-3xl font-bold">
+          <div className="text-yellow-400 text-2xl font-bold tracking-wider">
             SET {currentSet} / {config.sets}
           </div>
 
           {/* Timer circle */}
           <div className="relative">
-            <svg className="w-96 h-96" viewBox="0 0 200 200">
+            <svg className="w-[450px] h-[450px]" viewBox="0 0 200 200">
               <circle
                 cx="100"
                 cy="100"
@@ -436,22 +439,22 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-9xl font-black text-yellow-400">{formatTime(timeRemaining)}</span>
+              <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
             </div>
           </div>
 
           {/* Status text */}
           {phase === 'setup' && (
-            <h2 className="text-5xl font-black text-white">GET READY</h2>
+            <h2 className="text-6xl font-black text-white tracking-wide">GET READY</h2>
           )}
 
           {/* Play button */}
           <Button
             onClick={togglePause}
             size="lg"
-            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-24 h-24 rounded-full"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-28 h-28 rounded-full shadow-2xl shadow-yellow-400/50"
           >
-            {isPaused ? <Play className="w-10 h-10" /> : <Pause className="w-10 h-10" />}
+            {isPaused ? <Play className="w-12 h-12" /> : <Pause className="w-12 h-12" />}
           </Button>
         </div>
       </div>
