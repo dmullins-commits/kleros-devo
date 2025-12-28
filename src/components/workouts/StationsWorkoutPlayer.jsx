@@ -36,7 +36,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
     const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
     const restSeconds = (migratedConfig.restTime?.minutes || 0) * 60 + (migratedConfig.restTime?.seconds || 0);
     
-    const maxExercises = Math.max(...migratedConfig.stations.map(s => s.exercises.length));
+    const maxExercises = migratedConfig.stations.length > 0 
+      ? Math.max(...migratedConfig.stations.map(s => (s.exercises || []).length))
+      : 0;
     const exerciseTime = (workSeconds + restSeconds) * maxExercises;
     const setRestSeconds = (migratedConfig.restBetweenSets?.minutes || 0) * 60 + (migratedConfig.restBetweenSets?.seconds || 0);
     return setupSeconds + (exerciseTime * migratedConfig.sets) + (setRestSeconds * (migratedConfig.sets - 1));
@@ -155,7 +157,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       setTimeRemaining(restSeconds);
       startTimer();
     } else if (phase === 'rest') {
-      const maxExercises = Math.max(...migratedConfig.stations.map(s => s.exercises.length));
+      const maxExercises = migratedConfig.stations.length > 0 
+        ? Math.max(...migratedConfig.stations.map(s => (s.exercises || []).length))
+        : 0;
       const nextExerciseIndex = currentExerciseIndex + 1;
       
       if (nextExerciseIndex >= maxExercises) {
