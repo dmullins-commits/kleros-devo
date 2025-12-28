@@ -159,7 +159,6 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       }
     }
   };
-  };
 
   const togglePause = () => {
     setIsPaused(prev => !prev);
