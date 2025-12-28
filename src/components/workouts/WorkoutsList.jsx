@@ -76,7 +76,7 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
                         <Button
                           variant="outline"
                           onClick={() => onEdit(workout)}
-                          className="border-gray-600 text-white hover:bg-gray-800"
+                          className="border-gray-600 text-black bg-white hover:bg-gray-200"
                         >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
