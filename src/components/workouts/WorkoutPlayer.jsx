@@ -17,19 +17,19 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
 
   // Calculate total workout time
   const calculateTotalTime = () => {
-    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    const setupSeconds = ((config.setupTime?.minutes || 0) * 60) + (config.setupTime?.seconds || 0);
     const exerciseTime = config.exercises.reduce((acc, ex) => {
-      const work = (ex.workTime.minutes * 60) + ex.workTime.seconds;
-      const rest = (ex.restTime.minutes * 60) + ex.restTime.seconds;
+      const work = ((ex.workTime?.minutes || 0) * 60) + (ex.workTime?.seconds || 0);
+      const rest = ((ex.restTime?.minutes || 0) * 60) + (ex.restTime?.seconds || 0);
       return acc + work + rest;
     }, 0);
-    const setRestTime = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+    const setRestTime = ((config.restBetweenSets?.minutes || 0) * 60) + (config.restBetweenSets?.seconds || 0);
     return setupSeconds + (exerciseTime * config.sets) + (setRestTime * (config.sets - 1));
   };
 
   // Initialize with setup time
   useEffect(() => {
-    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    const setupSeconds = ((config.setupTime?.minutes || 0) * 60) + (config.setupTime?.seconds || 0);
     setPhase('setup');
     setCurrentSet(1);
     setCurrentExerciseIndex(0);
@@ -129,7 +129,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
     
     // Calculate which phase we should be in based on elapsed time
     let accumulatedTime = 0;
-    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    const setupSeconds = ((config.setupTime?.minutes || 0) * 60) + (config.setupTime?.seconds || 0);
     
     // Setup phase
     if (newElapsed <= setupSeconds) {
@@ -145,8 +145,8 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
     for (let set = 1; set <= config.sets; set++) {
       for (let exerciseIdx = 0; exerciseIdx < config.exercises.length; exerciseIdx++) {
         const exercise = config.exercises[exerciseIdx];
-        const workSeconds = (exercise.workTime.minutes * 60) + exercise.workTime.seconds;
-        const restSeconds = (exercise.restTime.minutes * 60) + exercise.restTime.seconds;
+        const workSeconds = ((exercise.workTime?.minutes || 0) * 60) + (exercise.workTime?.seconds || 0);
+        const restSeconds = ((exercise.restTime?.minutes || 0) * 60) + (exercise.restTime?.seconds || 0);
         
         // Work phase
         if (newElapsed <= accumulatedTime + workSeconds) {
@@ -173,7 +173,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       
       // Set rest (between sets)
       if (set < config.sets) {
-        const setRestSeconds = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+        const setRestSeconds = ((config.restBetweenSets?.minutes || 0) * 60) + (config.restBetweenSets?.seconds || 0);
         if (newElapsed <= accumulatedTime + setRestSeconds) {
           setPhase('setRest');
           setCurrentSet(set);
@@ -215,14 +215,14 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       // Move to first exercise work phase
       playSound('go');
       setPhase('work');
-      const workSeconds = (config.exercises[0].workTime.minutes * 60) + config.exercises[0].workTime.seconds;
+      const workSeconds = ((config.exercises[0].workTime?.minutes || 0) * 60) + (config.exercises[0].workTime?.seconds || 0);
       setTimeRemaining(workSeconds);
       startTimer();
     } else if (phase === 'work') {
       // Move to rest phase or next exercise
       playSound('buzzer');
-      const restSeconds = (config.exercises[currentExerciseIndex].restTime.minutes * 60) + 
-                          config.exercises[currentExerciseIndex].restTime.seconds;
+      const restSeconds = ((config.exercises[currentExerciseIndex].restTime?.minutes || 0) * 60) + 
+                          (config.exercises[currentExerciseIndex].restTime?.seconds || 0);
       setPhase('rest');
       setTimeRemaining(restSeconds);
       startTimer();
@@ -234,8 +234,8 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         setCurrentExerciseIndex(nextIndex);
         playSound('go');
         setPhase('work');
-        const workSeconds = (config.exercises[nextIndex].workTime.minutes * 60) + 
-                           config.exercises[nextIndex].workTime.seconds;
+        const workSeconds = ((config.exercises[nextIndex].workTime?.minutes || 0) * 60) + 
+                           (config.exercises[nextIndex].workTime?.seconds || 0);
         setTimeRemaining(workSeconds);
         startTimer();
       } else {
@@ -243,7 +243,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         if (currentSet < config.sets) {
           // Set rest
           setPhase('setRest');
-          const setRestSeconds = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+          const setRestSeconds = ((config.restBetweenSets?.minutes || 0) * 60) + (config.restBetweenSets?.seconds || 0);
           setTimeRemaining(setRestSeconds);
           startTimer();
         } else {
@@ -257,7 +257,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       setCurrentExerciseIndex(0);
       playSound('go');
       setPhase('work');
-      const workSeconds = (config.exercises[0].workTime.minutes * 60) + config.exercises[0].workTime.seconds;
+      const workSeconds = ((config.exercises[0].workTime?.minutes || 0) * 60) + (config.exercises[0].workTime?.seconds || 0);
       setTimeRemaining(workSeconds);
       startTimer();
     }
