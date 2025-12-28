@@ -147,7 +147,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     if (phase === 'setup') {
       playSound('go');
       setPhase('work');
-      const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
+      const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
       setTimeRemaining(workSeconds);
       startTimer();
     } else if (phase === 'work') {
@@ -155,7 +155,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       playSound('buzzer');
       rotateColors();
       setPhase('rest');
-      const restSeconds = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
+      const restSeconds = (migratedConfig.restTime?.minutes || 0) * 60 + (migratedConfig.restTime?.seconds || 0);
       setTimeRemaining(restSeconds);
       startTimer();
     } else if (phase === 'rest') {
@@ -167,7 +167,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
           playSound('go');
           setPhase('work');
           setCurrentExerciseIndex(0);
-          const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
+          const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
           setTimeRemaining(workSeconds);
           startTimer();
         } else {
@@ -177,7 +177,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
         playSound('go');
         setPhase('work');
         setCurrentExerciseIndex(nextExerciseIndexInSet);
-        const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
+        const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
         setTimeRemaining(workSeconds);
         startTimer();
       }
@@ -259,7 +259,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
                 
                 // Calculate phase based on elapsed time
                 let accTime = 0;
-                const setupSecs = migratedConfig.setupTime.minutes * 60 + migratedConfig.setupTime.seconds;
+                const setupSecs = (migratedConfig.setupTime?.minutes || 0) * 60 + (migratedConfig.setupTime?.seconds || 0);
                 
                 if (newElapsed <= setupSecs) {
                   setPhase('setup');
@@ -270,9 +270,9 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
                   return;
                 }
                 accTime += setupSecs;
-                
-                const workSecs = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
-                const restSecs = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
+
+                const workSecs = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
+                const restSecs = (migratedConfig.restTime?.minutes || 0) * 60 + (migratedConfig.restTime?.seconds || 0);
                 
                 for (let set = 1; set <= migratedConfig.sets; set++) {
                   for (let exIdx = 0; exIdx < migratedConfig.exercises.length; exIdx++) {
