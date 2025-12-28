@@ -18,7 +18,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     }))
   };
 
-  const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'complete'
+  const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'setRest', 'complete'
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -455,6 +455,10 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
 
           {phase === 'rest' && (
             <h2 className="text-6xl font-black text-blue-400 tracking-wide">REST</h2>
+          )}
+
+          {phase === 'setRest' && (
+            <h2 className="text-6xl font-black text-purple-400 tracking-wide">SET REST</h2>
           )}
 
           <Button
