@@ -66,21 +66,20 @@ export default function WorkoutsList({ workouts, isLoading, onEdit }) {
                       <div className="flex gap-2">
                         {workout.workout_config && (
                           <Button
-                            variant="ghost"
-                            size="icon"
                             onClick={() => setPlayingWorkout(workout)}
-                            className="text-green-400 hover:text-green-300 hover:bg-gray-800"
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold"
                           >
-                            <Play className="w-4 h-4" />
+                            <Play className="w-4 h-4 mr-2" />
+                            Play
                           </Button>
                         )}
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          variant="outline"
                           onClick={() => onEdit(workout)}
-                          className="text-gray-400 hover:text-yellow-400 hover:bg-gray-800"
+                          className="border-gray-600 text-white hover:bg-gray-800"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
                         </Button>
                       </div>
                     </div>

@@ -32,6 +32,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
     const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
     setTimeRemaining(setupSeconds);
     setTotalWorkoutTime(calculateTotalTime());
+    setPhase('setup');
     setIsPaused(true); // Start paused, user must click play
     
     return () => {
@@ -56,12 +57,20 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.1);
     } else if (type === 'go') {
-      // Play go sound
-      const msg = new SpeechSynthesisUtterance('Go!');
-      msg.rate = 1.2;
-      msg.pitch = 1.2;
-      msg.volume = 1;
-      window.speechSynthesis.speak(msg);
+      // Play bell sound
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 1200;
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
     } else if (type === 'buzzer') {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -96,8 +105,8 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         
         const newTime = prev - 1;
         
-        // Countdown beep at 3, 2, 1
-        if (newTime <= 3 && newTime > 0 && (phase === 'setup' || phase === 'work')) {
+        // Countdown beep at 3, 2, 1 - play immediately when hitting these numbers
+        if ((newTime === 3 || newTime === 2 || newTime === 1) && (phase === 'setup' || phase === 'work')) {
           playSound('countdown');
         }
         
@@ -330,56 +339,20 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        {/* Set indicator */}
-        <div className="text-yellow-400 text-2xl font-bold mb-8">
-          SET {currentSet} / {config.sets}
-        </div>
-
-        {/* Timer circle */}
-        <div className="relative mb-12">
-          <svg className="w-80 h-80" viewBox="0 0 200 200">
-            <circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill="none"
-              stroke="#333"
-              strokeWidth="8"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill="none"
-              stroke="#FFD700"
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 90}`}
-              strokeDashoffset={0}
-              transform="rotate(-90 100 100)"
-              className="transition-all duration-1000"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-8xl font-black text-yellow-400">{formatTime(timeRemaining)}</span>
-          </div>
-        </div>
-
-        {/* Phase and exercise info */}
-        <div className="text-center space-y-6 max-w-4xl">
+      <div className="flex-1 flex items-center justify-between px-16 py-8">
+        {/* Left side - Exercise list */}
+        <div className="flex-1 max-w-md">
           {phase === 'setup' && (
-            <>
-              <h2 className="text-5xl font-black text-white mb-8">GET READY</h2>
-              <div className="space-y-3">
-                <p className="text-2xl text-yellow-400 font-bold">Exercises:</p>
+            <div className="space-y-6">
+              <h2 className="text-6xl font-black text-yellow-400 mb-8">Exercises:</h2>
+              <div className="space-y-4">
                 {config.exercises.map((ex, idx) => (
-                  <p key={idx} className="text-xl text-white">
+                  <p key={idx} className="text-3xl text-white font-bold">
                     {idx + 1}. {ex.name} {ex.reps && `- ${ex.reps} reps`}
                   </p>
                 ))}
               </div>
-            </>
+            </div>
           )}
 
           {phase === 'work' && (
@@ -421,17 +394,58 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
             </>
           )}
         </div>
-      </div>
 
-      {/* Bottom right controls */}
-      <div className="absolute bottom-8 right-8 flex gap-4">
-        <Button
-          onClick={togglePause}
-          size="lg"
-          className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-20 h-20 rounded-full"
-        >
-          {isPaused ? <Play className="w-8 h-8" /> : <Pause className="w-8 h-8" />}
-        </Button>
+        {/* Right side - Timer and status */}
+        <div className="flex flex-col items-center gap-8">
+          {/* Set indicator */}
+          <div className="text-yellow-400 text-3xl font-bold">
+            SET {currentSet} / {config.sets}
+          </div>
+
+          {/* Timer circle */}
+          <div className="relative">
+            <svg className="w-96 h-96" viewBox="0 0 200 200">
+              <circle
+                cx="100"
+                cy="100"
+                r="90"
+                fill="none"
+                stroke="#333"
+                strokeWidth="8"
+              />
+              <circle
+                cx="100"
+                cy="100"
+                r="90"
+                fill="none"
+                stroke="#FFD700"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 90}`}
+                strokeDashoffset={0}
+                transform="rotate(-90 100 100)"
+                className="transition-all duration-1000"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-9xl font-black text-yellow-400">{formatTime(timeRemaining)}</span>
+            </div>
+          </div>
+
+          {/* Status text */}
+          {phase === 'setup' && (
+            <h2 className="text-5xl font-black text-white">GET READY</h2>
+          )}
+
+          {/* Play button */}
+          <Button
+            onClick={togglePause}
+            size="lg"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-24 h-24 rounded-full"
+          >
+            {isPaused ? <Play className="w-10 h-10" /> : <Pause className="w-10 h-10" />}
+          </Button>
+        </div>
       </div>
 
       {/* Stop confirmation dialog */}
