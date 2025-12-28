@@ -404,17 +404,19 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                     </h3>
                   </div>
 
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                    {Array.from({ length: migratedConfig.sets }, (_, i) => (
-                      <span 
-                        key={i}
-                        className="text-lg font-black"
-                        style={{ color: getColorForText(color) }}
-                      >
-                        {displayReps}
-                      </span>
-                    ))}
-                  </div>
+                  {exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps.length > 0 && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                      {Array.from({ length: migratedConfig.sets }, (_, i) => (
+                        <span 
+                          key={i}
+                          className="text-lg font-black"
+                          style={{ color: getColorForText(color) }}
+                        >
+                          {exercise.perSetReps[i] || exercise.reps}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
