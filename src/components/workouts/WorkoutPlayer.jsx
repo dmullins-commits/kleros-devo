@@ -70,11 +70,11 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      oscillator.frequency.value = 400;
-      gainNode.gain.value = 0.3;
+      oscillator.frequency.value = 300;
+      gainNode.gain.value = 0.6;
       
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
+      oscillator.stop(audioContext.currentTime + 1.0);
     } else if (type === 'number') {
       const numberToSpeak = customNumber !== null ? customNumber : timeRemaining;
       const msg = new SpeechSynthesisUtterance(numberToSpeak.toString());
@@ -96,9 +96,9 @@ export default function WorkoutPlayer({ config, workoutName, onClose }) {
         
         const newTime = prev - 1;
         
-        // Countdown audio at 5, 4, 3, 2, 1
-        if (newTime <= 5 && newTime > 0 && (phase === 'setup' || phase === 'work')) {
-          playSound('number', newTime);
+        // Countdown beep at 3, 2, 1
+        if (newTime <= 3 && newTime > 0 && (phase === 'setup' || phase === 'work')) {
+          playSound('countdown');
         }
         
         return newTime;
