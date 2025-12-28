@@ -21,7 +21,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [exerciseOrder, setExerciseOrder] = useState([]);
+  const [colorRotation, setColorRotation] = useState(0);
   
   const timerRef = useRef(null);
 
@@ -43,7 +43,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     setTotalWorkoutTime(calculateTotalTime());
     setElapsedTime(0);
     setIsPaused(true);
-    setExerciseOrder(migratedConfig.exercises.map((_, idx) => idx));
+    setColorRotation(0);
     
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -119,13 +119,8 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     }
   }, [timeRemaining]);
 
-  const rotateExercises = () => {
-    setExerciseOrder(prev => {
-      const newOrder = [...prev];
-      const first = newOrder.shift();
-      newOrder.push(first);
-      return newOrder;
-    });
+  const rotateColors = () => {
+    setColorRotation(prev => (prev + 1) % migratedConfig.exercises.length);
   };
 
   const handlePhaseComplete = () => {
@@ -144,16 +139,15 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       setTimeRemaining(restSeconds);
       startTimer();
     } else if (phase === 'rest') {
-      rotateExercises();
-      
       const nextExerciseIndexInSet = (currentExerciseIndex + 1) % migratedConfig.exercises.length;
-      setCurrentExerciseIndex(nextExerciseIndexInSet);
       
       if (nextExerciseIndexInSet === 0) {
         if (currentSet < migratedConfig.sets) {
           setCurrentSet(prev => prev + 1);
+          rotateColors();
           playSound('go');
           setPhase('work');
+          setCurrentExerciseIndex(0);
           const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
           setTimeRemaining(workSeconds);
           startTimer();
@@ -161,8 +155,10 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
           setPhase('complete');
         }
       } else {
+        rotateColors();
         playSound('go');
         setPhase('work');
+        setCurrentExerciseIndex(nextExerciseIndexInSet);
         const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
         setTimeRemaining(workSeconds);
         startTimer();
@@ -237,11 +233,59 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
               min="0"
               max={totalWorkoutTime}
               value={elapsedTime}
+              onChange={(e) => {
+                const newElapsed = parseInt(e.target.value);
+                setElapsedTime(newElapsed);
+                setIsPaused(true);
+                if (timerRef.current) clearInterval(timerRef.current);
+                
+                // Calculate phase based on elapsed time
+                let accTime = 0;
+                const setupSecs = migratedConfig.setupTime.minutes * 60 + migratedConfig.setupTime.seconds;
+                
+                if (newElapsed <= setupSecs) {
+                  setPhase('setup');
+                  setCurrentSet(1);
+                  setCurrentExerciseIndex(0);
+                  setColorRotation(0);
+                  setTimeRemaining(setupSecs - newElapsed);
+                  return;
+                }
+                accTime += setupSecs;
+                
+                const workSecs = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
+                const restSecs = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
+                
+                for (let set = 1; set <= migratedConfig.sets; set++) {
+                  for (let exIdx = 0; exIdx < migratedConfig.exercises.length; exIdx++) {
+                    if (newElapsed <= accTime + workSecs) {
+                      setPhase('work');
+                      setCurrentSet(set);
+                      setCurrentExerciseIndex(exIdx);
+                      setColorRotation(Math.floor((set - 1) * migratedConfig.exercises.length + exIdx) % migratedConfig.exercises.length);
+                      setTimeRemaining(accTime + workSecs - newElapsed);
+                      return;
+                    }
+                    accTime += workSecs;
+                    
+                    if (newElapsed <= accTime + restSecs) {
+                      setPhase('rest');
+                      setCurrentSet(set);
+                      setCurrentExerciseIndex(exIdx);
+                      setColorRotation(Math.floor((set - 1) * migratedConfig.exercises.length + exIdx) % migratedConfig.exercises.length);
+                      setTimeRemaining(accTime + restSecs - newElapsed);
+                      return;
+                    }
+                    accTime += restSecs;
+                  }
+                }
+                
+                setPhase('complete');
+              }}
               className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer"
               style={{
                 background: `linear-gradient(to right, #FFD700 0%, #FFD700 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 100%)`
               }}
-              disabled
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>{formatTime(elapsedTime)}</span>
@@ -310,50 +354,38 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
               </div>
 
               {/* Exercise rows */}
-              {exerciseOrder.map((originalIdx, displayIdx) => {
-                const exercise = migratedConfig.exercises[originalIdx];
-                const isActive = displayIdx === 0;
+              {migratedConfig.exercises.map((exercise, exIdx) => {
+                const rotatedColorIdx = (exIdx + colorRotation) % migratedConfig.exercises.length;
+                const displayColor = migratedConfig.exercises[rotatedColorIdx].color;
+                const isActive = exIdx === currentExerciseIndex;
                 
                 return (
                   <div
-                    key={originalIdx}
+                    key={exIdx}
                     className="flex items-center h-24 relative"
-                    style={{ backgroundColor: exercise.color }}
+                    style={{ backgroundColor: displayColor }}
                   >
-                    {/* Exercise name in center */}
-                    <div className="flex-1 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        {isActive && <span className="text-5xl" style={{ color: getColorForText(exercise.color) }}>▶</span>}
-                        <h3 className="text-5xl font-black" style={{ color: getColorForText(exercise.color) }}>
-                          {exercise.name}
-                        </h3>
-                      </div>
-                    </div>
-
                     {/* Rep boxes */}
                     <div className="absolute left-4 top-1/2 -translate-y-1/2">
                       <div 
                         className="border-4 px-6 py-2 text-3xl font-black"
                         style={{ 
-                          borderColor: getColorForText(exercise.color),
-                          color: getColorForText(exercise.color)
+                          borderColor: getColorForText(displayColor),
+                          color: getColorForText(displayColor)
                         }}
                       >
                         {exercise.reps}
                       </div>
                     </div>
 
-                    {/* Additional rep numbers on the right */}
-                    <div className="flex gap-8 mr-8">
-                      {Array(3).fill(0).map((_, i) => (
-                        <span 
-                          key={i} 
-                          className="text-3xl font-black"
-                          style={{ color: getColorForText(exercise.color) }}
-                        >
-                          {exercise.reps}
-                        </span>
-                      ))}
+                    {/* Exercise name in center */}
+                    <div className="flex-1 text-center">
+                      <div className="flex items-center justify-center gap-4">
+                        {isActive && <span className="text-5xl" style={{ color: getColorForText(displayColor) }}>▶</span>}
+                        <h3 className="text-5xl font-black" style={{ color: getColorForText(displayColor) }}>
+                          {exercise.name}
+                        </h3>
+                      </div>
                     </div>
                   </div>
                 );
