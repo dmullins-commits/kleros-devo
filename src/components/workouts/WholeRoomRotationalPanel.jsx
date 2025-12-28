@@ -39,7 +39,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
   const handleTimeChange = (field, type, value) => {
     setConfig(prev => ({
       ...prev,
-      [field]: { ...prev[field], [type]: parseInt(value) || 0 }
+      [field]: { ...(prev[field] || {}), [type]: parseInt(value) || 0 }
     }));
   };
 
@@ -130,7 +130,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
               <Input
                 type="number"
                 min="0"
-                value={config.setupTime.minutes}
+                value={config.setupTime?.minutes || 0}
                 onChange={(e) => handleTimeChange('setupTime', 'minutes', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="M"
@@ -140,7 +140,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
                 type="number"
                 min="0"
                 max="59"
-                value={config.setupTime.seconds.toString().padStart(2, '0')}
+                value={(config.setupTime?.seconds || 0).toString().padStart(2, '0')}
                 onChange={(e) => handleTimeChange('setupTime', 'seconds', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="00"
@@ -154,7 +154,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
               <Input
                 type="number"
                 min="0"
-                value={config.workTime.minutes}
+                value={config.workTime?.minutes || 0}
                 onChange={(e) => handleTimeChange('workTime', 'minutes', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="M"
@@ -164,7 +164,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
                 type="number"
                 min="0"
                 max="59"
-                value={config.workTime.seconds}
+                value={config.workTime?.seconds || 0}
                 onChange={(e) => handleTimeChange('workTime', 'seconds', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="00"
@@ -178,7 +178,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
               <Input
                 type="number"
                 min="0"
-                value={config.restTime.minutes}
+                value={config.restTime?.minutes || 0}
                 onChange={(e) => handleTimeChange('restTime', 'minutes', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="M"
@@ -188,7 +188,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
                 type="number"
                 min="0"
                 max="59"
-                value={config.restTime.seconds}
+                value={config.restTime?.seconds || 0}
                 onChange={(e) => handleTimeChange('restTime', 'seconds', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="00"
@@ -202,7 +202,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
               <Input
                 type="number"
                 min="0"
-                value={config.restBetweenSets.minutes}
+                value={config.restBetweenSets?.minutes || 0}
                 onChange={(e) => handleTimeChange('restBetweenSets', 'minutes', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="M"
@@ -212,7 +212,7 @@ export default function WholeRoomRotationalPanel({ onSave, initialData }) {
                 type="number"
                 min="0"
                 max="59"
-                value={config.restBetweenSets.seconds}
+                value={config.restBetweenSets?.seconds || 0}
                 onChange={(e) => handleTimeChange('restBetweenSets', 'seconds', e.target.value)}
                 className="w-full bg-gray-800 border-gray-600 text-white text-center"
                 placeholder="00"
