@@ -16,16 +16,16 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
   const timerRef = useRef(null);
 
   const calculateTotalTime = () => {
-    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
-    const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
-    const restSeconds = (config.restTime.minutes * 60) + config.restTime.seconds;
+    const setupSeconds = (config.setupTime?.minutes || 0) * 60 + (config.setupTime?.seconds || 0);
+    const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
+    const restSeconds = (config.restTime?.minutes || 0) * 60 + (config.restTime?.seconds || 0);
     const exerciseTime = (workSeconds + restSeconds) * config.exercises.length;
-    const setRestSeconds = (config.restBetweenSets.minutes * 60) + config.restBetweenSets.seconds;
+    const setRestSeconds = (config.restBetweenSets?.minutes || 0) * 60 + (config.restBetweenSets?.seconds || 0);
     return setupSeconds + (exerciseTime * config.sets) + (setRestSeconds * (config.sets - 1));
   };
 
   useEffect(() => {
-    const setupSeconds = (config.setupTime.minutes * 60) + config.setupTime.seconds;
+    const setupSeconds = (config.setupTime?.minutes || 0) * 60 + (config.setupTime?.seconds || 0);
     setPhase('setup');
     setCurrentSet(1);
     setCurrentExerciseIndex(0);
@@ -124,13 +124,13 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     if (phase === 'setup') {
       playSound('go');
       setPhase('work');
-      const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
+      const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
       setTimeRemaining(workSeconds);
       startTimer();
     } else if (phase === 'work') {
       // Move to rest phase
       setPhase('rest');
-      const restSeconds = (config.restTime.minutes * 60) + config.restTime.seconds;
+      const restSeconds = (config.restTime?.minutes || 0) * 60 + (config.restTime?.seconds || 0);
       setTimeRemaining(restSeconds);
       startTimer();
     } else if (phase === 'rest') {
@@ -144,7 +144,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
           setCurrentSet(prev => prev + 1);
           playSound('go');
           setPhase('work');
-          const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
+          const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
           setTimeRemaining(workSeconds);
           startTimer();
         } else {
@@ -153,7 +153,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       } else {
         playSound('go');
         setPhase('work');
-        const workSeconds = (config.workTime.minutes * 60) + config.workTime.seconds;
+        const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
         setTimeRemaining(workSeconds);
         startTimer();
       }
