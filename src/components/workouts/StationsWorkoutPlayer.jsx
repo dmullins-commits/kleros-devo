@@ -305,7 +305,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
             {/* Exercise rows */}
             {station.exercises.map((exercise, exIdx) => {
               const isActive = exIdx === currentExerciseIndex;
-              const color = migratedConfig.stations[0].exercises[exIdx]?.color || '#FFFFFF';
+              const color = migratedConfig.stations[0]?.exercises?.[exIdx]?.color || exercise.color || '#FFFFFF';
               
               const displayReps = exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps[currentSet - 1]
                 ? exercise.perSetReps[currentSet - 1]
@@ -367,7 +367,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                 <div key={stationIdx} className="space-y-4">
                   <h3 className="text-3xl font-black text-white mb-4">Station {stationIdx + 1}</h3>
                   {station.exercises.map((ex, idx) => {
-                    const color = migratedConfig.stations[0].exercises[idx]?.color || '#FFD700';
+                    const color = migratedConfig.stations[0]?.exercises?.[idx]?.color || ex.color || '#FFD700';
                     return (
                       <div 
                         key={idx}
