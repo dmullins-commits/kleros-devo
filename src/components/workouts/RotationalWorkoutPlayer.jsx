@@ -3,6 +3,16 @@ import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
 export default function RotationalWorkoutPlayer({ config, workoutName, onClose }) {
+  // Migrate old config format to new format if needed
+  const migratedConfig = {
+    ...config,
+    setupTime: config.setupTime || { minutes: 1, seconds: 0 },
+    workTime: config.workTime || { minutes: 1, seconds: 0 },
+    restTime: config.restTime || { minutes: 1, seconds: 0 },
+    restBetweenSets: config.restBetweenSets || { minutes: 0, seconds: 10 },
+    exercises: config.exercises || []
+  };
+
   const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'complete'
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -16,16 +26,16 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
   const timerRef = useRef(null);
 
   const calculateTotalTime = () => {
-    const setupSeconds = (config.setupTime?.minutes || 0) * 60 + (config.setupTime?.seconds || 0);
-    const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
-    const restSeconds = (config.restTime?.minutes || 0) * 60 + (config.restTime?.seconds || 0);
-    const exerciseTime = (workSeconds + restSeconds) * config.exercises.length;
-    const setRestSeconds = (config.restBetweenSets?.minutes || 0) * 60 + (config.restBetweenSets?.seconds || 0);
-    return setupSeconds + (exerciseTime * config.sets) + (setRestSeconds * (config.sets - 1));
+    const setupSeconds = migratedConfig.setupTime.minutes * 60 + migratedConfig.setupTime.seconds;
+    const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
+    const restSeconds = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
+    const exerciseTime = (workSeconds + restSeconds) * migratedConfig.exercises.length;
+    const setRestSeconds = migratedConfig.restBetweenSets.minutes * 60 + migratedConfig.restBetweenSets.seconds;
+    return setupSeconds + (exerciseTime * migratedConfig.sets) + (setRestSeconds * (migratedConfig.sets - 1));
   };
 
   useEffect(() => {
-    const setupSeconds = (config.setupTime?.minutes || 0) * 60 + (config.setupTime?.seconds || 0);
+    const setupSeconds = migratedConfig.setupTime.minutes * 60 + migratedConfig.setupTime.seconds;
     setPhase('setup');
     setCurrentSet(1);
     setCurrentExerciseIndex(0);
@@ -33,7 +43,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     setTotalWorkoutTime(calculateTotalTime());
     setElapsedTime(0);
     setIsPaused(true);
-    setExerciseOrder(config.exercises.map((_, idx) => idx));
+    setExerciseOrder(migratedConfig.exercises.map((_, idx) => idx));
     
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -124,27 +134,27 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
     if (phase === 'setup') {
       playSound('go');
       setPhase('work');
-      const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
+      const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
       setTimeRemaining(workSeconds);
       startTimer();
     } else if (phase === 'work') {
       // Move to rest phase
       setPhase('rest');
-      const restSeconds = (config.restTime?.minutes || 0) * 60 + (config.restTime?.seconds || 0);
+      const restSeconds = migratedConfig.restTime.minutes * 60 + migratedConfig.restTime.seconds;
       setTimeRemaining(restSeconds);
       startTimer();
     } else if (phase === 'rest') {
       rotateExercises();
       
-      const nextExerciseIndexInSet = (currentExerciseIndex + 1) % config.exercises.length;
+      const nextExerciseIndexInSet = (currentExerciseIndex + 1) % migratedConfig.exercises.length;
       setCurrentExerciseIndex(nextExerciseIndexInSet);
       
       if (nextExerciseIndexInSet === 0) {
-        if (currentSet < config.sets) {
+        if (currentSet < migratedConfig.sets) {
           setCurrentSet(prev => prev + 1);
           playSound('go');
           setPhase('work');
-          const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
+          const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
           setTimeRemaining(workSeconds);
           startTimer();
         } else {
@@ -153,7 +163,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
       } else {
         playSound('go');
         setPhase('work');
-        const workSeconds = (config.workTime?.minutes || 0) * 60 + (config.workTime?.seconds || 0);
+        const workSeconds = migratedConfig.workTime.minutes * 60 + migratedConfig.workTime.seconds;
         setTimeRemaining(workSeconds);
         startTimer();
       }
@@ -265,7 +275,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
             <div className="space-y-8">
               <h2 className="text-7xl font-black text-yellow-400 mb-12">Exercises:</h2>
               <div className="space-y-6">
-                {config.exercises.map((ex, idx) => (
+                {migratedConfig.exercises.map((ex, idx) => (
                   <div 
                     key={idx}
                     className="p-6 rounded-lg"
@@ -285,7 +295,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
               {/* Sets indicator at top */}
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-4xl font-black text-white">Sets:</span>
-                {Array.from({ length: config.sets }, (_, i) => i + 1).map((setNum) => (
+                {Array.from({ length: migratedConfig.sets }, (_, i) => i + 1).map((setNum) => (
                   <div
                     key={setNum}
                     className={`text-4xl font-black ${
@@ -301,7 +311,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose }
 
               {/* Exercise rows */}
               {exerciseOrder.map((originalIdx, displayIdx) => {
-                const exercise = config.exercises[originalIdx];
+                const exercise = migratedConfig.exercises[originalIdx];
                 const isActive = displayIdx === 0;
                 
                 return (
