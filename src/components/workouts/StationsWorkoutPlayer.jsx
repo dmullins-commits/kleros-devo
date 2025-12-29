@@ -24,7 +24,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isPaused, setIsPaused] = useState(!overallWorkoutTime); // Auto-start in multi-timer mode
+  const [isPaused, setIsPaused] = useState(elapsedBeforeCurrentSection === 0); // Auto-start only if not first timer
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);

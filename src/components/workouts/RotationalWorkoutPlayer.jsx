@@ -47,7 +47,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose, 
     setTimeRemaining(setupSeconds);
     setTotalWorkoutTime(calculateTotalTime());
     setElapsedTime(0);
-    setIsPaused(!overallWorkoutTime); // Auto-start in multi-timer mode
+    setIsPaused(elapsedBeforeCurrentSection === 0); // Auto-start only if not first timer
     setColorRotation(0);
     
     return () => {
