@@ -323,17 +323,17 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
             <input
               type="range"
               min="0"
-              max={totalWorkoutTime}
-              value={elapsedTime}
+              max={overallWorkoutTime || totalWorkoutTime}
+              value={elapsedBeforeCurrentSection + elapsedTime}
               onChange={handleSliderChange}
               className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
               style={{
-                background: `linear-gradient(to right, #FFD700 0%, #FFD700 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 ${(elapsedTime / totalWorkoutTime) * 100}%, #374151 100%)`
+                background: `linear-gradient(to right, #FFD700 0%, #FFD700 ${((elapsedBeforeCurrentSection + elapsedTime) / (overallWorkoutTime || totalWorkoutTime)) * 100}%, #374151 ${((elapsedBeforeCurrentSection + elapsedTime) / (overallWorkoutTime || totalWorkoutTime)) * 100}%, #374151 100%)`
               }}
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>{formatTime(elapsedTime)}</span>
-              <span>{formatTime(totalWorkoutTime)}</span>
+              <span>{formatTime(elapsedBeforeCurrentSection + elapsedTime)}</span>
+              <span>{formatTime(overallWorkoutTime || totalWorkoutTime)}</span>
             </div>
           </div>
           <div className="text-yellow-400 text-lg font-bold tracking-wider whitespace-nowrap">
