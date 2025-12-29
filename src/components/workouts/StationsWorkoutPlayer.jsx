@@ -350,6 +350,11 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
         {/* Stations */}
         {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => (
           <div key={stationIdx} className={`${stationWidth} space-y-2`}>
+            {/* Station label */}
+            <div className="mb-2">
+              <span className="text-2xl font-black text-white">Station: {stationIdx + 1}</span>
+            </div>
+            
             {/* Sets indicator */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl font-black text-white">Sets:</span>
