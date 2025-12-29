@@ -41,6 +41,13 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
         
         return newTime;
       });
+      setElapsedTime(prev => {
+        const newElapsed = prev + 1;
+        if (onElapsedTimeUpdate) {
+          onElapsedTimeUpdate(newElapsed);
+        }
+        return newElapsed;
+      });
     }, 1000);
 
     return () => {
