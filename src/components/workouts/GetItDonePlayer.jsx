@@ -90,6 +90,18 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleSliderChange = (e) => {
+    const newElapsed = parseInt(e.target.value) - elapsedBeforeCurrentSection;
+    if (newElapsed < 0) return;
+    
+    setIsPaused(true);
+    if (timerRef.current) clearInterval(timerRef.current);
+    
+    setElapsedTime(newElapsed);
+    setTimeRemaining(totalSeconds - newElapsed);
+    lastMinuteRef.current = Math.floor((totalSeconds - newElapsed) / 60);
+  };
+
   if (timeRemaining === 0) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
