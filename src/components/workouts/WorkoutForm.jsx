@@ -85,6 +85,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     setFormData(prev => ({ ...prev, timer_sections: updatedSections }));
     setCurrentTimerSection(null);
     setEditingTimerIndex(null);
+    setIsConfigSaved(false);
   };
 
   const handleEditTimer = (index) => {
