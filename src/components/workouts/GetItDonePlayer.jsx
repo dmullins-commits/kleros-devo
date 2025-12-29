@@ -102,6 +102,13 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
     lastMinuteRef.current = Math.floor((totalSeconds - newElapsed) / 60);
   };
 
+  useEffect(() => {
+    if (timeRemaining === 0 && overallWorkoutTime) {
+      // Auto-transition in multi-timer mode
+      onClose();
+    }
+  }, [timeRemaining]);
+
   if (timeRemaining === 0) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">

@@ -251,6 +251,13 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
     return colors[bgColor] || '#FFFFFF';
   };
 
+  useEffect(() => {
+    if (phase === 'complete' && migratedConfig.totalWorkoutTime) {
+      // Auto-transition in multi-timer mode
+      onClose();
+    }
+  }, [phase]);
+
   if (phase === 'complete') {
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
