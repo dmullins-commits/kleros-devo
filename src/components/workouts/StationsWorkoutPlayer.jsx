@@ -368,30 +368,30 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center gap-6 px-16">
+      <div className="flex-1 flex items-center justify-between px-16">
         {/* Stations */}
-        <div className="flex gap-6">
+        <div className="flex gap-8">
           {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => {
             const rotatedStationIdx = (stationIdx + currentRotation - 1) % numStations;
             const displayStation = migratedConfig.stations[rotatedStationIdx];
             
             return (
-              <div key={stationIdx} className="w-[300px] space-y-2">
+              <div key={stationIdx} className="w-[350px] space-y-2">
             {/* Station label */}
-            <div className="mb-2">
-              <span className="text-2xl font-black text-white">Station: {stationIdx + 1}</span>
+            <div className="mb-3">
+              <span className="text-3xl font-black text-white">Station: {stationIdx + 1}</span>
             </div>
             
             {/* Sets indicator */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-black text-white">Sets:</span>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl font-black text-white">Sets:</span>
               {Array.from({ length: migratedConfig.sets }, (_, i) => i + 1).map((setNum) => (
                 <div
                   key={setNum}
-                  className={`text-2xl font-black ${
+                  className={`text-3xl font-black ${
                     setNum === currentSet 
-                      ? 'text-white border-2 border-white px-3 py-1' 
-                      : 'text-gray-600 px-3 py-1'
+                      ? 'text-white border-3 border-white px-4 py-2' 
+                      : 'text-gray-600 px-4 py-2'
                   }`}
                 >
                   {setNum}
@@ -412,12 +412,12 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
               return (
                 <div
                   key={exIdx}
-                  className="flex items-center h-20 relative"
+                  className="flex items-center h-24 relative"
                   style={{ backgroundColor: color }}
                 >
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
                     <div 
-                      className="border-2 px-4 py-2 text-2xl font-black"
+                      className="border-3 px-5 py-3 text-3xl font-black"
                       style={{ 
                         borderColor: getColorForText(color),
                         color: getColorForText(color)
@@ -429,7 +429,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
 
                   <div className="flex-1 flex items-center justify-center gap-2">
                     <h3 
-                      className="text-4xl font-black"
+                      className="text-5xl font-black"
                       style={{ color: getColorForText(color) }}
                     >
                       {exercise.name}
@@ -437,11 +437,11 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                   </div>
 
                   {exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps.length > 0 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
                       {Array.from({ length: migratedConfig.sets }, (_, i) => (
                         <span 
                           key={i}
-                          className="text-xl font-black"
+                          className="text-2xl font-black"
                           style={{ color: getColorForText(color) }}
                         >
                           {exercise.perSetReps[i] || exercise.reps}
@@ -458,43 +458,29 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
         </div>
 
         {/* Timer on the right */}
-        {(phase === 'work' || phase === 'rest') && (
-          <div className="flex flex-col items-center gap-6 ml-8">
-            <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
+        <div className="flex flex-col items-center gap-6">
+          <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
 
-            {phase === 'work' && (
-              <h2 className="text-5xl font-black text-green-400 tracking-wide">WORK</h2>
-            )}
+          {phase === 'setup' && (
+            <h2 className="text-6xl font-black text-white tracking-wide">SETUP</h2>
+          )}
 
-            {phase === 'rest' && (
-              <h2 className="text-5xl font-black text-blue-400 tracking-wide">REST</h2>
-            )}
+          {phase === 'work' && (
+            <h2 className="text-6xl font-black text-green-400 tracking-wide">WORK</h2>
+          )}
 
-            <Button
-              onClick={togglePause}
-              size="lg"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-24 h-24 rounded-full shadow-2xl shadow-yellow-400/50"
-            >
-              {isPaused ? <Play className="w-10 h-10" /> : <Pause className="w-10 h-10" />}
-            </Button>
-          </div>
-        )}
+          {phase === 'rest' && (
+            <h2 className="text-6xl font-black text-blue-400 tracking-wide">REST</h2>
+          )}
 
-        {phase === 'setup' && (
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
-            <span className="text-[100px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
-
-            <h2 className="text-5xl font-black text-white tracking-wide">GET READY</h2>
-
-            <Button
-              onClick={togglePause}
-              size="lg"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-24 h-24 rounded-full shadow-2xl shadow-yellow-400/50"
-            >
-              {isPaused ? <Play className="w-10 h-10" /> : <Pause className="w-10 h-10" />}
-            </Button>
-          </div>
-        )}
+          <Button
+            onClick={togglePause}
+            size="lg"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-28 h-28 rounded-full shadow-2xl shadow-yellow-400/50"
+          >
+            {isPaused ? <Play className="w-12 h-12" /> : <Pause className="w-12 h-12" />}
+          </Button>
+        </div>
       </div>
 
       {/* Stop confirmation dialog */}
