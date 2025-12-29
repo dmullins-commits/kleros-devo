@@ -427,7 +427,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                     </div>
                   </div>
 
-                  <div className="flex-1 flex items-center justify-center gap-2">
+                  <div className="flex-1 flex items-center justify-center gap-2 pl-24">
                     <h3 
                       className="text-5xl font-black"
                       style={{ color: getColorForText(color) }}
