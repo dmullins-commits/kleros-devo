@@ -10,9 +10,11 @@ import { X, Save, Dumbbell, Edit, Play } from "lucide-react";
 import WholeRoomSameExercisePanel from "./WholeRoomSameExercisePanel";
 import WholeRoomRotationalPanel from "./WholeRoomRotationalPanel";
 import StationsPanel from "./StationsPanel";
+import GetItDonePanel from "./GetItDonePanel";
 import WorkoutPlayer from "./WorkoutPlayer";
 import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
 import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
+import GetItDonePlayer from "./GetItDonePlayer";
 import MultiTimerPlayer from "./MultiTimerPlayer";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 
@@ -20,7 +22,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
   const [formData, setFormData] = useState(workout || {
     name: '',
     description: '',
-    workout_type: '',
+    workout_type: 'multi_timer',
     workout_config: null,
     timer_sections: [],
     assigned_teams: teams.length > 0 ? [teams[0].id] : [],
@@ -175,76 +177,8 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               />
             </div>
 
-
-
-            <div className="space-y-3">
-              <Label className="text-gray-300">Workout Type *</Label>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Button
-                  type="button"
-                  onClick={() => {
-                    handleChange('workout_type', 'multi_timer');
-                    setIsConfigSaved(false);
-                  }}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
-                    formData.workout_type === 'multi_timer'
-                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
-                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
-                  }`}
-                >
-                  <Plus className="w-6 h-6" />
-                  <span className="font-bold text-center">Multiple Timers</span>
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    handleChange('workout_type', 'whole_room_same');
-                    setIsConfigSaved(false);
-                  }}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
-                    formData.workout_type === 'whole_room_same'
-                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
-                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
-                  }`}
-                >
-                  <Dumbbell className="w-6 h-6" />
-                  <span className="font-bold text-center">Whole Room - Same</span>
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    handleChange('workout_type', 'whole_room_rotational');
-                    setIsConfigSaved(false);
-                  }}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
-                    formData.workout_type === 'whole_room_rotational'
-                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
-                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
-                  }`}
-                >
-                  <Dumbbell className="w-6 h-6" />
-                  <span className="font-bold text-center">Whole Room - Rotational</span>
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    handleChange('workout_type', 'stations');
-                    setIsConfigSaved(false);
-                  }}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
-                    formData.workout_type === 'stations'
-                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
-                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
-                  }`}
-                >
-                  <Dumbbell className="w-6 h-6" />
-                  <span className="font-bold text-center">Stations</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Multi-Timer Configuration */}
-            {formData.workout_type === 'multi_timer' && (
+            {/* Timer Sections Configuration */}
+            {(
               <Card className="bg-gray-900 border-gray-700">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
@@ -307,7 +241,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
 
                       <div className="space-y-2">
                         <Label className="text-gray-300">Timer Type</Label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
                             type="button"
                             onClick={() => {
@@ -350,6 +284,20 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                           >
                             Stations
                           </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTimerSection(prev => ({ ...prev, timer_type: 'get_it_done', config: null }));
+                              setIsConfigSaved(false);
+                            }}
+                            className={`h-16 ${
+                              currentTimerSection.timer_type === 'get_it_done'
+                                ? 'bg-yellow-400 text-black'
+                                : 'bg-gray-800 text-white'
+                            }`}
+                          >
+                            Get It Done
+                          </Button>
                         </div>
                       </div>
 
@@ -369,6 +317,13 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
 
                       {currentTimerSection.timer_type === 'stations' && !isConfigSaved && (
                         <StationsPanel 
+                          onSave={handleTimerSectionConfigSave}
+                          initialData={currentTimerSection.config}
+                        />
+                      )}
+
+                      {currentTimerSection.timer_type === 'get_it_done' && !isConfigSaved && (
+                        <GetItDonePanel 
                           onSave={handleTimerSectionConfigSave}
                           initialData={currentTimerSection.config}
                         />
@@ -414,30 +369,8 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
               </Card>
             )}
 
-            {/* Configuration panel */}
-            {formData.workout_type === 'whole_room_same' && !isConfigSaved && (
-              <WholeRoomSameExercisePanel 
-                onSave={handleConfigSave}
-                initialData={formData.workout_config}
-              />
-            )}
-
-            {formData.workout_type === 'whole_room_rotational' && !isConfigSaved && (
-              <WholeRoomRotationalPanel 
-                onSave={handleConfigSave}
-                initialData={formData.workout_config}
-              />
-            )}
-
-            {formData.workout_type === 'stations' && !isConfigSaved && (
-              <StationsPanel 
-                onSave={handleConfigSave}
-                initialData={formData.workout_config}
-              />
-            )}
-
-            {/* Config saved state with edit and play buttons */}
-            {(formData.workout_type === 'whole_room_same' || formData.workout_type === 'whole_room_rotational' || formData.workout_type === 'stations') && isConfigSaved && formData.workout_config && (
+            {/* Config saved state with edit and play buttons - kept for backward compatibility */}
+            {(formData.workout_type === 'whole_room_same' || formData.workout_type === 'whole_room_rotational' || formData.workout_type === 'stations' || formData.workout_type === 'get_it_done') && isConfigSaved && formData.workout_config && (
               <Card className="bg-gray-900 border-gray-700">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import WorkoutPlayer from './WorkoutPlayer';
 import RotationalWorkoutPlayer from './RotationalWorkoutPlayer';
 import StationsWorkoutPlayer from './StationsWorkoutPlayer';
+import GetItDonePlayer from './GetItDonePlayer';
 
 export default function MultiTimerPlayer({ timerSections, workoutName, onClose }) {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -24,6 +25,7 @@ export default function MultiTimerPlayer({ timerSections, workoutName, onClose }
     currentSection.timer_type === 'whole_room_same' ? WorkoutPlayer :
     currentSection.timer_type === 'whole_room_rotational' ? RotationalWorkoutPlayer :
     currentSection.timer_type === 'stations' ? StationsWorkoutPlayer :
+    currentSection.timer_type === 'get_it_done' ? GetItDonePlayer :
     null;
 
   if (!PlayerComponent) {
