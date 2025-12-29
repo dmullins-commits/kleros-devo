@@ -330,22 +330,32 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                   )}
 
                 {formData.timer_sections?.length > 0 && !currentTimerSection && (
-                  <div className="flex gap-3">
+                  <div className="space-y-3">
                     <Button
                       type="button"
-                      onClick={handlePlay}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                      onClick={handleAddTimer}
+                      className="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold border border-gray-600"
                     >
-                      <Play className="w-4 h-4 mr-2" />
-                      Play
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Timer
                     </Button>
-                    <Button
-                      type="submit"
-                      className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
-                    >
-                      <Save className="w-5 h-5 mr-2" />
-                      Save Workout Configuration
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        onClick={handlePlay}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Play
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
+                      >
+                        <Save className="w-5 h-5 mr-2" />
+                        Save Workout Configuration
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
