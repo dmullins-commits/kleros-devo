@@ -115,7 +115,13 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
         
         return newTime;
       });
-      setElapsedTime(prev => prev + 1);
+      setElapsedTime(prev => {
+        const newElapsed = prev + 1;
+        if (onElapsedTimeUpdate) {
+          onElapsedTimeUpdate(newElapsed);
+        }
+        return newElapsed;
+      });
     }, 1000);
   };
 
