@@ -38,33 +38,33 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
   
   return (
     <>
-      {playingWorkout && playingWorkout.workout_type === 'whole_room_same' && (
+      {playingWorkout && playingWorkout.timer_sections?.length > 0 && (
+        <MultiTimerPlayer
+          timerSections={playingWorkout.timer_sections}
+          workoutName={playingWorkout.name}
+          onClose={() => setPlayingWorkout(null)}
+        />
+      )}
+
+      {playingWorkout && !playingWorkout.timer_sections && playingWorkout.workout_type === 'whole_room_same' && (
         <WorkoutPlayer
           config={playingWorkout.workout_config}
           workoutName={playingWorkout.name}
           onClose={() => setPlayingWorkout(null)}
         />
       )}
-      
-      {playingWorkout && playingWorkout.workout_type === 'whole_room_rotational' && (
+
+      {playingWorkout && !playingWorkout.timer_sections && playingWorkout.workout_type === 'whole_room_rotational' && (
         <RotationalWorkoutPlayer
           config={playingWorkout.workout_config}
           workoutName={playingWorkout.name}
           onClose={() => setPlayingWorkout(null)}
         />
       )}
-      
-      {playingWorkout && playingWorkout.workout_type === 'stations' && (
+
+      {playingWorkout && !playingWorkout.timer_sections && playingWorkout.workout_type === 'stations' && (
         <StationsWorkoutPlayer
           config={playingWorkout.workout_config}
-          workoutName={playingWorkout.name}
-          onClose={() => setPlayingWorkout(null)}
-        />
-      )}
-
-      {playingWorkout && playingWorkout.workout_type === 'multi_timer' && (
-        <MultiTimerPlayer
-          timerSections={playingWorkout.timer_sections}
           workoutName={playingWorkout.name}
           onClose={() => setPlayingWorkout(null)}
         />
@@ -89,26 +89,21 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
                         <p className="text-gray-400 text-sm mb-3">{workout.description}</p>
                         
                         <div className="flex gap-2 flex-wrap items-center">
-                          <Badge variant="outline" className="border-gray-600 text-gray-300 capitalize">
-                            {workout.workout_type?.replace(/_/g, ' ') || 'Custom'}
-                          </Badge>
-                          {workout.workout_type === 'multi_timer' && workout.timer_sections?.length > 0 && (
+                          {workout.timer_sections?.length > 0 ? (
                             <Badge variant="outline" className="border-gray-600 text-gray-300">
                               <Dumbbell className="w-3 h-3 mr-1" />
-                              {workout.timer_sections.length} timer sections
+                              {workout.timer_sections.length} timer{workout.timer_sections.length > 1 ? 's' : ''}
                             </Badge>
-                          )}
-                          {workout.workout_config && workout.workout_type !== 'multi_timer' && (
-                            <Badge variant="outline" className="border-gray-600 text-gray-300">
-                              <Dumbbell className="w-3 h-3 mr-1" />
-                              {workout.workout_config.exercises?.length || 0} exercises
+                          ) : (
+                            <Badge variant="outline" className="border-gray-600 text-gray-300 capitalize">
+                              {workout.workout_type?.replace(/_/g, ' ') || 'Custom'}
                             </Badge>
                           )}
                         </div>
                       </div>
 
                       <div className="flex gap-2">
-                        {(workout.workout_config || (workout.workout_type === 'multi_timer' && workout.timer_sections?.length > 0)) && (
+                        {(workout.workout_config || workout.timer_sections?.length > 0) && (
                           <Button
                             onClick={() => setPlayingWorkout(workout)}
                             className="bg-green-600 hover:bg-green-700 text-white font-bold"

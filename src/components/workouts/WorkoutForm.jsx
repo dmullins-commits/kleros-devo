@@ -62,9 +62,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
   };
 
   const handlePlay = () => {
-    if (formData.workout_type === 'multi_timer' && formData.timer_sections?.length > 0) {
-      setShowPlayer(true);
-    } else if (formData.workout_config) {
+    if (formData.timer_sections?.length > 0) {
       setShowPlayer(true);
     }
   };
@@ -114,31 +112,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
 
   return (
     <>
-      {showPlayer && formData.workout_config && formData.workout_type === 'whole_room_same' && (
-        <WorkoutPlayer
-          config={formData.workout_config}
-          workoutName={formData.name}
-          onClose={() => setShowPlayer(false)}
-        />
-      )}
-      
-      {showPlayer && formData.workout_config && formData.workout_type === 'whole_room_rotational' && (
-        <RotationalWorkoutPlayer
-          config={formData.workout_config}
-          workoutName={formData.name}
-          onClose={() => setShowPlayer(false)}
-        />
-      )}
-      
-      {showPlayer && formData.workout_config && formData.workout_type === 'stations' && (
-        <StationsWorkoutPlayer
-          config={formData.workout_config}
-          workoutName={formData.name}
-          onClose={() => setShowPlayer(false)}
-        />
-      )}
-
-      {showPlayer && formData.workout_type === 'multi_timer' && formData.timer_sections?.length > 0 && (
+      {showPlayer && formData.timer_sections?.length > 0 && (
         <MultiTimerPlayer
           timerSections={formData.timer_sections}
           workoutName={formData.name}
@@ -178,22 +152,21 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
             </div>
 
             {/* Timer Sections Configuration */}
-            {(
-              <Card className="bg-gray-900 border-gray-700">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-white font-bold">Timer Sections</h3>
-                    {!currentTimerSection && (
-                      <Button
-                        type="button"
-                        onClick={handleAddTimer}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Timer
-                      </Button>
-                    )}
-                  </div>
+            <Card className="bg-gray-900 border-gray-700">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-bold">Workout Timers</h3>
+                  {!currentTimerSection && (
+                    <Button
+                      type="button"
+                      onClick={handleAddTimer}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Timer
+                    </Button>
+                  )}
+                </div>
 
                   {formData.timer_sections?.length > 0 && !currentTimerSection && (
                     <div className="space-y-2">
@@ -356,65 +329,29 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                     </div>
                   )}
 
-                  {formData.timer_sections?.length > 0 && !currentTimerSection && (
+                {formData.timer_sections?.length > 0 && !currentTimerSection && (
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      onClick={handlePlay}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Play
+                    </Button>
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
+                      className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
                     >
                       <Save className="w-5 h-5 mr-2" />
-                      Save Workout
+                      Save Workout Configuration
                     </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Config saved state with edit and play buttons - kept for backward compatibility */}
-            {(formData.workout_type === 'whole_room_same' || formData.workout_type === 'whole_room_rotational' || formData.workout_type === 'stations' || formData.workout_type === 'get_it_done') && isConfigSaved && formData.workout_config && (
-              <Card className="bg-gray-900 border-gray-700">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h3 className="text-white font-bold">Workout Configured</h3>
-                      <p className="text-gray-400 text-sm">
-                        {formData.workout_type === 'stations' 
-                          ? `${formData.workout_config.stations.length} station(s) • ${formData.workout_config.sets} set(s)`
-                          : `${formData.workout_config.exercises.length} exercises • ${formData.workout_config.sets} set(s)`
-                        }
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        onClick={handlePlay}
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Play
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleEditConfig}
-                        variant="outline"
-                        className="border-gray-600 text-white hover:bg-gray-800"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                    </div>
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
-                  >
-                    <Save className="w-5 h-5 mr-2" />
-                    Save Workout
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
 
-            {!isConfigSaved && (
+            {formData.timer_sections?.length === 0 && (
               <div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
                 <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:bg-gray-800">
                   Cancel
