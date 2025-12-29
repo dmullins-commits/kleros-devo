@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import WorkoutPlayer from "./WorkoutPlayer";
 import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
 import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
+import MultiTimerPlayer from "./MultiTimerPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +61,14 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
           onClose={() => setPlayingWorkout(null)}
         />
       )}
+
+      {playingWorkout && playingWorkout.workout_type === 'multi_timer' && (
+        <MultiTimerPlayer
+          timerSections={playingWorkout.timer_sections}
+          workoutName={playingWorkout.name}
+          onClose={() => setPlayingWorkout(null)}
+        />
+      )}
       
       <Card className="bg-gray-950 border border-gray-800">
         <CardContent className="p-6">
@@ -83,7 +92,13 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
                           <Badge variant="outline" className="border-gray-600 text-gray-300 capitalize">
                             {workout.workout_type?.replace(/_/g, ' ') || 'Custom'}
                           </Badge>
-                          {workout.workout_config && (
+                          {workout.workout_type === 'multi_timer' && workout.timer_sections?.length > 0 && (
+                            <Badge variant="outline" className="border-gray-600 text-gray-300">
+                              <Dumbbell className="w-3 h-3 mr-1" />
+                              {workout.timer_sections.length} timer sections
+                            </Badge>
+                          )}
+                          {workout.workout_config && workout.workout_type !== 'multi_timer' && (
                             <Badge variant="outline" className="border-gray-600 text-gray-300">
                               <Dumbbell className="w-3 h-3 mr-1" />
                               {workout.workout_config.exercises?.length || 0} exercises
@@ -93,7 +108,7 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
                       </div>
 
                       <div className="flex gap-2">
-                        {workout.workout_config && (
+                        {(workout.workout_config || (workout.workout_type === 'multi_timer' && workout.timer_sections?.length > 0)) && (
                           <Button
                             onClick={() => setPlayingWorkout(workout)}
                             className="bg-green-600 hover:bg-green-700 text-white font-bold"

@@ -13,6 +13,8 @@ import StationsPanel from "./StationsPanel";
 import WorkoutPlayer from "./WorkoutPlayer";
 import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
 import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
+import MultiTimerPlayer from "./MultiTimerPlayer";
+import { Plus, Trash2, GripVertical } from "lucide-react";
 
 export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(workout || {
@@ -20,11 +22,14 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     description: '',
     workout_type: '',
     workout_config: null,
+    timer_sections: [],
     assigned_teams: teams.length > 0 ? [teams[0].id] : [],
     assigned_athletes: []
   });
   const [showPlayer, setShowPlayer] = useState(false);
   const [isConfigSaved, setIsConfigSaved] = useState(false);
+  const [currentTimerSection, setCurrentTimerSection] = useState(null);
+  const [editingTimerIndex, setEditingTimerIndex] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -55,8 +60,53 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
   };
 
   const handlePlay = () => {
-    if (formData.workout_config) {
+    if (formData.workout_type === 'multi_timer' && formData.timer_sections?.length > 0) {
       setShowPlayer(true);
+    } else if (formData.workout_config) {
+      setShowPlayer(true);
+    }
+  };
+
+  const handleAddTimer = () => {
+    setCurrentTimerSection({
+      name: '',
+      timer_type: '',
+      config: null
+    });
+  };
+
+  const handleSaveTimerSection = (section) => {
+    const updatedSections = [...(formData.timer_sections || [])];
+    if (editingTimerIndex !== null) {
+      updatedSections[editingTimerIndex] = section;
+    } else {
+      updatedSections.push(section);
+    }
+    setFormData(prev => ({ ...prev, timer_sections: updatedSections }));
+    setCurrentTimerSection(null);
+    setEditingTimerIndex(null);
+  };
+
+  const handleEditTimer = (index) => {
+    setCurrentTimerSection(formData.timer_sections[index]);
+    setEditingTimerIndex(index);
+  };
+
+  const handleDeleteTimer = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      timer_sections: prev.timer_sections.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleTimerSectionConfigSave = (config) => {
+    setCurrentTimerSection(prev => ({ ...prev, config }));
+    setIsConfigSaved(true);
+  };
+
+  const handleSaveCurrentSection = () => {
+    if (currentTimerSection && currentTimerSection.name && currentTimerSection.config) {
+      handleSaveTimerSection(currentTimerSection);
     }
   };
 
@@ -81,6 +131,14 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
       {showPlayer && formData.workout_config && formData.workout_type === 'stations' && (
         <StationsWorkoutPlayer
           config={formData.workout_config}
+          workoutName={formData.name}
+          onClose={() => setShowPlayer(false)}
+        />
+      )}
+
+      {showPlayer && formData.workout_type === 'multi_timer' && formData.timer_sections?.length > 0 && (
+        <MultiTimerPlayer
+          timerSections={formData.timer_sections}
           workoutName={formData.name}
           onClose={() => setShowPlayer(false)}
         />
@@ -121,7 +179,22 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
 
             <div className="space-y-3">
               <Label className="text-gray-300">Workout Type *</Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    handleChange('workout_type', 'multi_timer');
+                    setIsConfigSaved(false);
+                  }}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 ${
+                    formData.workout_type === 'multi_timer'
+                      ? 'bg-yellow-400 text-black hover:bg-yellow-500'
+                      : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <Plus className="w-6 h-6" />
+                  <span className="font-bold text-center">Multiple Timers</span>
+                </Button>
                 <Button
                   type="button"
                   onClick={() => {
@@ -135,7 +208,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                   }`}
                 >
                   <Dumbbell className="w-6 h-6" />
-                  <span className="font-bold">Whole Room - Same Exercise</span>
+                  <span className="font-bold text-center">Whole Room - Same</span>
                 </Button>
                 <Button
                   type="button"
@@ -150,7 +223,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                   }`}
                 >
                   <Dumbbell className="w-6 h-6" />
-                  <span className="font-bold">Whole Room - Rotational</span>
+                  <span className="font-bold text-center">Whole Room - Rotational</span>
                 </Button>
                 <Button
                   type="button"
@@ -165,10 +238,181 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                   }`}
                 >
                   <Dumbbell className="w-6 h-6" />
-                  <span className="font-bold">Stations</span>
+                  <span className="font-bold text-center">Stations</span>
                 </Button>
               </div>
             </div>
+
+            {/* Multi-Timer Configuration */}
+            {formData.workout_type === 'multi_timer' && (
+              <Card className="bg-gray-900 border-gray-700">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white font-bold">Timer Sections</h3>
+                    {!currentTimerSection && (
+                      <Button
+                        type="button"
+                        onClick={handleAddTimer}
+                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Timer
+                      </Button>
+                    )}
+                  </div>
+
+                  {formData.timer_sections?.length > 0 && !currentTimerSection && (
+                    <div className="space-y-2">
+                      {formData.timer_sections.map((section, index) => (
+                        <div key={index} className="flex items-center gap-3 p-4 bg-gray-800 rounded-lg">
+                          <GripVertical className="w-5 h-5 text-gray-500" />
+                          <div className="flex-1">
+                            <p className="text-white font-bold">{section.name}</p>
+                            <p className="text-gray-400 text-sm capitalize">{section.timer_type.replace(/_/g, ' ')}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={() => handleEditTimer(index)}
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-600 text-white"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => handleDeleteTimer(index)}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-700 text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {currentTimerSection && (
+                    <div className="space-y-4 p-4 border border-gray-700 rounded-lg">
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">Section Name</Label>
+                        <Input
+                          placeholder="e.g., Warmup, Main Workout, Cool Down"
+                          value={currentTimerSection.name}
+                          onChange={(e) => setCurrentTimerSection(prev => ({ ...prev, name: e.target.value }))}
+                          className="bg-gray-900 border-gray-700 text-white"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">Timer Type</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTimerSection(prev => ({ ...prev, timer_type: 'whole_room_same', config: null }));
+                              setIsConfigSaved(false);
+                            }}
+                            className={`h-16 ${
+                              currentTimerSection.timer_type === 'whole_room_same'
+                                ? 'bg-yellow-400 text-black'
+                                : 'bg-gray-800 text-white'
+                            }`}
+                          >
+                            Same Exercise
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTimerSection(prev => ({ ...prev, timer_type: 'whole_room_rotational', config: null }));
+                              setIsConfigSaved(false);
+                            }}
+                            className={`h-16 ${
+                              currentTimerSection.timer_type === 'whole_room_rotational'
+                                ? 'bg-yellow-400 text-black'
+                                : 'bg-gray-800 text-white'
+                            }`}
+                          >
+                            Rotational
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTimerSection(prev => ({ ...prev, timer_type: 'stations', config: null }));
+                              setIsConfigSaved(false);
+                            }}
+                            className={`h-16 ${
+                              currentTimerSection.timer_type === 'stations'
+                                ? 'bg-yellow-400 text-black'
+                                : 'bg-gray-800 text-white'
+                            }`}
+                          >
+                            Stations
+                          </Button>
+                        </div>
+                      </div>
+
+                      {currentTimerSection.timer_type === 'whole_room_same' && !isConfigSaved && (
+                        <WholeRoomSameExercisePanel 
+                          onSave={handleTimerSectionConfigSave}
+                          initialData={currentTimerSection.config}
+                        />
+                      )}
+
+                      {currentTimerSection.timer_type === 'whole_room_rotational' && !isConfigSaved && (
+                        <WholeRoomRotationalPanel 
+                          onSave={handleTimerSectionConfigSave}
+                          initialData={currentTimerSection.config}
+                        />
+                      )}
+
+                      {currentTimerSection.timer_type === 'stations' && !isConfigSaved && (
+                        <StationsPanel 
+                          onSave={handleTimerSectionConfigSave}
+                          initialData={currentTimerSection.config}
+                        />
+                      )}
+
+                      {isConfigSaved && currentTimerSection.config && (
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={handleSaveCurrentSection}
+                            className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Section
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTimerSection(null);
+                              setEditingTimerIndex(null);
+                              setIsConfigSaved(false);
+                            }}
+                            variant="outline"
+                            className="border-gray-600 text-white"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {formData.timer_sections?.length > 0 && !currentTimerSection && (
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-black text-lg py-6"
+                    >
+                      <Save className="w-5 h-5 mr-2" />
+                      Save Workout
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Configuration panel */}
             {formData.workout_type === 'whole_room_same' && !isConfigSaved && (
