@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function WorkoutPlayer({ config, workoutName, onClose }) {
+export default function WorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
   const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'setRest', 'complete'
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
