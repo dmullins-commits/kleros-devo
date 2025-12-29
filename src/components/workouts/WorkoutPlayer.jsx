@@ -7,7 +7,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isPaused, setIsPaused] = useState(true);
+  const [isPaused, setIsPaused] = useState(!overallWorkoutTime); // Auto-start in multi-timer mode
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);

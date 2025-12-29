@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function RotationalWorkoutPlayer({ config, workoutName, onClose }) {
+export default function RotationalWorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
   // Migrate old config format to new format if needed
   const migratedConfig = {
     ...config,

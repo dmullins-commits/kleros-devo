@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function StationsWorkoutPlayer({ config, workoutName, onClose }) {
+export default function StationsWorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
   const migratedConfig = {
     ...config,
     sets: config.sets || 1,
@@ -24,7 +24,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isPaused, setIsPaused] = useState(true);
+  const [isPaused, setIsPaused] = useState(!overallWorkoutTime); // Auto-start in multi-timer mode
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);

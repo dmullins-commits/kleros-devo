@@ -5,7 +5,7 @@ import { X, Play, Pause, StopCircle } from "lucide-react";
 export default function GetItDonePlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
   const totalSeconds = (config.totalTime?.minutes || 0) * 60 + (config.totalTime?.seconds || 0);
   const [timeRemaining, setTimeRemaining] = useState(totalSeconds);
-  const [isPaused, setIsPaused] = useState(true);
+  const [isPaused, setIsPaused] = useState(!overallWorkoutTime); // Auto-start in multi-timer mode
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef(null);
