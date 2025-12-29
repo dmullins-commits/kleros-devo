@@ -126,7 +126,8 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
   };
 
   const handleSliderChange = (e) => {
-    const newElapsed = parseInt(e.target.value);
+    const newElapsed = parseInt(e.target.value) - elapsedBeforeCurrentSection;
+    if (newElapsed < 0) return; // Can't scrub before this section
     setElapsedTime(newElapsed);
     
     // Pause and clear existing timer
