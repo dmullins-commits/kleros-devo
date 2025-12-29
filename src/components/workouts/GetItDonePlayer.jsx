@@ -125,26 +125,40 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Top bar */}
       <div className="absolute top-4 left-4 right-4 z-10">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black text-white">{workoutName}</h2>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleStop}
-              className="text-red-400 hover:bg-red-400/10 w-10 h-10"
-            >
-              <StopCircle className="w-6 h-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onClose()}
-              className="text-white hover:bg-white/10 w-10 h-10"
-            >
-              <X className="w-6 h-6" />
-            </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <input
+              type="range"
+              min="0"
+              max={overallWorkoutTime || totalSeconds}
+              value={elapsedBeforeCurrentSection + elapsedTime}
+              onChange={handleSliderChange}
+              className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #FFD700 0%, #FFD700 ${((elapsedBeforeCurrentSection + elapsedTime) / (overallWorkoutTime || totalSeconds)) * 100}%, #374151 ${((elapsedBeforeCurrentSection + elapsedTime) / (overallWorkoutTime || totalSeconds)) * 100}%, #374151 100%)`
+              }}
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>{formatTime(elapsedBeforeCurrentSection + elapsedTime)}</span>
+              <span>{formatTime(overallWorkoutTime || totalSeconds)}</span>
+            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onClose()}
+            className="text-white hover:bg-white/10 w-10 h-10"
+          >
+            <X className="w-6 h-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleStop}
+            className="text-red-400 hover:bg-red-400/10 w-10 h-10"
+          >
+            <StopCircle className="w-6 h-6" />
+          </Button>
         </div>
       </div>
 
