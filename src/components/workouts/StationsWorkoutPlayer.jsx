@@ -268,9 +268,6 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
     );
   }
 
-  const numStations = migratedConfig.stations.length;
-  const stationWidth = numStations === 2 ? 'w-[390px]' : numStations === 3 ? 'w-[260px]' : 'w-[195px]';
-
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Top bar */}
