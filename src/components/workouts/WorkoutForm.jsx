@@ -312,10 +312,11 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                           <Button
                             type="button"
                             onClick={handleSaveCurrentSection}
-                            className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+                            disabled={!currentTimerSection.name}
+                            className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Save className="w-4 h-4 mr-2" />
-                            Save Section
+                            Save Section {!currentTimerSection.name && '(Enter Section Name)'}
                           </Button>
                           <Button
                             type="button"
