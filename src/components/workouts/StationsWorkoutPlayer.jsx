@@ -29,8 +29,12 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [colorRotation, setColorRotation] = useState(0);
+  const [currentRotation, setCurrentRotation] = useState(1);
   
   const timerRef = useRef(null);
+  
+  const numStations = migratedConfig.stations.length;
+  const totalRotations = numStations > 1 ? numStations : 1;
 
   const calculateTotalTime = () => {
     const setupSeconds = (migratedConfig.setupTime?.minutes || 0) * 60 + (migratedConfig.setupTime?.seconds || 0);
@@ -42,7 +46,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       : 0;
     const exerciseTime = (workSeconds + restSeconds) * maxExercises;
     const setRestSeconds = (migratedConfig.restBetweenSets?.minutes || 0) * 60 + (migratedConfig.restBetweenSets?.seconds || 0);
-    return setupSeconds + (exerciseTime * migratedConfig.sets) + (setRestSeconds * (migratedConfig.sets - 1));
+    const numStations = migratedConfig.stations.length;
+    const totalRotations = numStations > 1 ? numStations : 1;
+    return setupSeconds + (exerciseTime * migratedConfig.sets * totalRotations) + (setRestSeconds * (migratedConfig.sets - 1) * totalRotations);
   };
 
   useEffect(() => {
@@ -55,6 +61,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
     setElapsedTime(0);
     setIsPaused(true);
     setColorRotation(0);
+    setCurrentRotation(1);
     
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -181,6 +188,16 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
           const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
           setTimeRemaining(workSeconds);
           startTimer();
+        } else if (currentRotation < totalRotations) {
+          // Move to next rotation
+          setCurrentRotation(prev => prev + 1);
+          setCurrentSet(1);
+          playSound('go');
+          setPhase('work');
+          setCurrentExerciseIndex(0);
+          const workSeconds = (migratedConfig.workTime?.minutes || 0) * 60 + (migratedConfig.workTime?.seconds || 0);
+          setTimeRemaining(workSeconds);
+          startTimer();
         } else {
           setPhase('complete');
         }
@@ -285,32 +302,40 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                   setCurrentSet(1);
                   setCurrentExerciseIndex(0);
                   setColorRotation(0);
+                  setCurrentRotation(1);
                   setTimeRemaining(setupSecs - newElapsed);
                   return;
                 }
                 accTime += setupSecs;
                 
-                for (let set = 1; set <= migratedConfig.sets; set++) {
-                  for (let exIdx = 0; exIdx < maxExercises; exIdx++) {
-                    if (newElapsed <= accTime + workSecs) {
-                      setPhase('work');
-                      setCurrentSet(set);
-                      setCurrentExerciseIndex(exIdx);
-                      setColorRotation(Math.floor((set - 1) * maxExercises + exIdx) % maxExercises);
-                      setTimeRemaining(accTime + workSecs - newElapsed);
-                      return;
+                const numStations = migratedConfig.stations.length;
+                const totalRotations = numStations > 1 ? numStations : 1;
+                
+                for (let rotation = 1; rotation <= totalRotations; rotation++) {
+                  for (let set = 1; set <= migratedConfig.sets; set++) {
+                    for (let exIdx = 0; exIdx < maxExercises; exIdx++) {
+                      if (newElapsed <= accTime + workSecs) {
+                        setPhase('work');
+                        setCurrentSet(set);
+                        setCurrentExerciseIndex(exIdx);
+                        setCurrentRotation(rotation);
+                        setColorRotation(Math.floor((rotation - 1) * migratedConfig.sets * maxExercises + (set - 1) * maxExercises + exIdx) % maxExercises);
+                        setTimeRemaining(accTime + workSecs - newElapsed);
+                        return;
+                      }
+                      accTime += workSecs;
+                      
+                      if (newElapsed <= accTime + restSecs) {
+                        setPhase('rest');
+                        setCurrentSet(set);
+                        setCurrentExerciseIndex(exIdx);
+                        setCurrentRotation(rotation);
+                        setColorRotation(Math.floor((rotation - 1) * migratedConfig.sets * maxExercises + (set - 1) * maxExercises + exIdx) % maxExercises);
+                        setTimeRemaining(accTime + restSecs - newElapsed);
+                        return;
+                      }
+                      accTime += restSecs;
                     }
-                    accTime += workSecs;
-                    
-                    if (newElapsed <= accTime + restSecs) {
-                      setPhase('rest');
-                      setCurrentSet(set);
-                      setCurrentExerciseIndex(exIdx);
-                      setColorRotation(Math.floor((set - 1) * maxExercises + exIdx) % maxExercises);
-                      setTimeRemaining(accTime + restSecs - newElapsed);
-                      return;
-                    }
-                    accTime += restSecs;
                   }
                 }
                 
@@ -346,10 +371,15 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-start justify-between gap-8 px-16 pt-24">
+      <div className="flex-1 flex items-center justify-center gap-6 px-16">
         {/* Stations */}
-        {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => (
-          <div key={stationIdx} className={`${stationWidth} space-y-2`}>
+        <div className="flex gap-6">
+          {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => {
+            const rotatedStationIdx = (stationIdx + currentRotation - 1) % numStations;
+            const displayStation = migratedConfig.stations[rotatedStationIdx];
+            
+            return (
+              <div key={stationIdx} className="w-[300px] space-y-2">
             {/* Station label */}
             <div className="mb-2">
               <span className="text-2xl font-black text-white">Station: {stationIdx + 1}</span>
@@ -373,10 +403,10 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
             </div>
 
             {/* Exercise rows */}
-            {station.exercises.map((exercise, exIdx) => {
+            {displayStation.exercises.map((exercise, exIdx) => {
               const isActive = exIdx === currentExerciseIndex;
-              const rotatedColorIdx = (exIdx + colorRotation) % station.exercises.length;
-              const color = migratedConfig.stations[0]?.exercises?.[rotatedColorIdx]?.color || station.exercises[rotatedColorIdx]?.color || '#FFFFFF';
+              const rotatedColorIdx = (exIdx + colorRotation) % displayStation.exercises.length;
+              const color = migratedConfig.stations[0]?.exercises?.[rotatedColorIdx]?.color || displayStation.exercises[rotatedColorIdx]?.color || '#FFFFFF';
               
               const displayReps = exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps[currentSet - 1]
                 ? exercise.perSetReps[currentSet - 1]
@@ -385,12 +415,12 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
               return (
                 <div
                   key={exIdx}
-                  className="flex items-center h-16 relative"
+                  className="flex items-center h-20 relative"
                   style={{ backgroundColor: color }}
                 >
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
                     <div 
-                      className="border-2 px-3 py-1 text-xl font-black"
+                      className="border-2 px-4 py-2 text-2xl font-black"
                       style={{ 
                         borderColor: getColorForText(color),
                         color: getColorForText(color)
@@ -402,7 +432,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
 
                   <div className="flex-1 flex items-center justify-center gap-2">
                     <h3 
-                      className="text-3xl font-black"
+                      className="text-4xl font-black"
                       style={{ color: getColorForText(color) }}
                     >
                       {exercise.name}
@@ -410,11 +440,11 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
                   </div>
 
                   {exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps.length > 0 && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                       {Array.from({ length: migratedConfig.sets }, (_, i) => (
                         <span 
                           key={i}
-                          className="text-lg font-black"
+                          className="text-xl font-black"
                           style={{ color: getColorForText(color) }}
                         >
                           {exercise.perSetReps[i] || exercise.reps}
@@ -426,12 +456,13 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose }) 
               );
             })}
           </div>
-        ))}
+        );
+      })}
+        </div>
 
-        {/* Timer */}
+        {/* Timer on the right */}
         {(phase === 'work' || phase === 'rest') && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
-            
+          <div className="flex flex-col items-center gap-6 ml-8">
             <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
 
             {phase === 'work' && (
