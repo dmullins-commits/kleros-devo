@@ -16,6 +16,7 @@ export default function Workouts() {
   const [showWorkoutForm, setShowWorkoutForm] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const formRef = React.useRef(null);
 
   const teamIds = useMemo(() => filteredTeams.map(t => t.id), [filteredTeams]);
 
@@ -112,16 +113,18 @@ export default function Workouts() {
 
         <div className="space-y-8">
           {showWorkoutForm && (
-            <WorkoutForm
-              workout={editingWorkout}
-              teams={teams}
-              athletes={athletes}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setShowWorkoutForm(false);
-                setEditingWorkout(null);
-              }}
-            />
+            <div ref={formRef}>
+              <WorkoutForm
+                workout={editingWorkout}
+                teams={teams}
+                athletes={athletes}
+                onSubmit={handleSubmit}
+                onCancel={() => {
+                  setShowWorkoutForm(false);
+                  setEditingWorkout(null);
+                }}
+              />
+            </div>
           )}
 
           <WorkoutsList 
@@ -130,6 +133,9 @@ export default function Workouts() {
             onEdit={(workout) => {
               setEditingWorkout(workout);
               setShowWorkoutForm(true);
+              setTimeout(() => {
+                formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
             }}
             onDelete={handleDelete}
           />
