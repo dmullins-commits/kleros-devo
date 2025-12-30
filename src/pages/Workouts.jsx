@@ -24,6 +24,12 @@ export default function Workouts() {
     loadData();
   }, [selectedOrganization?.id]);
 
+  useEffect(() => {
+    if (showWorkoutForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showWorkoutForm]);
+
   const loadData = async () => {
     if (!selectedOrganization) return;
     
@@ -133,9 +139,6 @@ export default function Workouts() {
             onEdit={(workout) => {
               setEditingWorkout(workout);
               setShowWorkoutForm(true);
-              setTimeout(() => {
-                formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }, 100);
             }}
             onDelete={handleDelete}
           />
