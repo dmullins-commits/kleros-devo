@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Dumbbell, Play, Trash2 } from "lucide-react";
+import { Edit, Dumbbell, Play, Trash2, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import WorkoutPlayer from "./WorkoutPlayer";
 import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
 import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
 import MultiTimerPlayer from "./MultiTimerPlayer";
+import WorkoutOverviewModal from "./WorkoutOverviewModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,7 @@ import {
 export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) {
   const [deleteWorkout, setDeleteWorkout] = useState(null);
   const [playingWorkout, setPlayingWorkout] = useState(null);
+  const [overviewWorkout, setOverviewWorkout] = useState(null);
 
   if (isLoading) {
     return (
@@ -112,6 +114,16 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
                             Play
                           </Button>
                         )}
+                        {workout.timer_sections?.length > 0 && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setOverviewWorkout(workout)}
+                            className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Overview
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           onClick={() => onEdit(workout)}
@@ -146,6 +158,12 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
           </div>
         </CardContent>
       </Card>
+
+      <WorkoutOverviewModal
+        workout={overviewWorkout}
+        open={!!overviewWorkout}
+        onClose={() => setOverviewWorkout(null)}
+      />
 
       <AlertDialog open={!!deleteWorkout} onOpenChange={() => setDeleteWorkout(null)}>
         <AlertDialogContent className="bg-gray-900 border-gray-700">
