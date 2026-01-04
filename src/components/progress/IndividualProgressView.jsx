@@ -313,7 +313,9 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
       if (!isValidDate(label)) return null;
       
       try {
-        const [year, month, day] = label.split('-');
+        const dateParts = String(label).split('-');
+        if (dateParts.length !== 3) return null;
+        const [year, month, day] = dateParts;
         const safeDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         
         if (isNaN(safeDate.getTime())) return null;
@@ -720,7 +722,9 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               tickFormatter={(date) => {
                                 if (!isValidDate(date)) return 'Invalid';
                                 try {
-                                  const [year, month, day] = date.split('-');
+                                  const dateParts = String(date).split('-');
+                                  if (dateParts.length !== 3) return 'Invalid';
+                                  const [year, month, day] = dateParts;
                                   const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                                   if (isNaN(parsedDate.getTime())) return 'Invalid';
                                   return format(parsedDate, "MMM d");
@@ -940,7 +944,9 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               <div className="text-amber-500/60 text-xs font-semibold">{(() => {
                                 if (!isValidDate(firstDate)) return 'Invalid Date';
                                 try {
-                                  const [year, month, day] = firstDate.split('-');
+                                  const dateParts = String(firstDate).split('-');
+                                  if (dateParts.length !== 3) return 'Invalid Date';
+                                  const [year, month, day] = dateParts;
                                   const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                                   if (isNaN(parsedDate.getTime())) return 'Invalid Date';
                                   return format(parsedDate, "MMM d, yyyy");
@@ -955,7 +961,9 @@ export default function IndividualProgressView({ athlete, metrics, records, isLo
                               <div className="text-amber-500/60 text-xs font-semibold">{(() => {
                                 if (!isValidDate(latestDate)) return 'Invalid Date';
                                 try {
-                                  const [year, month, day] = latestDate.split('-');
+                                  const dateParts = String(latestDate).split('-');
+                                  if (dateParts.length !== 3) return 'Invalid Date';
+                                  const [year, month, day] = dateParts;
                                   const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                                   if (isNaN(parsedDate.getTime())) return 'Invalid Date';
                                   return format(parsedDate, "MMM d, yyyy");
