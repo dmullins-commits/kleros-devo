@@ -157,22 +157,27 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       if (!isValidDate(label)) return null;
-      const [year, month, day] = label.split('-');
-      const safeDate = new Date(year, month - 1, day);
-      return (
-        <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
-          <p className="text-white font-medium">{format(safeDate, "MMM d, yyyy")}</p>
-          {payload.map((entry, index) => {
-            if (entry.value == null) return null;
-            const metric = metrics.find(m => m.id === entry.dataKey);
-            return (
-              <p key={index} style={{ color: entry.color }}>
-                {entry.name}: {formatValue(entry.value, metric)}
-              </p>
-            );
-          })}
-        </div>
-      );
+      try {
+        const [year, month, day] = label.split('-');
+        const safeDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (isNaN(safeDate.getTime())) return null;
+        return (
+          <div className="bg-gray-900 border border-gray-700 p-3 rounded-lg shadow-lg">
+            <p className="text-white font-medium">{format(safeDate, "MMM d, yyyy")}</p>
+            {payload.map((entry, index) => {
+              if (entry.value == null) return null;
+              const metric = metrics.find(m => m.id === entry.dataKey);
+              return (
+                <p key={index} style={{ color: entry.color }}>
+                  {entry.name}: {formatValue(entry.value, metric)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      } catch (error) {
+        return null;
+      }
     }
     return null;
   };
@@ -344,8 +349,14 @@ export default function TeamProgressView({ metrics, records, athletes, isLoading
                               fontSize={12}
                               tickFormatter={(date) => {
                                 if (!isValidDate(date)) return 'Invalid';
-                                const [year, month, day] = date.split('-');
-                                return format(new Date(year, month - 1, day), "MMM d");
+                                try {
+                                  const [year, month, day] = date.split('-');
+                                  const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                  if (isNaN(parsedDate.getTime())) return 'Invalid';
+                                  return format(parsedDate, "MMM d");
+                                } catch (error) {
+                                  return 'Invalid';
+                                }
                               }}
                             />
                             <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} domain={['auto', 'auto']} />

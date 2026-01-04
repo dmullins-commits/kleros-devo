@@ -206,24 +206,29 @@ export default function SnapshotView({
     // Build CSV with all metrics
     const headerParts = ['Athlete'];
     snapshotData.forEach(({ metric, dates }) => {
-      dates.forEach(date => {
-        try {
-          if (!isValidDate(date)) {
-            headerParts.push(`${metric.name} - Invalid Date`);
-            return;
-          }
-          const [year, month, day] = date.split('-');
-          if (!year || !month || !day) {
-            headerParts.push(`${metric.name} - ${date}`);
-            return;
-          }
-          // Convert YYYY-MM-DD to MM-DD-YYYY for display
-          const formattedDate = `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
-          headerParts.push(`${metric.name} - ${formattedDate}`);
-        } catch (e) {
-          headerParts.push(`${metric.name} - ${date}`);
+    dates.forEach(date => {
+      try {
+        if (!isValidDate(date)) {
+          headerParts.push(`${metric.name} - Invalid Date`);
+          return;
         }
-      });
+        const dateParts = String(date).split('-');
+        if (dateParts.length !== 3) {
+          headerParts.push(`${metric.name} - ${date}`);
+          return;
+        }
+        const [year, month, day] = dateParts;
+        if (!year || !month || !day) {
+          headerParts.push(`${metric.name} - ${date}`);
+          return;
+        }
+        // Convert YYYY-MM-DD to MM-DD-YYYY for display
+        const formattedDate = `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
+        headerParts.push(`${metric.name} - ${formattedDate}`);
+      } catch (e) {
+        headerParts.push(`${metric.name} - ${date}`);
+      }
+    });
     });
     
     const rows = [headerParts];
@@ -625,7 +630,9 @@ export default function SnapshotView({
                        {(() => {
                          try {
                            if (!date) return 'Invalid Date';
-                           const [year, month, day] = date.split('-');
+                           const dateParts = String(date).split('-');
+                           if (dateParts.length !== 3) return 'Invalid Date';
+                           const [year, month, day] = dateParts;
                            if (!year || !month || !day) return 'Invalid Date';
                            // Display as MM-DD-YYYY
                            return `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`;
