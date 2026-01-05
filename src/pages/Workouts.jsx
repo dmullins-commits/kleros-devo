@@ -124,6 +124,7 @@ export default function Workouts() {
                 workout={editingWorkout}
                 teams={teams}
                 athletes={athletes}
+                savedWorkouts={workouts}
                 onSubmit={handleSubmit}
                 onCancel={() => {
                   setShowWorkoutForm(false);
