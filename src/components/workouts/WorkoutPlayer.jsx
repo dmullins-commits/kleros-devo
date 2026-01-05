@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function WorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, autoStartInMultiTimer = false }) {
+export default function WorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, totalRemainingTime, autoStartInMultiTimer = false }) {
   const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'setRest', 'complete'
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -327,6 +327,11 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
       {/* Top bar with slider and set indicator */}
       <div className="absolute top-4 left-4 right-4 z-10">
         <div className="flex items-center gap-4">
+          {totalRemainingTime !== undefined && (
+            <div className="text-yellow-400 text-xl font-bold whitespace-nowrap">
+              {formatTime(totalRemainingTime)}
+            </div>
+          )}
           <div className="flex-1">
             <input
               type="range"

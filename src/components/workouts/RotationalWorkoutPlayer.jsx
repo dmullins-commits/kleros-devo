@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function RotationalWorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, autoStartInMultiTimer = false }) {
+export default function RotationalWorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, totalRemainingTime, autoStartInMultiTimer = false }) {
   // Migrate old config format to new format if needed
   const migratedConfig = {
     ...config,
@@ -261,6 +261,11 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose, 
       {/* Top bar */}
       <div className="absolute top-4 left-4 right-4 z-10">
         <div className="flex items-center gap-4">
+          {totalRemainingTime !== undefined && (
+            <div className="text-yellow-400 text-xl font-bold whitespace-nowrap">
+              {formatTime(totalRemainingTime)}
+            </div>
+          )}
           <div className="flex-1">
             <input
               type="range"

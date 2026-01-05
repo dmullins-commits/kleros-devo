@@ -7,7 +7,6 @@ import GetItDonePlayer from './GetItDonePlayer';
 export default function MultiTimerPlayer({ timerSections, workoutName, onClose }) {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [overallElapsedTime, setOverallElapsedTime] = useState(0);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const calculateSectionTime = (section) => {
     const config = section.config;
@@ -60,18 +59,10 @@ export default function MultiTimerPlayer({ timerSections, workoutName, onClose }
   const handleSectionComplete = () => {
     if (currentSectionIndex < timerSections.length - 1) {
       setCurrentSectionIndex(prev => prev + 1);
-      setIsFirstLoad(false); // Auto-play subsequent sections
     } else {
       onClose();
     }
   };
-
-  useEffect(() => {
-    // Reset isFirstLoad when starting a new section (except first)
-    if (currentSectionIndex > 0) {
-      setIsFirstLoad(false);
-    }
-  }, [currentSectionIndex]);
 
   const currentSection = timerSections[currentSectionIndex];
 
@@ -90,6 +81,8 @@ export default function MultiTimerPlayer({ timerSections, workoutName, onClose }
     return null;
   }
 
+  const totalRemainingTime = totalWorkoutTime - overallElapsedTime;
+
   return (
     <PlayerComponent
       config={currentSection.config}
@@ -98,7 +91,8 @@ export default function MultiTimerPlayer({ timerSections, workoutName, onClose }
       totalWorkoutTime={totalWorkoutTime}
       elapsedBeforeCurrentSection={elapsedBeforeCurrentSection}
       onElapsedTimeUpdate={(elapsed) => setOverallElapsedTime(elapsedBeforeCurrentSection + elapsed)}
-      autoStartInMultiTimer={!isFirstLoad}
+      totalRemainingTime={totalRemainingTime}
+      autoStartInMultiTimer={currentSectionIndex > 0}
     />
   );
 }
