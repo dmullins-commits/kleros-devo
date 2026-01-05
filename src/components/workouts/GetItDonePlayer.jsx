@@ -105,7 +105,7 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
   useEffect(() => {
     if (timeRemaining === 0 && overallWorkoutTime) {
       // Auto-transition in multi-timer mode
-      onClose();
+      setTimeout(() => onClose(), 100);
     }
   }, [timeRemaining]);
 

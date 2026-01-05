@@ -299,11 +299,9 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
     : null;
 
   useEffect(() => {
-    if (phase === 'complete') {
-      if (overallWorkoutTime) {
-        // Auto-transition in multi-timer mode
-        onClose();
-      }
+    if (phase === 'complete' && overallWorkoutTime) {
+      // Auto-transition in multi-timer mode
+      setTimeout(() => onClose(), 100);
     }
   }, [phase]);
 

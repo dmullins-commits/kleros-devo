@@ -233,9 +233,9 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose, 
   };
 
   useEffect(() => {
-    if (phase === 'complete' && config.totalWorkoutTime) {
+    if (phase === 'complete' && overallWorkoutTime) {
       // Auto-transition in multi-timer mode
-      onClose();
+      setTimeout(() => onClose(), 100);
     }
   }, [phase]);
 

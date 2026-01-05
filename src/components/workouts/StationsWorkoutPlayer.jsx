@@ -252,9 +252,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
   };
 
   useEffect(() => {
-    if (phase === 'complete' && migratedConfig.totalWorkoutTime) {
+    if (phase === 'complete' && overallWorkoutTime) {
       // Auto-transition in multi-timer mode
-      onClose();
+      setTimeout(() => onClose(), 100);
     }
   }, [phase]);
 
