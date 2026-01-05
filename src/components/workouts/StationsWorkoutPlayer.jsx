@@ -276,9 +276,9 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="absolute top-4 left-4 right-4 z-10">
+      <div className="absolute top-2 left-2 right-2 z-10">
         <div className="flex items-center gap-4">
           {totalRemainingTime !== undefined && (
             <div className="text-yellow-400 text-xl font-bold whitespace-nowrap">
@@ -380,7 +380,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-between px-16">
+      <div className="flex-1 flex items-center justify-between px-8 mt-16">
         {/* Stations */}
         <div className="flex gap-8">
           {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => {

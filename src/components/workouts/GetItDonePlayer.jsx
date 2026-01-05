@@ -129,9 +129,9 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
   const progress = ((totalSeconds - timeRemaining) / totalSeconds) * 360;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="absolute top-4 left-4 right-4 z-10">
+      <div className="absolute top-2 left-2 right-2 z-10">
         <div className="flex items-center gap-4">
           {totalRemainingTime !== undefined && (
             <div className="text-yellow-400 text-xl font-bold whitespace-nowrap">
@@ -175,7 +175,7 @@ export default function GetItDonePlayer({ config, workoutName, onClose, totalWor
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-between px-16">
+      <div className="flex-1 flex items-center justify-between px-8 mt-16">
         {/* Exercises list on left */}
         <div className="flex-1 max-w-2xl space-y-4">
           <h3 className="text-4xl font-black text-yellow-400 mb-8">GET IT DONE!</h3>

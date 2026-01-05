@@ -323,9 +323,9 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden">
       {/* Top bar with slider and set indicator */}
-      <div className="absolute top-4 left-4 right-4 z-10">
+      <div className="absolute top-2 left-2 right-2 z-10">
         <div className="flex items-center gap-4">
           {totalRemainingTime !== undefined && (
             <div className="text-yellow-400 text-xl font-bold whitespace-nowrap">
@@ -372,7 +372,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-between px-16 py-8">
+      <div className="flex-1 flex items-center justify-between px-8 py-4 mt-16">
         {/* Left side - Exercise list */}
         <div className="flex-1 max-w-md">
           {phase === 'setup' && (
