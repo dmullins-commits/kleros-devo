@@ -445,6 +445,70 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
         </CardContent>
       </Card>
     </motion.div>
+
+    {/* Saved Segments Modal */}
+    <AlertDialog open={showSavedSegments} onOpenChange={setShowSavedSegments}>
+      <AlertDialogContent className="bg-gray-900 border-gray-700 max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-white flex items-center gap-2">
+            <FolderOpen className="w-5 h-5 text-yellow-400" />
+            Add Saved Segment
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-400">
+            Select a saved workout to add its timers to your current workout.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex-1 overflow-y-auto py-4 space-y-2">
+          {savedWorkouts.filter(w => w.id !== workout?.id).map((savedWorkout) => (
+            <div
+              key={savedWorkout.id}
+              onClick={() => handleAddSavedSegment(savedWorkout)}
+              className="p-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-yellow-400 cursor-pointer transition-colors"
+            >
+              <h4 className="text-white font-bold">{savedWorkout.name}</h4>
+              <p className="text-gray-400 text-sm">{savedWorkout.description}</p>
+              <p className="text-yellow-400 text-xs mt-1">
+                {savedWorkout.timer_sections?.length > 0 
+                  ? `${savedWorkout.timer_sections.length} timer${savedWorkout.timer_sections.length > 1 ? 's' : ''}`
+                  : savedWorkout.workout_config ? '1 timer' : 'No timers'
+                }
+              </p>
+            </div>
+          ))}
+          {savedWorkouts.filter(w => w.id !== workout?.id).length === 0 && (
+            <p className="text-gray-500 text-center py-8">No other saved workouts available</p>
+          )}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
+            Cancel
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Confirmation Dialog */}
+    <AlertDialog open={!!selectedSavedWorkout} onOpenChange={() => setSelectedSavedWorkout(null)}>
+      <AlertDialogContent className="bg-gray-900 border-gray-700">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-white">Add Saved Segment?</AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-400">
+            Are you sure you want to add "{selectedSavedWorkout?.name}" to your current workout?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
+            No
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirmAddSavedSegment}
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+          >
+            Yes
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
