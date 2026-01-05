@@ -112,6 +112,35 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     }));
   };
 
+  const handleAddSavedSegment = (savedWorkout) => {
+    setSelectedSavedWorkout(savedWorkout);
+  };
+
+  const confirmAddSavedSegment = () => {
+    if (selectedSavedWorkout) {
+      // Add all timer sections from the saved workout
+      if (selectedSavedWorkout.timer_sections?.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          timer_sections: [...prev.timer_sections, ...selectedSavedWorkout.timer_sections]
+        }));
+      } else if (selectedSavedWorkout.workout_config) {
+        // If it's a legacy single-config workout, convert it to a timer section
+        const newSection = {
+          name: selectedSavedWorkout.name,
+          timer_type: selectedSavedWorkout.workout_type || 'whole_room_same',
+          config: selectedSavedWorkout.workout_config
+        };
+        setFormData(prev => ({
+          ...prev,
+          timer_sections: [...prev.timer_sections, newSection]
+        }));
+      }
+    }
+    setSelectedSavedWorkout(null);
+    setShowSavedSegments(false);
+  };
+
   const handleTimerSectionConfigSave = (config) => {
     setCurrentTimerSection(prev => ({ ...prev, config }));
     setIsConfigSaved(true);
