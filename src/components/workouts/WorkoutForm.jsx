@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel }) {
+export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel, savedWorkouts = [] }) {
   const [formData, setFormData] = useState(workout || {
     name: '',
     description: '',
@@ -42,6 +42,8 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
   const [isConfigSaved, setIsConfigSaved] = useState(false);
   const [currentTimerSection, setCurrentTimerSection] = useState(null);
   const [editingTimerIndex, setEditingTimerIndex] = useState(null);
+  const [showSavedSegments, setShowSavedSegments] = useState(false);
+  const [selectedSavedWorkout, setSelectedSavedWorkout] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
