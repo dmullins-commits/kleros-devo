@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Save, Dumbbell, Edit, Play } from "lucide-react";
+import { X, Save, Dumbbell, Edit, Play, FolderOpen } from "lucide-react";
 import WholeRoomSameExercisePanel from "./WholeRoomSameExercisePanel";
 import WholeRoomRotationalPanel from "./WholeRoomRotationalPanel";
 import StationsPanel from "./StationsPanel";
@@ -17,6 +17,16 @@ import StationsWorkoutPlayer from "./StationsWorkoutPlayer";
 import GetItDonePlayer from "./GetItDonePlayer";
 import MultiTimerPlayer from "./MultiTimerPlayer";
 import { Plus, Trash2, GripVertical } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(workout || {
