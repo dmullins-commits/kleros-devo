@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function WorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
+export default function WorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, autoStartInMultiTimer = false }) {
   const [phase, setPhase] = useState('setup'); // 'setup', 'work', 'rest', 'setRest', 'complete'
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isPaused, setIsPaused] = useState(elapsedBeforeCurrentSection === 0); // Auto-start only if not first timer
+  const [isPaused, setIsPaused] = useState(!autoStartInMultiTimer); // Auto-start if part of multi-timer sequence
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -36,7 +36,7 @@ export default function WorkoutPlayer({ config, workoutName, onClose, totalWorko
     setTimeRemaining(setupSeconds);
     setTotalWorkoutTime(calculateTotalTime());
     setElapsedTime(0);
-    setIsPaused(true); // Start paused, user must click play
+    setIsPaused(!autoStartInMultiTimer); // Auto-start if part of multi-timer
     
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);

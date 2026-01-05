@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function GetItDonePlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
+export default function GetItDonePlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, autoStartInMultiTimer = false }) {
   const totalSeconds = (config.totalTime?.minutes || 0) * 60 + (config.totalTime?.seconds || 0);
   const [timeRemaining, setTimeRemaining] = useState(totalSeconds);
-  const [isPaused, setIsPaused] = useState(elapsedBeforeCurrentSection === 0); // Auto-start only if not first timer
+  const [isPaused, setIsPaused] = useState(!autoStartInMultiTimer); // Auto-start if part of multi-timer sequence
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef(null);

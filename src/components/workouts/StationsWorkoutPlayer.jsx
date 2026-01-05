@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, StopCircle } from "lucide-react";
 
-export default function StationsWorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate }) {
+export default function StationsWorkoutPlayer({ config, workoutName, onClose, totalWorkoutTime: overallWorkoutTime, elapsedBeforeCurrentSection = 0, onElapsedTimeUpdate, autoStartInMultiTimer = false }) {
   const migratedConfig = {
     ...config,
     sets: config.sets || 1,
@@ -24,7 +24,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
   const [currentSet, setCurrentSet] = useState(1);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isPaused, setIsPaused] = useState(elapsedBeforeCurrentSection === 0); // Auto-start only if not first timer
+  const [isPaused, setIsPaused] = useState(!autoStartInMultiTimer); // Auto-start if part of multi-timer sequence
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [totalWorkoutTime, setTotalWorkoutTime] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -154,7 +154,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
     const maxExercises = migratedConfig.stations.length > 0 
       ? Math.max(...migratedConfig.stations.map(s => (s.exercises || []).length))
       : 0;
-    setColorRotation(prev => (prev + 1) % maxExercises);
+    setColorRotation(prev => (prev - 1 + maxExercises) % maxExercises);
   };
 
   const handlePhaseComplete = () => {
