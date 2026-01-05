@@ -380,15 +380,15 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-between px-8 mt-16">
+      <div className="flex-1 flex items-center justify-between px-8 mt-16 overflow-hidden">
         {/* Stations */}
-        <div className="flex gap-8">
+        <div className="flex gap-6 max-h-full overflow-y-auto">
           {(phase === 'setup' || phase === 'work' || phase === 'rest') && migratedConfig.stations.map((station, stationIdx) => {
             const rotatedStationIdx = (stationIdx + currentRotation - 1) % numStations;
             const displayStation = migratedConfig.stations[rotatedStationIdx];
             
             return (
-              <div key={stationIdx} className="w-[350px] space-y-2">
+              <div key={stationIdx} className="w-[280px] space-y-2 flex-shrink-0">
             {/* Station label */}
             <div className="mb-3">
               <span className="text-3xl font-black text-white">Station: {stationIdx + 1}</span>

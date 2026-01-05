@@ -92,7 +92,7 @@ export default function MultiTimerPlayer({ timerSections, workoutName, onClose }
       elapsedBeforeCurrentSection={elapsedBeforeCurrentSection}
       onElapsedTimeUpdate={(elapsed) => setOverallElapsedTime(elapsedBeforeCurrentSection + elapsed)}
       totalRemainingTime={totalRemainingTime}
-      autoStartInMultiTimer={currentSectionIndex > 0}
+      autoStartInMultiTimer={false}
     />
   );
 }
