@@ -235,14 +235,27 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                   {!currentTimerSection && formData.timer_sections?.length === 0 && (
                     <div className="text-center py-8">
                       <p className="text-gray-400 mb-4">No timers added yet</p>
-                      <Button
-                        type="button"
-                        onClick={handleAddTimer}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Timer
-                      </Button>
+                      <div className="flex gap-3 justify-center">
+                        <Button
+                          type="button"
+                          onClick={handleAddTimer}
+                          className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Your First Timer
+                        </Button>
+                        {savedWorkouts.length > 0 && (
+                          <Button
+                            type="button"
+                            onClick={() => setShowSavedSegments(true)}
+                            variant="outline"
+                            className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10"
+                          >
+                            <FolderOpen className="w-4 h-4 mr-2" />
+                            Add Saved Segment
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
 
