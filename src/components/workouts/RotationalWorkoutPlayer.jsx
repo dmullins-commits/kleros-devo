@@ -351,7 +351,7 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose, 
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-between px-16 py-8">
+      <div className="flex-1 flex items-center justify-between px-8 mt-16">
         {/* Left side - Exercise list */}
         <div className="flex-1 max-w-3xl">
           {phase === 'setup' && (
