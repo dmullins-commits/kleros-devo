@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Dumbbell, Play, Trash2, FileText } from "lucide-react";
+import { Edit, Dumbbell, Play, Trash2, FileText, Copy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import WorkoutPlayer from "./WorkoutPlayer";
 import RotationalWorkoutPlayer from "./RotationalWorkoutPlayer";
@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) {
+export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete, onDuplicate }) {
   const [deleteWorkout, setDeleteWorkout] = useState(null);
   const [playingWorkout, setPlayingWorkout] = useState(null);
   const [overviewWorkout, setOverviewWorkout] = useState(null);
@@ -118,12 +118,20 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete }) 
                           <Button
                             variant="outline"
                             onClick={() => setOverviewWorkout(workout)}
-                            className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                            className="border-gray-600 text-black bg-white hover:bg-gray-200"
                           >
                             <FileText className="w-4 h-4 mr-2" />
                             Overview
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          onClick={() => onDuplicate(workout)}
+                          className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
+                        </Button>
                         <Button
                           variant="outline"
                           onClick={() => onEdit(workout)}
