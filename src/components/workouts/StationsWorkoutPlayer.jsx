@@ -388,7 +388,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
             const displayStation = migratedConfig.stations[rotatedStationIdx];
             
             return (
-              <div key={stationIdx} className="w-[400px] space-y-2 flex-shrink-0">
+              <div key={stationIdx} className="w-[350px] space-y-2 flex-shrink-0">
             {/* Station label */}
             <div className="mb-3">
               <span className="text-3xl font-black text-white">Station: {stationIdx + 1}</span>
@@ -421,16 +421,19 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
                 ? exercise.perSetReps[currentSet - 1]
                 : exercise.reps;
               
+              const nameFontSize = exercise.name.length > 19 ? 'text-2xl' : 'text-3xl';
+              const noteFontSize = exercise.notes ? 'text-xs' : '';
+              
               return (
                 <div
                   key={exIdx}
-                  className={`flex flex-col justify-center relative px-4 py-2 ${exercise.notes ? 'h-28' : 'h-24'}`}
+                  className="flex flex-col justify-center relative px-4 py-2 h-24"
                   style={{ backgroundColor: color }}
                 >
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <div 
-                        className="border-3 px-4 py-2 text-2xl font-black"
+                        className="border-3 px-3 py-1 text-xl font-black"
                         style={{ 
                           borderColor: getColorForText(color),
                           color: getColorForText(color)
@@ -440,13 +443,21 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
                       </div>
                     </div>
 
-                    <div className="flex-1 flex items-center justify-center px-4">
+                    <div className="flex-1 flex flex-col items-center justify-center px-3">
                       <h3 
-                        className="text-3xl font-black truncate"
+                        className={`${nameFontSize} font-black leading-tight text-center`}
                         style={{ color: getColorForText(color) }}
                       >
                         {exercise.name}
                       </h3>
+                      {exercise.notes && (
+                        <p 
+                          className={`${noteFontSize} font-semibold leading-tight mt-0.5`}
+                          style={{ color: getColorForText(color) }}
+                        >
+                          {exercise.notes}
+                        </p>
+                      )}
                     </div>
 
                     {exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps.length > 0 && (
@@ -454,7 +465,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
                         {Array.from({ length: migratedConfig.sets }, (_, i) => (
                           <span 
                             key={i}
-                            className="text-xl font-black"
+                            className="text-lg font-black"
                             style={{ color: getColorForText(color) }}
                           >
                             {exercise.perSetReps[i] || exercise.reps}
@@ -463,17 +474,6 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
                       </div>
                     )}
                   </div>
-                  
-                  {exercise.notes && (
-                    <div className="text-center mt-1">
-                      <p 
-                        className="text-sm font-semibold"
-                        style={{ color: getColorForText(color) }}
-                      >
-                        {exercise.notes}
-                      </p>
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -483,27 +483,27 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
         </div>
 
         {/* Timer on the right */}
-        <div className="flex flex-col items-center gap-6">
-          <span className="text-[120px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
+        <div className="flex flex-col items-center gap-4">
+          <span className="text-[100px] font-black text-yellow-400">{formatTime(timeRemaining)}</span>
 
           {phase === 'setup' && (
-            <h2 className="text-6xl font-black text-white tracking-wide">SETUP</h2>
+            <h2 className="text-5xl font-black text-white tracking-wide">SETUP</h2>
           )}
 
           {phase === 'work' && (
-            <h2 className="text-6xl font-black text-green-400 tracking-wide">WORK</h2>
+            <h2 className="text-5xl font-black text-green-400 tracking-wide">WORK</h2>
           )}
 
           {phase === 'rest' && (
-            <h2 className="text-6xl font-black text-blue-400 tracking-wide">REST</h2>
+            <h2 className="text-5xl font-black text-blue-400 tracking-wide">REST</h2>
           )}
 
           <Button
             onClick={togglePause}
             size="lg"
-            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-28 h-28 rounded-full shadow-2xl shadow-yellow-400/50"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold w-24 h-24 rounded-full shadow-2xl shadow-yellow-400/50"
           >
-            {isPaused ? <Play className="w-12 h-12" /> : <Pause className="w-12 h-12" />}
+            {isPaused ? <Play className="w-10 h-10" /> : <Pause className="w-10 h-10" />}
           </Button>
         </div>
       </div>
