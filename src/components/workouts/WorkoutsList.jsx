@@ -127,7 +127,7 @@ export default function WorkoutsList({ workouts, isLoading, onEdit, onDelete, on
                         <Button
                           variant="outline"
                           onClick={() => onDuplicate(workout)}
-                          className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                          className="border-gray-600 text-black bg-white hover:bg-gray-200"
                         >
                           <Copy className="w-4 h-4 mr-2" />
                           Duplicate
