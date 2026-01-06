@@ -388,7 +388,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
             const displayStation = migratedConfig.stations[rotatedStationIdx];
             
             return (
-              <div key={stationIdx} className="w-[280px] space-y-2 flex-shrink-0">
+              <div key={stationIdx} className="w-[400px] space-y-2 flex-shrink-0">
             {/* Station label */}
             <div className="mb-3">
               <span className="text-3xl font-black text-white">Station: {stationIdx + 1}</span>
@@ -424,41 +424,54 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
               return (
                 <div
                   key={exIdx}
-                  className="flex items-center h-24 relative"
+                  className={`flex flex-col justify-center relative px-4 py-2 ${exercise.notes ? 'h-28' : 'h-24'}`}
                   style={{ backgroundColor: color }}
                 >
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <div 
-                      className="border-3 px-5 py-3 text-3xl font-black"
-                      style={{ 
-                        borderColor: getColorForText(color),
-                        color: getColorForText(color)
-                      }}
-                    >
-                      {displayReps}
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div 
+                        className="border-3 px-4 py-2 text-2xl font-black"
+                        style={{ 
+                          borderColor: getColorForText(color),
+                          color: getColorForText(color)
+                        }}
+                      >
+                        {displayReps}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex-1 flex items-center justify-center gap-2 pl-24">
-                    <h3 
-                      className="text-5xl font-black"
-                      style={{ color: getColorForText(color) }}
-                    >
-                      {exercise.name}
-                    </h3>
-                  </div>
+                    <div className="flex-1 flex items-center justify-center px-4">
+                      <h3 
+                        className="text-3xl font-black truncate"
+                        style={{ color: getColorForText(color) }}
+                      >
+                        {exercise.name}
+                      </h3>
+                    </div>
 
-                  {exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps.length > 0 && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                      {Array.from({ length: migratedConfig.sets }, (_, i) => (
-                        <span 
-                          key={i}
-                          className="text-2xl font-black"
-                          style={{ color: getColorForText(color) }}
-                        >
-                          {exercise.perSetReps[i] || exercise.reps}
-                        </span>
-                      ))}
+                    {exercise.usePerSetReps && exercise.perSetReps && exercise.perSetReps.length > 0 && (
+                      <div className="flex-shrink-0 flex gap-2">
+                        {Array.from({ length: migratedConfig.sets }, (_, i) => (
+                          <span 
+                            key={i}
+                            className="text-xl font-black"
+                            style={{ color: getColorForText(color) }}
+                          >
+                            {exercise.perSetReps[i] || exercise.reps}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {exercise.notes && (
+                    <div className="text-center mt-1">
+                      <p 
+                        className="text-sm font-semibold"
+                        style={{ color: getColorForText(color) }}
+                      >
+                        {exercise.notes}
+                      </p>
                     </div>
                   )}
                 </div>
