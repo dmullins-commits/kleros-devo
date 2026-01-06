@@ -91,7 +91,13 @@ export default function ManageUsers() {
       
       setShowEditModal(false);
       setEditingUser(null);
-      loadData();
+      
+      // If updating current user's organizations or role, reload page to refresh context
+      if (editingUser.id === currentUser?.id) {
+        window.location.reload();
+      } else {
+        loadData();
+      }
     } catch (error) {
       console.error("Error updating user:", error);
     }
