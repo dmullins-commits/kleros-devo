@@ -78,6 +78,18 @@ export default function Workouts() {
     loadData();
   };
 
+  const handleDuplicate = (workout) => {
+    const duplicateWorkout = {
+      ...workout,
+      name: `${workout.name} (Copy)`,
+      id: undefined,
+      created_date: undefined,
+      updated_date: undefined
+    };
+    setEditingWorkout(duplicateWorkout);
+    setShowWorkoutForm(true);
+  };
+
   const handleDelete = async (workoutId) => {
     try {
       await Workout.delete(workoutId);
@@ -142,6 +154,7 @@ export default function Workouts() {
               setShowWorkoutForm(true);
             }}
             onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
           />
         </div>
       </div>
