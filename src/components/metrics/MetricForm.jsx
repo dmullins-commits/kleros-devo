@@ -230,7 +230,7 @@ export default function MetricForm({ metric, categories, organizationId, onSubmi
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                className="border-gray-700 text-black bg-white hover:bg-gray-200"
               >
                 Cancel
               </Button>

@@ -370,7 +370,7 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
                         type="button"
                         variant="outline"
                         onClick={handleCancelTeam}
-                        className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+                        className="flex-1 border-gray-700 text-black bg-white hover:bg-gray-200"
                       >
                         Cancel
                       </Button>
@@ -430,12 +430,12 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteTeam(team.id)}
-                            className="text-gray-400 hover:text-red-400"
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => handleDeleteTeam(team.id)}
+                           className="bg-red-600 hover:bg-red-700 text-white"
                           >
-                            <Trash2 className="w-4 h-4" />
+                           <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
@@ -500,7 +500,7 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
                         type="button"
                         variant="outline"
                         onClick={handleCancelPeriod}
-                        className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+                        className="flex-1 border-gray-700 text-black bg-white hover:bg-gray-200"
                       >
                         Cancel
                       </Button>
@@ -550,7 +550,7 @@ export default function TeamManagementModal({ open, onOpenChange, onTeamsUpdated
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeletePeriod(period.id)}
-                              className="text-gray-400 hover:text-red-400"
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

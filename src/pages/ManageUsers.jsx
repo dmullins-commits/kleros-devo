@@ -359,7 +359,7 @@ export default function ManageUsers() {
               <Button
                 variant="outline"
                 onClick={() => setShowEditModal(false)}
-                className="border-gray-700 text-gray-300"
+                className="border-gray-700 text-black bg-white hover:bg-gray-200"
               >
                 Cancel
               </Button>

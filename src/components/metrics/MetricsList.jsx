@@ -291,7 +291,7 @@ export default function MetricsList({ metrics, records, isLoading, onEdit, onSel
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-700 text-white hover:bg-gray-800">
+            <AlertDialogCancel className="border-gray-700 text-black bg-white hover:bg-gray-200">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

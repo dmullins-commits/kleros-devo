@@ -323,7 +323,7 @@ export default function AthleteForm({ athlete, teams, onSubmit, onCancel }) {
                 variant="outline"
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="border-2 border-amber-400/30 text-amber-300 hover:bg-amber-400/10 font-bold"
+                className="border-2 border-amber-400/30 text-black bg-white hover:bg-gray-200 font-bold"
               >
                 CANCEL
               </Button>
