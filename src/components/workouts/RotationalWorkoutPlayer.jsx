@@ -138,7 +138,8 @@ export default function RotationalWorkoutPlayer({ config, workoutName, onClose, 
   }, [timeRemaining]);
 
   const rotateColors = () => {
-    setColorRotation(prev => (prev - 1 + migratedConfig.exercises.length) % migratedConfig.exercises.length);
+    const numExercises = migratedConfig.exercises?.length || 0;
+    setColorRotation(prev => (prev + 1) % numExercises);
   };
 
   const handlePhaseComplete = () => {
