@@ -252,7 +252,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                             className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10"
                           >
                             <FolderOpen className="w-4 h-4 mr-2" />
-                            Add Saved Segment
+                            Add Saved Workout
                           </Button>
                         )}
                       </div>
@@ -408,7 +408,7 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
                           className="flex-1 border-yellow-400 text-yellow-400 hover:bg-yellow-400/10"
                         >
                           <FolderOpen className="w-4 h-4 mr-2" />
-                          Add Saved Segment
+                          Add Saved Workout
                         </Button>
                       )}
                     </div>
@@ -452,10 +452,10 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
         <AlertDialogHeader>
           <AlertDialogTitle className="text-white flex items-center gap-2">
             <FolderOpen className="w-5 h-5 text-yellow-400" />
-            Add Saved Segment
+            Add Saved Workout
           </AlertDialogTitle>
           <AlertDialogDescription className="text-gray-400">
-            Select a saved workout to add its timers to your current workout.
+            Select a saved workout to add all of its timers to your current workout.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex-1 overflow-y-auto py-4 space-y-2">
@@ -491,9 +491,9 @@ export default function WorkoutForm({ workout, teams, athletes, onSubmit, onCanc
     <AlertDialog open={!!selectedSavedWorkout} onOpenChange={() => setSelectedSavedWorkout(null)}>
       <AlertDialogContent className="bg-gray-900 border-gray-700">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-white">Add Saved Segment?</AlertDialogTitle>
+          <AlertDialogTitle className="text-white">Add Saved Workout?</AlertDialogTitle>
           <AlertDialogDescription className="text-gray-400">
-            Are you sure you want to add "{selectedSavedWorkout?.name}" to your current workout?
+            This will add all timers from "{selectedSavedWorkout?.name}" to your current workout.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

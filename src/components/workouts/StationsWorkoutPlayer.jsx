@@ -154,7 +154,7 @@ export default function StationsWorkoutPlayer({ config, workoutName, onClose, to
     const maxExercises = migratedConfig.stations.length > 0 
       ? Math.max(...migratedConfig.stations.map(s => (s.exercises || []).length))
       : 0;
-    setColorRotation(prev => (prev - 1 + maxExercises) % maxExercises);
+    setColorRotation(prev => (prev + 1) % maxExercises);
   };
 
   const handlePhaseComplete = () => {
