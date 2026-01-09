@@ -51,7 +51,8 @@ export default function LeaderboardBuilder() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [filterType, setFilterType] = useState("all"); // all, team, class_period
-  const [filterId, setFilterId] = useState(null);
+  const [selectedTeamIds, setSelectedTeamIds] = useState([]);
+  const [selectedClassPeriods, setSelectedClassPeriods] = useState([]);
   const [useAllTimePR, setUseAllTimePR] = useState(false);
 
   // Visual configuration
@@ -100,7 +101,7 @@ export default function LeaderboardBuilder() {
     if (selectedMetric && athletes.length > 0 && records.length > 0) {
       generateLeaderboard();
     }
-  }, [selectedMetric, selectedDate, filterType, filterId, useAllTimePR, athletes, records]);
+  }, [selectedMetric, selectedDate, filterType, selectedTeamIds, selectedClassPeriods, useAllTimePR, athletes, records]);
 
   const loadTemplates = async () => {
     if (!selectedOrgId) return;
@@ -124,14 +125,14 @@ export default function LeaderboardBuilder() {
     // Filter athletes
     let filteredAthletes = athletes.filter(a => a.status === 'active');
     
-    if (filterType === 'team' && filterId) {
+    if (filterType === 'team' && selectedTeamIds.length > 0) {
       filteredAthletes = filteredAthletes.filter(a => {
         const teamIds = a.team_ids || [];
-        return Array.isArray(teamIds) && teamIds.includes(filterId);
+        return Array.isArray(teamIds) && teamIds.some(id => selectedTeamIds.includes(id));
       });
       console.log('Team filter:', filteredAthletes.length, 'athletes');
-    } else if (filterType === 'class_period' && filterId) {
-      filteredAthletes = filteredAthletes.filter(a => a.class_period === filterId);
+    } else if (filterType === 'class_period' && selectedClassPeriods.length > 0) {
+      filteredAthletes = filteredAthletes.filter(a => selectedClassPeriods.includes(a.class_period));
     }
 
     // Get records for each athlete
@@ -827,7 +828,7 @@ export default function LeaderboardBuilder() {
 
                 <div>
                   <Label className="text-gray-300 font-semibold mb-2 block">Filter By</Label>
-                  <Select value={filterType} onValueChange={(val) => { setFilterType(val); setFilterId(null); }}>
+                  <Select value={filterType} onValueChange={(val) => { setFilterType(val); setSelectedTeamIds([]); setSelectedClassPeriods([]); }}>
                     <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
                       <SelectValue />
                     </SelectTrigger>
@@ -841,37 +842,82 @@ export default function LeaderboardBuilder() {
 
                 {filterType === 'team' && (
                   <div>
-                    <Label className="text-gray-300 font-semibold mb-2 block">Select Team</Label>
-                    <Select value={filterId || ""} onValueChange={setFilterId}>
-                      <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                        <SelectValue placeholder="Choose team" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-900 border-gray-700">
-                        {teams.map(team => (
-                          <SelectItem key={team.id} value={team.id} className="text-white">
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-gray-300 font-semibold mb-2 block">Select Teams</Label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-900 border border-gray-700 rounded-md p-3">
+                      {teams.map(team => (
+                        <label
+                          key={team.id}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-2 rounded transition-colors"
+                        >
+                          <Checkbox
+                            checked={selectedTeamIds.includes(team.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedTeamIds([...selectedTeamIds, team.id]);
+                              } else {
+                                setSelectedTeamIds(selectedTeamIds.filter(id => id !== team.id));
+                              }
+                            }}
+                            className="border-amber-400/50"
+                          />
+                          <span className="text-white text-sm">{team.name}</span>
+                        </label>
+                      ))}
+                      {teams.length === 0 && (
+                        <p className="text-gray-500 text-sm text-center py-2">No teams available</p>
+                      )}
+                    </div>
+                    {selectedTeamIds.length > 0 && (
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        {selectedTeamIds.map(id => {
+                          const team = teams.find(t => t.id === id);
+                          return team ? (
+                            <Badge key={id} className="bg-amber-400/20 text-amber-300 border-amber-400/30">
+                              {team.name}
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {filterType === 'class_period' && (
                   <div>
-                    <Label className="text-gray-300 font-semibold mb-2 block">Select Class Period</Label>
-                    <Select value={filterId || ""} onValueChange={setFilterId}>
-                      <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                        <SelectValue placeholder="Choose period" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-900 border-gray-700">
-                        {classPeriods.map(period => (
-                          <SelectItem key={period.id} value={period.name} className="text-white">
-                            {period.name}
-                          </SelectItem>
+                    <Label className="text-gray-300 font-semibold mb-2 block">Select Class Periods</Label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-900 border border-gray-700 rounded-md p-3">
+                      {classPeriods.map(period => (
+                        <label
+                          key={period.id}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-2 rounded transition-colors"
+                        >
+                          <Checkbox
+                            checked={selectedClassPeriods.includes(period.name)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedClassPeriods([...selectedClassPeriods, period.name]);
+                              } else {
+                                setSelectedClassPeriods(selectedClassPeriods.filter(name => name !== period.name));
+                              }
+                            }}
+                            className="border-amber-400/50"
+                          />
+                          <span className="text-white text-sm">{period.name}</span>
+                        </label>
+                      ))}
+                      {classPeriods.length === 0 && (
+                        <p className="text-gray-500 text-sm text-center py-2">No class periods available</p>
+                      )}
+                    </div>
+                    {selectedClassPeriods.length > 0 && (
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        {selectedClassPeriods.map(name => (
+                          <Badge key={name} className="bg-amber-400/20 text-amber-300 border-amber-400/30">
+                            {name}
+                          </Badge>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
