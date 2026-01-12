@@ -172,7 +172,7 @@ export function useMetricRecords(organizationId, options = {}) {
 }
 
 // Recent metric records (for dashboard) - limited fetch
-export function useRecentMetricRecords(limit = 10000, options = {}) {
+export function useRecentMetricRecords(limit = 100, options = {}) {
   return useQuery({
     queryKey: ['recentMetricRecords', limit],
     queryFn: async () => {
